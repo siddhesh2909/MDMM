@@ -1,0 +1,338 @@
+/* ── Analytics Page ── */
+
+.an-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.an-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.an-header h1 {
+    font-size: 1.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.an-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ── Dataset Selector ── */
+.an-ds-select {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: inherit;
+    min-width: 220px;
+}
+
+/* ── Stats Grid ── */
+.an-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.an-stat {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.an-stat .label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.an-stat .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 0.15rem;
+}
+
+.an-stat .sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.1rem;
+}
+
+/* Quality score colors */
+.an-stat .value.quality-good {
+    color: var(--success-color);
+}
+
+.an-stat .value.quality-ok {
+    color: var(--warning-color);
+}
+
+.an-stat .value.quality-bad {
+    color: #ef4444;
+}
+
+/* ── Main Layout: Charts + Chat ── */
+.an-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 1.5rem;
+}
+
+/* ── Column Stats Table ── */
+.an-col-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.an-col-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.an-col-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.an-col-table tr:hover td {
+    background: var(--bg-secondary);
+}
+
+.an-col-name {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.an-type-badge {
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.an-type-badge.numeric {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.an-type-badge.categorical {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+
+/* ── Chart Cards ── */
+.an-chart-card {
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 1.25rem;
+}
+
+.an-chart-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* Distribution mini bars */
+.an-dist-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.an-dist-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.an-dist-label {
+    width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.an-dist-bar-bg {
+    flex: 1;
+    height: 16px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.an-dist-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--primary-color);
+    transition: width 0.4s;
+}
+
+.an-dist-count {
+    width: 32px;
+    text-align: right;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+}
+
+/* Column selector pills */
+.an-col-pills {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.an-col-pill {
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.an-col-pill:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.an-col-pill.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* ── AI Chat Panel ── */
+.an-chat {
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+}
+
+.an-chat-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.an-chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.an-chat-msg {
+    max-width: 90%;
+    padding: 0.7rem 0.9rem;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.an-chat-msg.ai {
+    background: var(--bg-secondary);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+.an-chat-msg.user {
+    background: var(--primary-color);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.an-chat-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+}
+
+.an-chat-action-btn {
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.an-chat-action-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.an-chat-input {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.an-chat-input input {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: inherit;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .an-main {
+        grid-template-columns: 1fr;
+    }
+
+    .an-chat {
+        height: 400px;
+    }
+}

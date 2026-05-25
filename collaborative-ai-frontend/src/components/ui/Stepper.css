@@ -1,0 +1,86 @@
+.stepper-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 1.5rem 0 2.5rem 0;
+}
+
+.stepper-item {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.stepper-item:last-child {
+    flex: 0;
+}
+
+.stepper-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    z-index: 2;
+    transition: all var(--transition-normal);
+}
+
+.stepper-circle.active {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.stepper-circle.completed {
+    border-color: var(--success-color);
+    background-color: var(--success-color);
+    color: white;
+}
+
+.stepper-label {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: color var(--transition-normal);
+}
+
+.stepper-item:first-child .stepper-label {
+    left: 0;
+    transform: translateX(0);
+}
+
+.stepper-item:last-child .stepper-label {
+    left: auto;
+    right: 0;
+    transform: translateX(0);
+}
+
+.stepper-label.active-label {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.stepper-line {
+    flex: 1;
+    height: 2px;
+    background-color: var(--border-color);
+    margin: 0 12px;
+    transition: background-color var(--transition-normal);
+}
+
+.stepper-line.completed-line {
+    background-color: var(--success-color);
+}

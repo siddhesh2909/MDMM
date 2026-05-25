@@ -1,0 +1,426 @@
+/* ── Workflows Page Styles ── */
+
+.wf-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ── Header ── */
+.wf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.wf-header h1 {
+    font-size: 1.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.wf-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* ── Stats Row ── */
+.wf-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.wf-stat-card {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wf-stat-card .label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.wf-stat-card .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.wf-stat-card.pending .value {
+    color: var(--warning-color);
+}
+
+.wf-stat-card.inprogress .value {
+    color: var(--primary-color);
+}
+
+.wf-stat-card.approved .value {
+    color: var(--success-color);
+}
+
+.wf-stat-card.rejected .value {
+    color: #ef4444;
+}
+
+/* ── Filters ── */
+.wf-filters {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.wf-filter-btn {
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wf-filter-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.wf-filter-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* ── Task List ── */
+.wf-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.wf-task-card {
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--border-color);
+    transition: all 0.2s;
+    cursor: default;
+}
+
+.wf-task-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.wf-task-card.status-pending {
+    border-left-color: var(--warning-color);
+}
+
+.wf-task-card.status-inprogress {
+    border-left-color: var(--primary-color);
+}
+
+.wf-task-card.status-approved {
+    border-left-color: var(--success-color);
+}
+
+.wf-task-card.status-rejected {
+    border-left-color: #ef4444;
+}
+
+.wf-task-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.wf-task-title {
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.wf-task-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+/* Tags Row */
+.wf-task-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.wf-tag {
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.wf-tag.priority-critical {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.wf-tag.priority-high {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+.wf-tag.priority-medium {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.wf-tag.priority-low {
+    background: rgba(107, 114, 128, 0.15);
+    color: #6b7280;
+}
+
+.wf-tag.category {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    text-transform: none;
+    font-weight: 500;
+}
+
+.wf-tag.status-tag {
+    text-transform: none;
+    font-weight: 500;
+}
+
+.wf-tag.status-tag.pending {
+    background: rgba(234, 179, 8, 0.15);
+    color: #ca8a04;
+}
+
+.wf-tag.status-tag.approved {
+    background: rgba(34, 197, 94, 0.15);
+    color: #16a34a;
+}
+
+.wf-tag.status-tag.rejected {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.wf-tag.status-tag.inprogress {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+/* Meta Row */
+.wf-task-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.wf-task-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.wf-task-info span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Progress Bar */
+.wf-progress-bar {
+    flex: 1;
+    max-width: 120px;
+    height: 6px;
+    background: var(--bg-secondary);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.wf-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s;
+    background: var(--primary-color);
+}
+
+.wf-progress-fill.complete {
+    background: var(--success-color);
+}
+
+/* Action Buttons */
+.wf-task-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.wf-action-btn {
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.wf-action-btn:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+.wf-action-btn.approve {
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.wf-action-btn.approve:hover {
+    background: var(--success-color);
+    color: white;
+}
+
+.wf-action-btn.reject {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.wf-action-btn.reject:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.wf-action-btn.delete {
+    border-color: #ef4444;
+    color: #ef4444;
+    opacity: 0.7;
+}
+
+.wf-action-btn.delete:hover {
+    background: #ef4444;
+    color: white;
+    opacity: 1;
+}
+
+/* ── Create Modal ── */
+.wf-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.15s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.wf-modal {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    width: 95%;
+    max-width: 520px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.wf-modal h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.wf-modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.wf-modal-field label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.wf-modal-field input,
+.wf-modal-field select,
+.wf-modal-field textarea {
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: inherit;
+}
+
+.wf-modal-field textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.wf-modal-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.wf-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* ── Empty State ── */
+.wf-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+}
+
+.wf-empty p {
+    font-size: 0.9rem;
+}

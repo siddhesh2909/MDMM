@@ -1,0 +1,32 @@
+
+> collaborative-ai-frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.34:3000
+
+✓ Starting...
+✓ Ready in 849ms
+ GET /ingestion 200 in 504ms (compile: 284ms, render: 220ms)
+✓ Compiled in 192ms
+ GET /ingestion 200 in 151ms (compile: 73ms, render: 78ms)
+ GET /ingestion 200 in 42ms (compile: 4ms, render: 38ms)
+ GET / 307 in 104ms (compile: 25ms, render: 79ms)
+ GET /ingestion 200 in 32ms (compile: 1804µs, render: 30ms)
+ GET /contracts 200 in 93ms (compile: 78ms, render: 15ms)
+(node:44065) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ Compiled in 81ms
+✓ Compiled in 4ms
+ GET /analytics 200 in 221ms (compile: 207ms, render: 14ms)
+⚠ Fast Refresh had to perform a full reload when ./src/components/providers/ThemeProvider.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+✓ Compiled in 24ms
+ GET /analytics 200 in 181ms (compile: 54ms, render: 128ms)
+⚠ Fast Refresh had to perform a full reload when ./src/components/providers/ThemeProvider.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+✓ Compiled in 83ms
+ GET /analytics 200 in 199ms (compile: 50ms, render: 149ms)
+ GET /analytics 200 in 71ms (compile: 13ms, render: 58ms)
+ GET / 307 in 171ms (compile: 34ms, render: 138ms)
+ GET /ingestion 200 in 77ms (compile: 32ms, render: 44ms)
+ GET /contracts 200 in 44ms (compile: 35ms, render: 10ms)
