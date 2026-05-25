@@ -1,0 +1,200 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./data.db"
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  datasets  Dataset[]
+  contracts DataContract[]
+  auditLogs AuditLog[]
+  workflows WorkflowTask[]
+}
+
+model User {
+  id             String       @id @default(uuid())
+  name           String
+  email          String       @unique
+  role           String       @default("Business User") 
+  department     String?
+  password       String   
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  permissions    String       @default("[]") // JSON array of fine-grained permissions
+  status         String       @default("Active") // Active, Inactive, Pending
+  lastActive     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  datasets       Dataset[]
+  contracts      DataContract[]
+}
+
+model WorkflowTask {
+  id             String       @id @default(uuid())
+  title          String
+  description    String       @default("")
+  status         String       @default("Pending")
+  assignee       String
+  priority       String       @default("Medium")
+  category       String       @default("General")
+  progress       Int          @default(0)
+  dueDate        DateTime?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Dataset {
+  id             String       @id @default(uuid())
+  name           String
+  rawData        String       // Storing JSON string of the uploaded data
+  inferredSchema String?      // Storing inferred schema from AI
+  source         String?      // "file", "postgres", "mongo", "api"
+  sourceUri      String?      // connection string or file name
+  status         String       @default("INGESTED") // INGESTED, VALIDATED, FAILED_VALIDATION, PROCESSED
+  boundContractId String?     // contract this dataset is validated against
+  owner          User         @relation(fields: [ownerId], references: [id])
+  ownerId        String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+}
+
+model DataContract {
+  id             String       @id @default(uuid())
+  name           String
+  domain         String
+  ownerName      String       // User name for display
+  owner          User         @relation(fields: [ownerId], references: [id])
+  ownerId        String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  version        String       @default("1.0.0")
+  schemaDef      String   
+  status         String       @default("Draft")
+  enforcementMode String      @default("warning") // strict, warning, monitor
+  autoCreated    Boolean      @default(false) // true when auto-generated during ingestion
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model AppAnalytics {
+  id               String   @id @default(uuid())
+  date             DateTime @default(now())
+  revenue          Float
+  activeUsers      Int
+  ingestionQuality Float
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  userId         String
+  role           String
+  action         String
+  entityType     String
+  entityId       String
+  details        String?      // Optional JSON details
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  timestamp      DateTime     @default(now())
+}
+
+// ─── NEW: Validation Reports ─────────────────────────
+
+model ValidationReport {
+  id              String   @id @default(uuid())
+  datasetId       String
+  contractId      String
+  contractVersion String
+  mode            String   // strict, warning, monitor
+  totalRows       Int
+  validRows       Int
+  invalidRows     Int
+  passRate        Float
+  completeness    Float    @default(0)
+  validity        Float    @default(0)
+  uniqueness      Float    @default(0)
+  overallScore    Float    @default(0)
+  issues          String   @default("[]") // JSON array of issues
+  summary         String   @default("{}") // JSON summary by error category
+  organizationId  String
+  createdAt       DateTime @default(now())
+}
+
+// ─── NEW: Contract Versioning ────────────────────────
+
+model ContractVersion {
+  id         String   @id @default(uuid())
+  contractId String
+  version    String
+  schemaDef  String   // JSON snapshot
+  changeLog  String   @default("")
+  changedBy  String
+  createdAt  DateTime @default(now())
+}
+
+// ─── NEW: Data Lineage ───────────────────────────────
+
+model LineageNode {
+  id             String   @id @default(uuid())
+  nodeType       String   // source, dataset, contract, transform, output
+  label          String
+  entityId       String?  // ID of related dataset/contract/etc
+  metadata       String   @default("{}") // JSON (row count, score, etc.)
+  organizationId String
+  createdAt      DateTime @default(now())
+}
+
+model LineageEdge {
+  id             String   @id @default(uuid())
+  sourceNodeId   String
+  targetNodeId   String
+  relationship   String   // ingested_from, validated_by, transformed_into, rejected_by
+  metadata       String   @default("{}")
+  organizationId String
+  createdAt      DateTime @default(now())
+}
+
+// ─── NEW: Quality Snapshots ──────────────────────────
+
+model QualitySnapshot {
+  id           String   @id @default(uuid())
+  datasetId    String
+  completeness Float
+  validity     Float
+  uniqueness   Float
+  freshness    Float
+  overallScore Float
+  recordedAt   DateTime @default(now())
+}
+
+// ─── NEW: Pipeline Logs ──────────────────────────────
+
+model PipelineLog {
+  id             String   @id @default(uuid())
+  logType        String   // ingestion, validation, error, alert, connector
+  severity       String   // info, warning, error
+  message        String
+  datasetId      String?
+  contractId     String?
+  metadata       String   @default("{}") // JSON details
+  organizationId String
+  createdAt      DateTime @default(now())
+}
+

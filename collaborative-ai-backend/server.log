@@ -1,0 +1,7 @@
+
+> collaborative-ai-backend@1.0.0 start
+> node dist/server.js
+
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+Backend Server running locally on http://localhost:5001
