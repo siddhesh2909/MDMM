@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { getGroqChatCompletion, groq } from '../lib/groq';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { notifyUser } from '../services/notification.service';
 
 const SYSTEM_PROMPT = `
 You are a friendly and knowledgeable AI Data Assistant working within a Collaborative AI Platform.
@@ -55,15 +56,34 @@ Always be helpful, specific, and encouraging. Reference actual field names and c
 
 export const handleChat = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { message, history } = req.body;
+        const { message, history, datasetContext } = req.body;
 
         if (!message) {
             return res.status(400).json({ error: 'Message content is required.' });
         }
 
-        // Ideally, history would be mapped cleanly, but for demo we just pass the latest prompt
-        const completion = await getGroqChatCompletion(message, SYSTEM_PROMPT);
+        let customPrompt = SYSTEM_PROMPT;
+        if (datasetContext) {
+            customPrompt += `\n\nActive Dataset Context Information:\n${JSON.stringify(datasetContext)}`;
+        }
+
+        const completion = await getGroqChatCompletion(message, customPrompt);
         const aiResponse = completion.choices[0]?.message?.content || "I'm sorry, I couldn't formulate a response.";
+
+        try {
+            const userId = req.user?.id;
+            if (userId) {
+                await notifyUser(
+                    userId,
+                    'AI Assistant Response',
+                    `AI answered to your message.`,
+                    'message',
+                    '/analytics'
+                );
+            }
+        } catch (nErr) {
+            console.error('Failed to trigger AI chat notification:', nErr);
+        }
 
         res.status(200).json({ reply: aiResponse });
 

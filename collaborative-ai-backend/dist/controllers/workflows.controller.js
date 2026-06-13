@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteWorkflow = exports.updateWorkflow = exports.createWorkflow = exports.getWorkflows = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
+const notification_service_1 = require("../services/notification.service");
 const getWorkflows = async (req, res) => {
     try {
         const orgId = req.user?.organizationId;
@@ -48,6 +49,12 @@ const createWorkflow = async (req, res) => {
                 organizationId: user.organizationId
             }
         });
+        try {
+            await (0, notification_service_1.notifyAssignee)(assignee, 'New Workflow Task Assigned', `You have been assigned to task: "${title}".`, 'task', '/workflows');
+        }
+        catch (nErr) {
+            console.error('Failed to trigger task assignment notifications:', nErr);
+        }
         res.status(201).json(workflow);
     }
     catch (err) {
@@ -86,6 +93,19 @@ const updateWorkflow = async (req, res) => {
         if (dueDate !== undefined)
             data.dueDate = dueDate ? new Date(dueDate) : null;
         const workflow = await prisma_1.default.workflowTask.update({ where: { id }, data });
+        try {
+            const titleStr = workflow.title;
+            const updatedAssignee = workflow.assignee;
+            if (workflow.status === 'Approved' || workflow.progress === 100) {
+                await (0, notification_service_1.notifyAssignee)(updatedAssignee, 'Workflow Task Completed', `Task "${titleStr}" has been marked as completed/approved.`, 'task', '/workflows');
+            }
+            else {
+                await (0, notification_service_1.notifyAssignee)(updatedAssignee, 'Workflow Task Updated', `Task "${titleStr}" status updated to ${workflow.status} (${workflow.progress}%).`, 'task', '/workflows');
+            }
+        }
+        catch (nErr) {
+            console.error('Failed to trigger task update notifications:', nErr);
+        }
         res.status(200).json(workflow);
     }
     catch (err) {
@@ -106,6 +126,12 @@ const deleteWorkflow = async (req, res) => {
         if (!existing)
             return res.status(404).json({ error: 'Workflow task not found or unauthorized' });
         await prisma_1.default.workflowTask.delete({ where: { id } });
+        try {
+            await (0, notification_service_1.notifyAssignee)(existing.assignee, 'Workflow Task Deleted', `Task "${existing.title}" has been deleted.`, 'task', '/workflows');
+        }
+        catch (nErr) {
+            console.error('Failed to trigger task delete notifications:', nErr);
+        }
         res.status(200).json({ message: 'Workflow deleted' });
     }
     catch (err) {

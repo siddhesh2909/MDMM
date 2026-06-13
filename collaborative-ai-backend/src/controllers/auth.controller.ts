@@ -3,12 +3,13 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { z } from 'zod';
+import { notifyUser, notifyAdmins } from '../services/notification.service';
 
 const registerSchema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
     password: z.string().min(6),
-    role: z.enum(['Data Engineer', 'Data Analyst', 'Business User', 'Admin']).optional(),
+    role: z.enum(['Data Engineer', 'Data Analyst', 'Business User', 'Admin', 'Data Steward', 'Analyst', 'Viewer']).optional(),
     department: z.string().optional()
 });
 
@@ -18,10 +19,14 @@ const loginSchema = z.object({
 });
 
 const generateToken = (user: any) => {
+    const roleMapped = user.role === 'Data Engineer' ? 'Data Steward' :
+        user.role === 'Data Analyst' ? 'Analyst' :
+            user.role === 'Business User' ? 'Viewer' :
+                user.role;
     return jwt.sign(
         {
             id: user.id,
-            role: user.role,
+            role: roleMapped,
             organizationId: user.organizationId,
             permissions: user.permissions
         },
@@ -47,8 +52,8 @@ export const register = async (req: express.Request, res: express.Response) => {
 
         // Assign default permissions based on role
         const defaultPermissions = role === 'Admin' ? ['*'] :
-            role === 'Data Engineer' ? ['dataset:manage', 'contract:edit', 'workflow:view', 'workflow:edit'] :
-                role === 'Data Analyst' ? ['dataset:view', 'contract:view', 'workflow:view'] :
+            role === 'Data Engineer' || role === 'Data Steward' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'workflow:edit'] :
+                role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:view', 'workflow:view'] :
                     ['dataset:view'];
 
         const user = await prisma.user.create({
@@ -56,14 +61,39 @@ export const register = async (req: express.Request, res: express.Response) => {
                 name,
                 email,
                 password: hashedPassword,
-                role: role || 'Business User',
+                role: role || 'Viewer',
                 department,
                 organizationId: (org as any).id,
                 permissions: JSON.stringify(defaultPermissions)
             } as any
         });
 
+        // Trigger notifications
+        try {
+            await notifyUser(
+                user.id,
+                'Welcome to Collaborative AI!',
+                `Hi ${name}, your account was successfully created as a ${user.role}.`,
+                'account',
+                '/admin'
+            );
+            await notifyAdmins(
+                (org as any).id,
+                'New User Registered',
+                `${name} (${email}) has joined the organization as ${user.role}.`,
+                'account',
+                '/admin'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger register notifications:', nErr);
+        }
+
         const token = generateToken(user);
+
+        const mappedRole = user.role === 'Data Engineer' ? 'Data Steward' :
+            user.role === 'Data Analyst' ? 'Analyst' :
+                user.role === 'Business User' ? 'Viewer' :
+                    user.role;
 
         res.status(201).json({
             message: 'User registered successfully',
@@ -72,7 +102,7 @@ export const register = async (req: express.Request, res: express.Response) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+                role: mappedRole,
                 organizationId: (user as any).organizationId,
                 permissions: defaultPermissions
             }
@@ -99,13 +129,31 @@ export const login = async (req: express.Request, res: express.Response) => {
         // Update last active
         await prisma.user.update({ where: { id: user.id }, data: { lastActive: new Date() } });
 
+        // Trigger login security alert notification
+        try {
+            await notifyUser(
+                user.id,
+                'Security Alert: Successful Login',
+                `A successful login was detected for your account.`,
+                'security',
+                '/'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger login notification:', nErr);
+        }
+
+        const mappedRole = user.role === 'Data Engineer' ? 'Data Steward' :
+            user.role === 'Data Analyst' ? 'Analyst' :
+                user.role === 'Business User' ? 'Viewer' :
+                    user.role;
+
         res.status(200).json({
             token,
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+                role: mappedRole,
                 department: user.department,
                 organizationId: (user as any).organizationId,
                 permissions: JSON.parse((user as any).permissions)

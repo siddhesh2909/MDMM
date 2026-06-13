@@ -1,6 +1,7 @@
 import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import { notifyAssignee } from '../services/notification.service';
 
 export const getWorkflows = async (req: AuthenticatedRequest, res: express.Response) => {
     try {
@@ -43,6 +44,19 @@ export const createWorkflow = async (req: AuthenticatedRequest, res: express.Res
                 organizationId: user.organizationId
             } as any
         });
+
+        try {
+            await notifyAssignee(
+                assignee,
+                'New Workflow Task Assigned',
+                `You have been assigned to task: "${title}".`,
+                'task',
+                '/workflows'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger task assignment notifications:', nErr);
+        }
+
         res.status(201).json(workflow);
     } catch (err) {
         res.status(500).json({ error: 'Failed to create workflow' });
@@ -75,6 +89,32 @@ export const updateWorkflow = async (req: AuthenticatedRequest, res: express.Res
         if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
 
         const workflow = await prisma.workflowTask.update({ where: { id }, data });
+
+        try {
+            const titleStr = workflow.title;
+            const updatedAssignee = workflow.assignee;
+            
+            if (workflow.status === 'Approved' || workflow.progress === 100) {
+                await notifyAssignee(
+                    updatedAssignee,
+                    'Workflow Task Completed',
+                    `Task "${titleStr}" has been marked as completed/approved.`,
+                    'task',
+                    '/workflows'
+                );
+            } else {
+                await notifyAssignee(
+                    updatedAssignee,
+                    'Workflow Task Updated',
+                    `Task "${titleStr}" status updated to ${workflow.status} (${workflow.progress}%).`,
+                    'task',
+                    '/workflows'
+                );
+            }
+        } catch (nErr) {
+            console.error('Failed to trigger task update notifications:', nErr);
+        }
+
         res.status(200).json(workflow);
     } catch (err) {
         res.status(500).json({ error: 'Failed to update workflow' });
@@ -96,6 +136,19 @@ export const deleteWorkflow = async (req: AuthenticatedRequest, res: express.Res
         if (!existing) return res.status(404).json({ error: 'Workflow task not found or unauthorized' });
 
         await prisma.workflowTask.delete({ where: { id } });
+
+        try {
+            await notifyAssignee(
+                existing.assignee,
+                'Workflow Task Deleted',
+                `Task "${existing.title}" has been deleted.`,
+                'task',
+                '/workflows'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger task delete notifications:', nErr);
+        }
+
         res.status(200).json({ message: 'Workflow deleted' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete workflow' });

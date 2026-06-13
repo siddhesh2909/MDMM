@@ -1,6 +1,7 @@
 import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import { notifyUser, notifyAll, notifyAdmins } from '../services/notification.service';
 
 export const getContracts = async (req: AuthenticatedRequest, res: express.Response) => {
     try {
@@ -37,6 +38,26 @@ export const createContract = async (req: AuthenticatedRequest, res: express.Res
                 schemaDef: typeof schemaDef === 'string' ? schemaDef : JSON.stringify(schemaDef),
             } as any,
         });
+
+        try {
+            await notifyUser(
+                user.id,
+                'Data Contract Created',
+                `You created data contract "${name}".`,
+                'project',
+                '/data-contracts'
+            );
+            await notifyAll(
+                user.organizationId,
+                'New Data Contract',
+                `A new data contract "${name}" was created by ${user.id}.`,
+                'project',
+                '/data-contracts'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger contract create notifications:', nErr);
+        }
+
         res.status(201).json(contract);
     } catch (err) {
         console.error("Contract creation error:", err);
@@ -70,6 +91,18 @@ export const updateContract = async (req: AuthenticatedRequest, res: express.Res
                 ...(enforcementMode && validModes.includes(enforcementMode) && { enforcementMode }),
             } as any,
         });
+
+        try {
+            await notifyUser(
+                user.id,
+                'Data Contract Updated',
+                `Contract "${contract.name}" has been updated.`,
+                'project',
+                '/data-contracts'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger contract update notifications:', nErr);
+        }
 
         res.status(200).json(contract);
     } catch (err) {
@@ -130,6 +163,19 @@ export const deleteContract = async (req: AuthenticatedRequest, res: express.Res
         }
 
         await prisma.dataContract.delete({ where: { id: contractId } });
+
+        try {
+            await notifyUser(
+                user.id,
+                'Data Contract Deleted',
+                `Contract "${existing.name}" has been deleted.`,
+                'project',
+                '/data-contracts'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger contract delete notifications:', nErr);
+        }
+
         res.status(200).json({ message: 'Contract deleted successfully.' });
     } catch (err) {
         console.error("Contract deletion error:", err);
@@ -164,6 +210,18 @@ export const duplicateContract = async (req: AuthenticatedRequest, res: express.
             }
         });
 
+        try {
+            await notifyUser(
+                user.id,
+                'Data Contract Duplicated',
+                `Contract "${existing.name}" has been duplicated as "${duplicate.name}".`,
+                'project',
+                '/data-contracts'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger contract duplicate notifications:', nErr);
+        }
+
         res.status(201).json(duplicate);
     } catch (err) {
         console.error("Contract duplication error:", err);
@@ -191,6 +249,18 @@ export const toggleContractStatus = async (req: AuthenticatedRequest, res: expre
             where: { id: contractId },
             data: { status: newStatus }
         });
+
+        try {
+            await notifyAll(
+                user.organizationId,
+                `Data Contract ${newStatus === 'Active' ? 'Activated' : 'Deactivated'}`,
+                `Contract "${existing.name}" status has been set to ${newStatus}.`,
+                'approval',
+                '/data-contracts'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger contract status toggle notifications:', nErr);
+        }
 
         res.status(200).json(updated);
     } catch (err) {

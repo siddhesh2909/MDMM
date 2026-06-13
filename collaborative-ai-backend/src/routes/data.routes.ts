@@ -3,7 +3,7 @@ import { getContracts, createContract, updateContract, deleteContract, duplicate
 import { getWorkflows, createWorkflow, updateWorkflow, deleteWorkflow } from '../controllers/workflows.controller';
 import { getAnalytics, getDatasetAnalytics } from '../controllers/analytics.controller';
 import { getDatasets, createDataset, updateDataset, getDatasetDetail, deleteDataset } from '../controllers/datasets.controller';
-import { getUsers, getAuditLog, inviteUser, updateUserRole, deactivateUser } from '../controllers/users.controller';
+import { getUsers, getAuditLog, inviteUser, updateUserRole, deactivateUser, updateProfile, getProfile, revokeOtherSessions, downloadPersonalData, deleteAccount, updateOrganizationDetails } from '../controllers/users.controller';
 import { testConnection, pullData } from '../controllers/connectors.controller';
 import { authenticateToken, requirePermission, requireRole } from '../middleware/auth';
 
@@ -14,8 +14,12 @@ import { getDatasetLineage, getFullLineage } from '../controllers/lineage.contro
 import { createVersion, getVersions, compareVersions, rollbackVersion } from '../controllers/versioning.controller';
 import { getSchemaSuggestions, applySuggestion } from '../controllers/evolution.controller';
 import { getErrorLogs, getLogSummary } from '../controllers/pipeline-logs.controller';
+import { getNotifications, markRead, markAllRead, streamNotifications } from '../controllers/notifications.controller';
 
 const router = Router();
+
+// SSE Stream must be authenticated inline using token query param to allow native browser EventSource connections
+router.get('/notifications/stream', streamNotifications);
 
 // Protect all data routes
 router.use(authenticateToken);
@@ -76,6 +80,12 @@ router.get('/analytics', getAnalytics);
 
 // ── Admin / Users ──
 router.get('/users', getUsers);
+router.get('/users/profile', getProfile);
+router.patch('/users/profile', updateProfile);
+router.post('/users/profile/revoke-others', revokeOtherSessions);
+router.get('/users/profile/download-data', downloadPersonalData);
+router.delete('/users/profile', deleteAccount);
+router.patch('/organization', updateOrganizationDetails);
 router.get('/audit-log', requireRole(['Admin']), getAuditLog);
 router.post('/users/invite', requireRole(['Admin']), inviteUser);
 router.patch('/users/update-role', requireRole(['Admin']), updateUserRole);
@@ -88,5 +98,10 @@ router.post('/connectors/pull', requirePermission('dataset:manage'), pullData);
 // ── Pipeline Logs (Part 7) ──
 router.get('/logs/errors', getErrorLogs);
 router.get('/logs/summary', getLogSummary);
+
+// ── Notifications ──
+router.get('/notifications', getNotifications);
+router.patch('/notifications/:id/read', markRead);
+router.post('/notifications/mark-all-read', markAllRead);
 
 export default router;

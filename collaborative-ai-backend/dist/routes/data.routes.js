@@ -6,30 +6,84 @@ const workflows_controller_1 = require("../controllers/workflows.controller");
 const analytics_controller_1 = require("../controllers/analytics.controller");
 const datasets_controller_1 = require("../controllers/datasets.controller");
 const users_controller_1 = require("../controllers/users.controller");
+const connectors_controller_1 = require("../controllers/connectors.controller");
 const auth_1 = require("../middleware/auth");
+// New controllers
+const validation_controller_1 = require("../controllers/validation.controller");
+const quality_controller_1 = require("../controllers/quality.controller");
+const lineage_controller_1 = require("../controllers/lineage.controller");
+const versioning_controller_1 = require("../controllers/versioning.controller");
+const evolution_controller_1 = require("../controllers/evolution.controller");
+const pipeline_logs_controller_1 = require("../controllers/pipeline-logs.controller");
+const notifications_controller_1 = require("../controllers/notifications.controller");
 const router = (0, express_1.Router)();
+// SSE Stream must be authenticated inline using token query param to allow native browser EventSource connections
+router.get('/notifications/stream', notifications_controller_1.streamNotifications);
 // Protect all data routes
 router.use(auth_1.authenticateToken);
-// Contracts
+// ── Data Contracts Dashboard Stats (must be before :id routes) ──
+router.get('/contracts-dashboard-stats', contracts_controller_1.getContractsDashboardStats);
+// ── Contracts ──
 router.get('/contracts', contracts_controller_1.getContracts);
 router.post('/contracts', (0, auth_1.requirePermission)('contract:edit'), contracts_controller_1.createContract);
 router.patch('/contracts/:id', (0, auth_1.requirePermission)('contract:edit'), contracts_controller_1.updateContract);
-// Datasets
+router.delete('/contracts/:id', (0, auth_1.requirePermission)('contract:edit'), contracts_controller_1.deleteContract);
+router.post('/contracts/:id/duplicate', (0, auth_1.requirePermission)('contract:edit'), contracts_controller_1.duplicateContract);
+router.patch('/contracts/:id/status', (0, auth_1.requirePermission)('contract:edit'), contracts_controller_1.toggleContractStatus);
+router.get('/contracts/:id/detail', contracts_controller_1.getContractDetail);
+// ── Contract Validation (Part 1) ──
+router.post('/contracts/:id/validate-dataset', (0, auth_1.requirePermission)('contract:edit'), validation_controller_1.validateDataset);
+// ── Contract Versioning (Part 5) ──
+router.post('/contracts/:id/version', (0, auth_1.requirePermission)('contract:edit'), versioning_controller_1.createVersion);
+router.get('/contracts/:id/versions', versioning_controller_1.getVersions);
+router.get('/contracts/:id/versions/compare', versioning_controller_1.compareVersions);
+router.post('/contracts/:id/rollback', (0, auth_1.requirePermission)('contract:edit'), versioning_controller_1.rollbackVersion);
+// ── Contract Evolution / Schema Suggestions (Part 6) ──
+router.get('/contracts/:id/latest', contracts_controller_1.getLatestContract);
+router.get('/contracts/:id/schema-suggestions', evolution_controller_1.getSchemaSuggestions);
+router.post('/contracts/:id/apply-suggestion', (0, auth_1.requirePermission)('contract:edit'), evolution_controller_1.applySuggestion);
+// ── Datasets ──
 router.get('/datasets', datasets_controller_1.getDatasets);
+router.get('/datasets/:id', datasets_controller_1.getDatasetDetail);
 router.post('/datasets', (0, auth_1.requirePermission)('dataset:manage'), datasets_controller_1.createDataset);
 router.patch('/datasets/:id', (0, auth_1.requirePermission)('dataset:manage'), datasets_controller_1.updateDataset);
+router.delete('/datasets/:id', (0, auth_1.requirePermission)('dataset:manage'), datasets_controller_1.deleteDataset);
 router.get('/datasets/:id/analytics', analytics_controller_1.getDatasetAnalytics);
-// Workflows 
+// ── Dataset Validation Report (Part 1) ──
+router.get('/datasets/:id/validation-report', validation_controller_1.getValidationReport);
+// ── Dataset Quality Metrics (Part 3) ──
+router.get('/datasets/:id/quality', quality_controller_1.getDatasetQuality);
+router.get('/quality/overview', quality_controller_1.getQualityOverview);
+// ── Dataset Lineage (Part 4) ──
+router.get('/datasets/:id/lineage', lineage_controller_1.getDatasetLineage);
+router.get('/lineage/full', lineage_controller_1.getFullLineage);
+// ── Workflows ──
 router.get('/workflows', workflows_controller_1.getWorkflows);
 router.post('/workflows', (0, auth_1.requirePermission)('workflow:edit'), workflows_controller_1.createWorkflow);
 router.patch('/workflows/:id', (0, auth_1.requirePermission)('workflow:edit'), workflows_controller_1.updateWorkflow);
 router.delete('/workflows/:id', (0, auth_1.requirePermission)('workflow:edit'), workflows_controller_1.deleteWorkflow);
-// Analytics
+// ── Analytics ──
 router.get('/analytics', analytics_controller_1.getAnalytics);
-// Admin / Users
+// ── Admin / Users ──
 router.get('/users', users_controller_1.getUsers);
+router.get('/users/profile', users_controller_1.getProfile);
+router.patch('/users/profile', users_controller_1.updateProfile);
+router.post('/users/profile/revoke-others', users_controller_1.revokeOtherSessions);
+router.get('/users/profile/download-data', users_controller_1.downloadPersonalData);
+router.delete('/users/profile', users_controller_1.deleteAccount);
+router.patch('/organization', users_controller_1.updateOrganizationDetails);
 router.get('/audit-log', (0, auth_1.requireRole)(['Admin']), users_controller_1.getAuditLog);
 router.post('/users/invite', (0, auth_1.requireRole)(['Admin']), users_controller_1.inviteUser);
 router.patch('/users/update-role', (0, auth_1.requireRole)(['Admin']), users_controller_1.updateUserRole);
 router.patch('/users/deactivate', (0, auth_1.requireRole)(['Admin']), users_controller_1.deactivateUser);
+// ── Connectors ──
+router.post('/connectors/test', (0, auth_1.requirePermission)('dataset:manage'), connectors_controller_1.testConnection);
+router.post('/connectors/pull', (0, auth_1.requirePermission)('dataset:manage'), connectors_controller_1.pullData);
+// ── Pipeline Logs (Part 7) ──
+router.get('/logs/errors', pipeline_logs_controller_1.getErrorLogs);
+router.get('/logs/summary', pipeline_logs_controller_1.getLogSummary);
+// ── Notifications ──
+router.get('/notifications', notifications_controller_1.getNotifications);
+router.patch('/notifications/:id/read', notifications_controller_1.markRead);
+router.post('/notifications/mark-all-read', notifications_controller_1.markAllRead);
 exports.default = router;

@@ -1,53 +1,16 @@
-import prisma from '../lib/prisma';
-
-/**
- * Validation Engine Service
- * 
- * Validates dataset rows against a contract's schema definition.
- * Computes quality metrics: completeness, validity, uniqueness.
- * Returns structured validation report.
- */
-
-export interface SchemaField {
-    name: string;
-    type: string;
-    required: boolean;
-    description?: string;
-    format?: string;    // regex for format validation
-    minValue?: number;
-    maxValue?: number;
-    enumValues?: string[];
-}
-
-export interface ValidationIssue {
-    row: number;
-    field: string;
-    rule: string;
-    expected: string;
-    actual: string;
-    severity: 'error' | 'warning';
-}
-
-export interface ValidationResult {
-    totalRows: number;
-    validRows: number;
-    invalidRows: number;
-    passRate: number;
-    completeness: number;
-    validity: number;
-    uniqueness: number;
-    overallScore: number;
-    issues: ValidationIssue[];
-    summary: Record<string, number>; // counts by error category
-}
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.validateDataAgainstSchema = validateDataAgainstSchema;
+exports.runPipelineValidation = runPipelineValidation;
+const prisma_1 = __importDefault(require("../lib/prisma"));
 // ── Type Validators ──
-
-function isValidType(value: any, expectedType: string): boolean {
-    if (value === null || value === undefined || value === '') return true; // null checks handled by required rule
-
+function isValidType(value, expectedType) {
+    if (value === null || value === undefined || value === '')
+        return true; // null checks handled by required rule
     const strVal = String(value).trim();
-
     switch (expectedType) {
         case 'Integer':
             return /^-?\d+$/.test(strVal);
@@ -56,7 +19,8 @@ function isValidType(value: any, expectedType: string): boolean {
         case 'Boolean':
             return /^(true|false|0|1|yes|no)$/i.test(strVal);
         case 'Date':
-            if (!isNaN(Date.parse(strVal))) return true;
+            if (!isNaN(Date.parse(strVal)))
+                return true;
             return /^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(strVal);
         case 'UUID':
             return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(strVal);
@@ -68,44 +32,35 @@ function isValidType(value: any, expectedType: string): boolean {
             return true;
     }
 }
-
-function isValidFormat(value: string, format: string): boolean {
-    if (!format) return true;
+function isValidFormat(value, format) {
+    if (!format)
+        return true;
     try {
         const regex = new RegExp(format);
         return regex.test(value);
-    } catch {
+    }
+    catch {
         return true;
     }
 }
-
 // ── Main Validation Function ──
-
-export function validateDataAgainstSchema(
-    data: Record<string, any>[],
-    schemaFields: SchemaField[]
-): ValidationResult {
-    const issues: ValidationIssue[] = [];
-    const summary: Record<string, number> = {};
+function validateDataAgainstSchema(data, schemaFields) {
+    const issues = [];
+    const summary = {};
     const fieldNames = schemaFields.map(f => f.name);
-
     let totalCells = 0;
     let nullCells = 0;
     let typeMismatchCount = 0;
     let totalTypeChecks = 0;
-
     // Track uniqueness per field
-    const uniqueTrackers: Record<string, Set<string>> = {};
+    const uniqueTrackers = {};
     const uniqueFields = schemaFields.filter(f => f.name === 'id' || f.name === 'email' || f.name.endsWith('_id'));
     uniqueFields.forEach(f => { uniqueTrackers[f.name] = new Set(); });
-
-    const invalidRowIndices = new Set<number>();
-
+    const invalidRowIndices = new Set();
     data.forEach((row, rowIdx) => {
         schemaFields.forEach(field => {
             const value = row[field.name];
             totalCells++;
-
             // 1. Required check
             if (field.required && (value === null || value === undefined || String(value).trim() === '')) {
                 issues.push({
@@ -121,13 +76,11 @@ export function validateDataAgainstSchema(
                 nullCells++;
                 return;
             }
-
             // Count nulls for completeness
             if (value === null || value === undefined || String(value).trim() === '') {
                 nullCells++;
                 return;
             }
-
             // 2. Type check
             totalTypeChecks++;
             if (!isValidType(value, field.type)) {
@@ -143,7 +96,6 @@ export function validateDataAgainstSchema(
                 summary['type_mismatch'] = (summary['type_mismatch'] || 0) + 1;
                 invalidRowIndices.add(rowIdx);
             }
-
             // 3. Format check
             if (field.format && typeof value === 'string') {
                 if (!isValidFormat(value, field.format)) {
@@ -158,7 +110,6 @@ export function validateDataAgainstSchema(
                     summary['invalid_format'] = (summary['invalid_format'] || 0) + 1;
                 }
             }
-
             // 4. Range check
             if (field.minValue !== undefined || field.maxValue !== undefined) {
                 const num = Number(value);
@@ -173,7 +124,6 @@ export function validateDataAgainstSchema(
                     }
                 }
             }
-
             // 5. Enum check
             if (field.enumValues && field.enumValues.length > 0) {
                 if (!field.enumValues.includes(String(value))) {
@@ -181,7 +131,6 @@ export function validateDataAgainstSchema(
                     summary['invalid_enum'] = (summary['invalid_enum'] || 0) + 1;
                 }
             }
-
             // 6. Uniqueness tracking
             if (uniqueTrackers[field.name]) {
                 const key = String(value);
@@ -193,24 +142,19 @@ export function validateDataAgainstSchema(
             }
         });
     });
-
     const totalRows = data.length;
     const invalidRows = invalidRowIndices.size;
     const validRows = totalRows - invalidRows;
     const passRate = totalRows > 0 ? (validRows / totalRows) * 100 : 100;
-
     const completeness = totalCells > 0 ? ((totalCells - nullCells) / totalCells) * 100 : 100;
     const validity = totalTypeChecks > 0 ? ((totalTypeChecks - typeMismatchCount) / totalTypeChecks) * 100 : 100;
-
     // Uniqueness: average across tracked fields
     let uniqueness = 100;
     if (Object.keys(uniqueTrackers).length > 0 && totalRows > 0) {
         const uniqueRatios = Object.entries(uniqueTrackers).map(([_, set]) => (set.size / totalRows) * 100);
         uniqueness = uniqueRatios.reduce((a, b) => a + b, 0) / uniqueRatios.length;
     }
-
     const overallScore = Math.round(completeness * 0.3 + validity * 0.3 + uniqueness * 0.2 + passRate * 0.2);
-
     return {
         totalRows,
         validRows,
@@ -224,52 +168,43 @@ export function validateDataAgainstSchema(
         summary,
     };
 }
-
 // ── Pipeline Validation (auto-run after ingestion) ──
-
-export async function runPipelineValidation(
-    datasetId: string,
-    organizationId: string
-): Promise<{ reportId: string; result: ValidationResult; mode: string } | null> {
+async function runPipelineValidation(datasetId, organizationId) {
     // 1. Load dataset
-    const dataset = await prisma.dataset.findFirst({
+    const dataset = await prisma_1.default.dataset.findFirst({
         where: { id: datasetId, organizationId }
     });
-    if (!dataset) return null;
-
+    if (!dataset)
+        return null;
     // 2. Find matching contract
     let contract;
     if (dataset.boundContractId) {
-        contract = await prisma.dataContract.findFirst({
+        contract = await prisma_1.default.dataContract.findFirst({
             where: { id: dataset.boundContractId, organizationId }
         });
     }
-
     // Try to find by name similarity
     if (!contract) {
         const baseName = dataset.name.replace(/\.(csv|json|xlsx|xls)$/i, '').replace(/[\s_-]+/g, ' ').toLowerCase();
-        const allContracts = await prisma.dataContract.findMany({
+        const allContracts = await prisma_1.default.dataContract.findMany({
             where: { organizationId, status: 'Active' }
         });
-        contract = allContracts.find(c =>
-            c.name.toLowerCase().includes(baseName) || baseName.includes(c.name.toLowerCase())
-        );
+        contract = allContracts.find(c => c.name.toLowerCase().includes(baseName) || baseName.includes(c.name.toLowerCase()));
     }
-
     // Robust Fallback: If no contract found, find any existing contract or auto-create a default one
     if (!contract) {
-        contract = await prisma.dataContract.findFirst({
+        contract = await prisma_1.default.dataContract.findFirst({
             where: { organizationId }
         });
-
         if (!contract) {
             // Create a default contract based on inferredSchema or inferred columns from rawData
-            let parsedData: any[] = [];
+            let parsedData = [];
             try {
                 parsedData = JSON.parse(dataset.rawData);
-                if (!Array.isArray(parsedData)) parsedData = [parsedData];
-            } catch { /* ignore */ }
-
+                if (!Array.isArray(parsedData))
+                    parsedData = [parsedData];
+            }
+            catch { /* ignore */ }
             let inferredSchemaFields = dataset.inferredSchema ? JSON.parse(dataset.inferredSchema) : [];
             if (!inferredSchemaFields.length && parsedData.length > 0) {
                 const first = parsedData[0];
@@ -279,15 +214,15 @@ export async function runPipelineValidation(
                     if (val !== null && val !== undefined && val !== '') {
                         if (typeof val === 'number') {
                             type = Number.isInteger(val) ? 'Integer' : 'Float';
-                        } else if (typeof val === 'boolean') {
+                        }
+                        else if (typeof val === 'boolean') {
                             type = 'Boolean';
                         }
                     }
                     return { name: key, type, required: true, description: `Inferred from column '${key}'` };
                 });
             }
-
-            contract = await prisma.dataContract.create({
+            contract = await prisma_1.default.dataContract.create({
                 data: {
                     name: `${dataset.name.replace(/\.(csv|json|xlsx|xls)$/i, '')} Contract`,
                     domain: 'Ingestion',
@@ -298,37 +233,39 @@ export async function runPipelineValidation(
                     status: 'Draft',
                     schemaDef: JSON.stringify(inferredSchemaFields),
                     enforcementMode: 'warning',
-                } as any
+                }
             });
         }
-
         // Bind the contract back to the dataset
-        await prisma.dataset.update({
+        await prisma_1.default.dataset.update({
             where: { id: dataset.id },
             data: { boundContractId: contract.id }
         });
     }
-
     // 3. Parse data and schema
-    let data: Record<string, any>[];
+    let data;
     try {
         data = JSON.parse(dataset.rawData);
-        if (!Array.isArray(data)) data = [data];
-    } catch { return null; }
-
-    let schemaFields: SchemaField[];
+        if (!Array.isArray(data))
+            data = [data];
+    }
+    catch {
+        return null;
+    }
+    let schemaFields;
     try {
         schemaFields = typeof contract.schemaDef === 'string'
             ? JSON.parse(contract.schemaDef)
             : contract.schemaDef;
-    } catch { return null; }
-
+    }
+    catch {
+        return null;
+    }
     // 4. Run validation
     const result = validateDataAgainstSchema(data, schemaFields);
-    const mode = (contract as any).enforcementMode || 'warning';
-
+    const mode = contract.enforcementMode || 'warning';
     // 5. Save report
-    const report = await prisma.validationReport.create({
+    const report = await prisma_1.default.validationReport.create({
         data: {
             datasetId,
             contractId: contract.id,
@@ -347,20 +284,17 @@ export async function runPipelineValidation(
             organizationId,
         }
     });
-
     // 6. Update dataset status
     const newStatus = result.invalidRows > 0 && mode === 'strict'
         ? 'FAILED_VALIDATION'
         : 'VALIDATED';
-
-    await prisma.dataset.update({
+    await prisma_1.default.dataset.update({
         where: { id: datasetId },
         data: { status: newStatus, boundContractId: contract.id }
     });
-
     // 7. Save quality snapshot
     const freshness = 100; // just ingested = perfectly fresh
-    await prisma.qualitySnapshot.create({
+    await prisma_1.default.qualitySnapshot.create({
         data: {
             datasetId,
             completeness: result.completeness,
@@ -370,9 +304,8 @@ export async function runPipelineValidation(
             overallScore: result.overallScore,
         }
     });
-
     // 8. Log
-    await prisma.pipelineLog.create({
+    await prisma_1.default.pipelineLog.create({
         data: {
             logType: 'validation',
             severity: result.invalidRows > 0 ? (mode === 'strict' ? 'error' : 'warning') : 'info',
@@ -383,6 +316,5 @@ export async function runPipelineValidation(
             organizationId,
         }
     });
-
     return { reportId: report.id, result, mode };
 }

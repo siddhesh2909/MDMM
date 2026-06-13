@@ -1,23 +1,79 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.suggestSchema = exports.analyzeData = exports.handleChat = void 0;
+exports.validateSchema = exports.suggestSchema = exports.analyzeData = exports.handleChat = void 0;
 const groq_1 = require("../lib/groq");
+const notification_service_1 = require("../services/notification.service");
 const SYSTEM_PROMPT = `
-You are an expert Data Engineering and Analytics AI Assistant working within a Collaborative AI Platform for E-Commerce. 
-Your role is to help users understand their data pipelines, anomalies, contracts, and revenue metrics.
-Answer questions directly, concisely, and use a professional yet approachable tone. 
-The user is querying their platform's state. 
-Be helpful, provide specific mock metric numbers if asked (e.g. $124k revenue), and format output in simple markdown.
+You are a friendly and knowledgeable AI Data Assistant working within a Collaborative AI Platform.
+Your role is to help users understand their data contracts, schema fields, domains, validation issues, and data quality.
+
+Always respond in a conversational, engaging, and visually structured way using the style below:
+
+Response Style Rules:
+- Always use relevant emojis to make responses visually attractive (e.g. 👋 📊 ⚠️ ✅ 💡 🔍 📋 🎯 🚀)
+- Use bullet points (•) for lists, never dense paragraphs
+- Use **bold** for key terms, field names, domain names, and important values
+- Keep each point concise but meaningful — one clear idea per bullet
+- Add a friendly closing line like "What would you like to do next?" or "Let me know if you'd like to explore further!"
+- Do not use formal section headers like "### Assessment" — instead use emoji headers like "📊 **Schema Overview:**"
+
+Adapt your response based on the query type:
+
+For domain suggestions:
+👋 Great question! Based on your contract fields, here's my recommendation:
+
+🎯 **Suggested Domain:** <Domain Name>
+
+📋 **Why this fits:**
+• <Reason 1 based on field names or business meaning>
+• <Reason 2 based on data usage or ownership>
+• <Reason 3 addressing why the current domain may be too broad>
+
+💡 What would you like to do next?
+
+For schema / field design questions:
+🔍 **Schema Review:**
+• <Observation about a field or structure>
+• <Strength or issue identified>
+
+✅ **Recommendations:**
+• <Improvement suggestion>
+• <Best practice to follow>
+
+For validation / issue queries:
+⚠️ **Issues Found:**
+• <Issue 1 with field name bolded>
+• <Issue 2 with supporting detail>
+
+📊 **Impact:**
+• <Why it matters for data quality>
+
+🛠️ **Fixes:**
+• <Concrete fix or improvement>
+
+Always be helpful, specific, and encouraging. Reference actual field names and contract details from the context provided.
 `;
 const handleChat = async (req, res) => {
     try {
-        const { message, history } = req.body;
+        const { message, history, datasetContext } = req.body;
         if (!message) {
             return res.status(400).json({ error: 'Message content is required.' });
         }
-        // Ideally, history would be mapped cleanly, but for demo we just pass the latest prompt
-        const completion = await (0, groq_1.getGroqChatCompletion)(message, SYSTEM_PROMPT);
+        let customPrompt = SYSTEM_PROMPT;
+        if (datasetContext) {
+            customPrompt += `\n\nActive Dataset Context Information:\n${JSON.stringify(datasetContext)}`;
+        }
+        const completion = await (0, groq_1.getGroqChatCompletion)(message, customPrompt);
         const aiResponse = completion.choices[0]?.message?.content || "I'm sorry, I couldn't formulate a response.";
+        try {
+            const userId = req.user?.id;
+            if (userId) {
+                await (0, notification_service_1.notifyUser)(userId, 'AI Assistant Response', `AI answered to your message.`, 'message', '/analytics');
+            }
+        }
+        catch (nErr) {
+            console.error('Failed to trigger AI chat notification:', nErr);
+        }
         res.status(200).json({ reply: aiResponse });
     }
     catch (error) {
@@ -108,3 +164,65 @@ const suggestSchema = async (req, res) => {
     }
 };
 exports.suggestSchema = suggestSchema;
+const validateSchema = async (req, res) => {
+    try {
+        const { schema, contractName } = req.body;
+        if (!schema || !Array.isArray(schema)) {
+            return res.status(400).json({ error: 'Valid schema array is required for validation.' });
+        }
+        const prompt = `
+        You are a Data Quality Architect. Validate the following JSON schema array for a data contract${contractName ? ` named "${contractName}"` : ''}.
+
+        Check for these categories of issues:
+        1. "type_mismatch" - Fields with likely incorrect data types (e.g., a field named "created_at" typed as String should be Date)
+        2. "naming" - Inconsistent naming conventions (e.g., mixing camelCase and snake_case, vague names like "data1")
+        3. "missing_description" - Fields without descriptions
+        4. "redundancy" - Potentially duplicate or redundant fields
+        5. "completeness" - Commonly expected fields that are missing (e.g., id, timestamps)
+        6. "required" - Fields that should be required but aren't, or vice versa
+
+        Return ONLY a JSON object with this exact structure:
+        {
+            "issues": [
+                {
+                    "severity": "error" | "warning" | "suggestion",
+                    "field": "field_name or null if general",
+                    "category": "type_mismatch" | "naming" | "missing_description" | "redundancy" | "completeness" | "required",
+                    "message": "Human-readable description of the issue",
+                    "suggestedFix": { "key": "value to change" } or null
+                }
+            ],
+            "score": 0-100,
+            "summary": "Brief summary of findings"
+        }
+
+        Schema to validate:
+        ${JSON.stringify(schema)}
+        `;
+        const completion = await groq_1.groq.chat.completions.create({
+            messages: [{ role: 'user', content: prompt }],
+            model: 'llama-3.3-70b-versatile',
+            temperature: 0.1,
+            response_format: { type: "json_object" },
+        });
+        const responseText = completion.choices[0]?.message?.content || "{}";
+        let result = { issues: [], score: 100, summary: 'No issues found.' };
+        try {
+            const parsed = JSON.parse(responseText);
+            result = {
+                issues: parsed.issues || [],
+                score: parsed.score ?? 100,
+                summary: parsed.summary || 'Analysis complete.'
+            };
+        }
+        catch (e) {
+            console.error("Failed to parse Groq Validation JSON:", responseText);
+        }
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Groq Validate Schema Error:", error);
+        res.status(500).json({ error: 'Failed to run AI schema validation.' });
+    }
+};
+exports.validateSchema = validateSchema;

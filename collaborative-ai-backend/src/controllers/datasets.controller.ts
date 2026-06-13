@@ -2,6 +2,8 @@ import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { runIngestionPipeline, EnforcementMode } from '../services/ingestion.pipeline';
+import { runPipelineValidation } from '../services/validation.engine';
+import { notifyUser, notifyAdmins } from '../services/notification.service';
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -115,6 +117,25 @@ export const createDataset = async (req: AuthenticatedRequest, res: express.Resp
             organizationId: user.organizationId,
         });
 
+        try {
+            await notifyUser(
+                user.id,
+                'Dataset Ingested Successfully',
+                `Dataset "${name}" was successfully ingested.`,
+                'project',
+                '/ingestion'
+            );
+            await notifyAdmins(
+                user.organizationId,
+                'New Dataset Ingested',
+                `Dataset "${name}" has been uploaded by ${user.id}.`,
+                'project',
+                '/ingestion'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger dataset create notifications:', nErr);
+        }
+
         res.status(201).json(result);
     } catch (err) {
         console.error('Dataset creation error:', err);
@@ -150,6 +171,25 @@ export const updateDataset = async (req: AuthenticatedRequest, res: express.Resp
             where: { id: datasetId },
             data: { rawData: dataString }
         });
+
+        // Run validation pipeline on the updated dataset to recompute overallScore, completeness, validity, uniqueness, and validation reports!
+        try {
+            await runPipelineValidation(datasetId, user.organizationId);
+        } catch (valErr) {
+            console.error('Re-validation error after dataset update:', valErr);
+        }
+
+        try {
+            await notifyUser(
+                user.id,
+                'Dataset Updated',
+                `Dataset "${updated.name}" has been updated.`,
+                'project',
+                '/ingestion'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger dataset update notifications:', nErr);
+        }
 
         res.status(200).json(updated);
     } catch (err) {
@@ -244,13 +284,25 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
         }
 
         const ai_insights = {
-            summary: `This dataset contains ${rowCount} records across ${colCount} columns. The primary schema elements suggest this is a '${dataset.source || 'file'}' sourced dataset. The overall data quality score is ${overallScore}%, with minor suggestions for type casting and nullability.`,
+            summary: overallScore === 100
+                ? `This dataset contains ${rowCount} records across ${colCount} columns. The overall data quality score is 100%. The dataset is perfectly clean and ready for production use.`
+                : `This dataset contains ${rowCount} records across ${colCount} columns. The primary schema elements suggest this is a '${dataset.source || 'file'}' sourced dataset. The overall data quality score is ${overallScore}%, with minor suggestions for type casting and nullability.`,
             quality_score: overallScore,
-            missing_value_analysis: `${schemaFields.filter(f => !f.required).length} columns allow null values. The column with the highest null rate is ${schemaFields.find(f => !f.required)?.name || 'none'}.`,
-            preprocessing_suggestions: suggestions.slice(0, 3),
-            anomaly_warnings: lastReport && reportIssues.length > 0
-                ? reportIssues.slice(0, 3).map((iss: any) => `Row ${iss.row}: Field '${iss.field}' failed '${iss.rule}' (expected: ${iss.expected}, actual: ${iss.actual})`)
-                : ["No critical anomalies found. Schema meets all standard requirements."]
+            missing_value_analysis: overallScore === 100
+                ? "All columns are fully populated (100% completeness score)."
+                : `${schemaFields.filter(f => !f.required).length} columns allow null values. The column with the highest null rate is ${schemaFields.find(f => !f.required)?.name || 'none'}.`,
+            preprocessing_suggestions: overallScore === 100
+                ? [
+                    "Dataset is 100% clean. No further preprocessing actions required.",
+                    "Maintain strict schema enforcement for incoming data streams.",
+                    "Monitor real-time schema evolution alerts."
+                  ]
+                : suggestions.slice(0, 3),
+            anomaly_warnings: overallScore === 100
+                ? ["No critical anomalies found. Schema meets all standard requirements."]
+                : (lastReport && reportIssues.length > 0
+                    ? reportIssues.slice(0, 3).map((iss: any) => `Row ${iss.row}: Field '${iss.field}' failed '${iss.rule}' (expected: ${iss.expected}, actual: ${iss.actual})`)
+                    : ["No critical anomalies found. Schema meets all standard requirements."])
         };
 
         res.status(200).json({
@@ -280,6 +332,7 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
                 }),
                 preview_columns,
                 preview_rows,
+                rawData: parsedData,
                 ai_insights
             }
         });
@@ -325,6 +378,18 @@ export const deleteDataset = async (req: AuthenticatedRequest, res: express.Resp
         await prisma.dataset.delete({
             where: { id: datasetId }
         });
+
+        try {
+            await notifyUser(
+                user.id,
+                'Dataset Deleted',
+                `Dataset "${existing.name}" has been deleted.`,
+                'project',
+                '/ingestion'
+            );
+        } catch (nErr) {
+            console.error('Failed to trigger dataset delete notifications:', nErr);
+        }
 
         res.status(200).json({ success: true, message: 'Dataset deleted successfully' });
     } catch (err) {
