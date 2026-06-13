@@ -109,7 +109,6 @@ export default function AdminPage() {
                                             disabled={row.id === currentUser?.id || row.status === 'Inactive'}
                                         >
                                             <option value="Admin">Admin</option>
-                                            <option value="Data Engineer">Data Engineer</option>
                                             <option value="Data Analyst">Data Analyst</option>
                                             <option value="Business User">Business User</option>
                                         </select>
@@ -168,7 +167,6 @@ export default function AdminPage() {
                                 <thead>
                                     <tr>
                                         <th>Permission</th>
-                                        <th>Data Engineer</th>
                                         <th>Data Analyst</th>
                                         <th>Business User</th>
                                         <th>Admin</th>
@@ -177,15 +175,15 @@ export default function AdminPage() {
                                 <tbody style={{ textAlign: 'center' }}>
                                     <tr>
                                         <td style={{ textAlign: 'left' }}>Ingest Raw Data</td>
-                                        <td>✅</td><td>❌</td><td>❌</td><td>✅</td>
+                                        <td>✅</td><td>❌</td><td>✅</td>
                                     </tr>
                                     <tr>
                                         <td style={{ textAlign: 'left' }}>Edit Schema Contracts</td>
-                                        <td>✅</td><td>✅</td><td>❌</td><td>✅</td>
+                                        <td>✅</td><td>❌</td><td>✅</td>
                                     </tr>
                                     <tr>
                                         <td style={{ textAlign: 'left' }}>View Analytics</td>
-                                        <td>❌</td><td>✅</td><td>✅</td><td>✅</td>
+                                        <td>✅</td><td>✅</td><td>✅</td>
                                     </tr>
                                 </tbody>
                             </table>

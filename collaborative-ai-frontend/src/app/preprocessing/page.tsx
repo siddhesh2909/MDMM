@@ -9,12 +9,32 @@ import {
     Save, ChevronDown, ChevronUp, ArrowUpDown,
     Send, Sparkles, Filter, X, Trash2, PlusCircle, AlertTriangle,
     Check, RotateCcw, Eye, Clock, ArrowRight, Loader2, Copy,
-    Calendar, DollarSign, Hash, RefreshCw, Info, Database, Download, FileText, Redo, Undo, Search
+    Calendar, DollarSign, Hash, RefreshCw, Info, Database, Download, FileText, Redo, Undo, Search, CheckCircle
 } from 'lucide-react';
 import { useToast } from '@/components/providers/ToastProvider';
 import { apiClient } from '@/lib/apiClient';
 
 /* ── Types ── */
+const isValueMissing = (val: any, type: string) => {
+    if (val === null || val === undefined) return true;
+    const s = String(val).trim();
+    if (s === '' || s.toLowerCase() === 'omitted' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'nan' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return true;
+    const t = String(type).toLowerCase();
+    if (['int', 'float', 'integer', 'number', 'double'].includes(t) && Number(val) === 0) return true;
+    return false;
+};
+
+const isValueAnomaly = (val: any, colName: string, type: string) => {
+    if (val === null || val === undefined) return false;
+    const s = String(val).trim();
+    if (s === '' || s.toLowerCase() === 'omitted' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'nan' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return false;
+    const t = String(type).toLowerCase();
+    const isNumericType = ['int', 'float', 'integer', 'number', 'double'].includes(t);
+    if (isNumericType && isNaN(Number(s))) return true;
+    if (colName.toLowerCase().includes('email') && !s.includes('@')) return true;
+    if (colName.toLowerCase().includes('date') && isNaN(Date.parse(s))) return true;
+    return false;
+};
 interface DataRow {
     [key: string]: any;
     _rid: string;
@@ -65,15 +85,7 @@ const itemVariants = {
     visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 130, damping: 15 } },
 } as const;
 
-const issueCategories = [
-    { id: "all", label: "All Issues", color: "#4f46e5", bg: "rgba(79, 70, 229, 0.08)", count: 6 },
-    { id: "missing", label: "Missing Values", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.08)", count: 3 },
-    { id: "dupes", label: "Duplicates", color: "#3b82f6", bg: "rgba(59, 130, 246, 0.08)", count: 1 },
-    { id: "anomaly", label: "Anomalies", color: "#ef4444", bg: "rgba(239, 68, 68, 0.08)", count: 2 },
-    { id: "outliers", label: "Outliers", color: "#10b981", bg: "rgba(16, 185, 129, 0.08)", count: 0 },
-    { id: "formatting", label: "Formatting", color: "#a855f7", bg: "rgba(168, 85, 247, 0.08)", count: 0 },
-    { id: "schema", label: "Schema Issues", color: "#64748b", bg: "rgba(100, 116, 139, 0.08)", count: 0 },
-];
+// Live categories are calculated dynamically inside the component to reflect real-time cleaning updates.
 
 export default function PreprocessingPage() {
     // Core states
@@ -81,6 +93,21 @@ export default function PreprocessingPage() {
     const [dsId, setDsId] = useState<string>('products-50');
     const [dsName, setDsName] = useState<string>('products-50.csv');
     const [data, setData] = useState<DataRow[]>([]);
+
+    // History states for Undo/Redo
+    const [history, setHistory] = useState<DataRow[][]>([]);
+    const [historyIndex, setHistoryIndex] = useState<number>(-1);
+
+    // Find & Replace states
+    const [isFindReplaceOpen, setIsFindReplaceOpen] = useState<boolean>(false);
+    const [findText, setFindText] = useState<string>('');
+    const [replaceText, setReplaceText] = useState<string>('');
+    const [findCol, setFindCol] = useState<string>('all');
+    const [matchCase, setMatchCase] = useState<boolean>(false);
+
+    // AI Quality Scan states
+    const [isScanModalOpen, setIsScanModalOpen] = useState<boolean>(false);
+    const [scanState, setScanState] = useState<'idle' | 'scanning' | 'completed'>('idle');
 
     // UI Layout states
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -173,6 +200,75 @@ export default function PreprocessingPage() {
         return n;
     });
 
+    // Helper functions for Undo/Redo history & Find and Replace
+    const initHistory = (initialData: DataRow[]) => {
+        setHistory([initialData]);
+        setHistoryIndex(0);
+    };
+
+    const updateDataAndHistory = (newRows: DataRow[]) => {
+        const newHistory = history.slice(0, historyIndex + 1);
+        setHistory([...newHistory, newRows]);
+        setHistoryIndex(newHistory.length);
+        setData(newRows);
+        dataRef.current = newRows;
+    };
+
+    const handleUndo = () => {
+        if (historyIndex > 0) {
+            const prevIdx = historyIndex - 1;
+            setHistoryIndex(prevIdx);
+            setData(history[prevIdx]);
+            dataRef.current = history[prevIdx];
+            showToast('Undid last action', 'info');
+        }
+    };
+
+    const handleRedo = () => {
+        if (historyIndex < history.length - 1) {
+            const nextIdx = historyIndex + 1;
+            setHistoryIndex(nextIdx);
+            setData(history[nextIdx]);
+            dataRef.current = history[nextIdx];
+            showToast('Redid last action', 'info');
+        }
+    };
+
+    const handleReplaceAll = () => {
+        if (!findText) {
+            showToast('Please enter search text', 'error');
+            return;
+        }
+
+        let replacedCount = 0;
+        const flags = matchCase ? 'g' : 'gi';
+        const escapedFind = findText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(escapedFind, flags);
+
+        const updated = data.map(row => {
+            const u = { ...row };
+            columns.forEach(col => {
+                if (findCol === 'all' || findCol === col) {
+                    const originalVal = String(u[col] ?? '');
+                    if (regex.test(originalVal)) {
+                        const newVal = originalVal.replace(regex, replaceText);
+                        u[col] = newVal;
+                        replacedCount++;
+                    }
+                }
+            });
+            return u;
+        });
+
+        if (replacedCount > 0) {
+            updateDataAndHistory(updated);
+            showToast(`Replaced ${replacedCount} occurrences!`, 'success');
+            setIsFindReplaceOpen(false);
+        } else {
+            showToast('No matches found to replace.', 'info');
+        }
+    };
+
     // Quality metrics memo - recalculated on data or columns changes
     const qualityMetrics = useMemo(() => {
         const total = data.length;
@@ -193,6 +289,7 @@ export default function PreprocessingPage() {
         let missing = 0;
         let duplicate = 0;
         let anomaly = 0;
+        const invalidSet = new Set<string>();
 
         // Detect duplicates
         const seen = new Set();
@@ -200,6 +297,7 @@ export default function PreprocessingPage() {
             const key = columns.filter(c => c !== '_rid' && c !== 'id').map(c => String(r[c] ?? '')).join('||');
             if (seen.has(key)) {
                 duplicate++;
+                invalidSet.add(r._rid);
             } else {
                 seen.add(key);
             }
@@ -207,19 +305,27 @@ export default function PreprocessingPage() {
 
         data.forEach(r => {
             // Missing
-            const hasMissing = columns.some(col => r[col] === null || r[col] === undefined || String(r[col]).trim() === '' || (col === 'total_spent' && r[col] === 0));
+            const hasMissing = columns.some(col => {
+                const colType = columnsSchema.find(cs => cs.name === col)?.type || 'STRING';
+                return isValueMissing(r[col], colType);
+            });
             if (hasMissing) {
                 missing++;
+                invalidSet.add(r._rid);
             }
 
             // Anomaly
-            const hasAnomaly = (r.email && !String(r.email).includes('@')) || (r._reason && r._reason.toLowerCase().includes('anomaly'));
+            const hasAnomaly = columns.some(col => {
+                const colType = columnsSchema.find(cs => cs.name === col)?.type || 'STRING';
+                return isValueAnomaly(r[col], col, colType);
+            });
             if (hasAnomaly) {
                 anomaly++;
+                invalidSet.add(r._rid);
             }
         });
 
-        const validCount = Math.max(0, total - missing - duplicate - anomaly);
+        const validCount = Math.max(0, total - invalidSet.size);
 
         const validPct = Math.round((validCount / total) * 100);
         const missingPct = Math.round((missing / total) * 100);
@@ -241,64 +347,99 @@ export default function PreprocessingPage() {
         };
     }, [data, columns]);
 
+    const issueCategories = useMemo(() => {
+        return [
+            { id: "all", label: "All Issues", color: "#4f46e5", bg: "rgba(79, 70, 229, 0.08)", count: qualityMetrics.missingCount + qualityMetrics.duplicateCount + qualityMetrics.anomalyCount },
+            { id: "missing", label: "Missing Values", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.08)", count: qualityMetrics.missingCount },
+            { id: "dupes", label: "Duplicates", color: "#3b82f6", bg: "rgba(59, 130, 246, 0.08)", count: qualityMetrics.duplicateCount },
+            { id: "anomaly", label: "Anomalies", color: "#ef4444", bg: "rgba(239, 68, 68, 0.08)", count: qualityMetrics.anomalyCount },
+            { id: "outliers", label: "Outliers", color: "#10b981", bg: "rgba(16, 185, 129, 0.08)", count: 0 },
+            { id: "formatting", label: "Formatting", color: "#a855f7", bg: "rgba(168, 85, 247, 0.08)", count: 0 },
+            { id: "schema", label: "Schema Issues", color: "#64748b", bg: "rgba(100, 116, 139, 0.08)", count: 0 },
+        ];
+    }, [qualityMetrics]);
+
     /* ── Switch Dataset handler fully dynamic ── */
     const switchDataset = async (id: string) => {
+        localStorage.setItem('selected_dsId', id);
         if (id === 'products-50') {
             setDsId('products-50');
             setDsName('products-50.csv');
             setColumnsSchema(defaultSchema);
-            const demoRows = [
-                { _rid: 'r1', id: 1, user_id: 1, name: 'Rahul Sharma', age: 23, gender: 'M', email: 'rahuls@gmail.com', signup_date: '2024-01-05', country: 'India', total_spent: 1200, device: 'mobile' },
-                { _rid: 'r2', id: 2, user_id: 2, name: 'ankita patil', age: 27, gender: 'F', email: 'ankita@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 3400, device: 'desktop' },
-                { _rid: 'r3', id: 3, user_id: 3, name: 'Aman Verma', age: 18, gender: 'M', email: 'aman.verma@gmail.com', signup_date: '2024-03-12', country: 'India', total_spent: 500, device: 'laptop' },
-                { _rid: 'r4', id: 4, user_id: 4, name: 'Pooja Singh', age: 18, gender: 'M', email: 'pooja@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'total_spent', _reason: 'Missing Value', _fix: 2300 },
-                { _rid: 'r5', id: 5, user_id: 5, name: 'Rakesh Kumar', age: 45, gender: 'M', email: 'rakesh@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 9800, device: 'mobile' },
-                { _rid: 'r6', id: 6, user_id: 6, name: 'Neha Joshi', age: 19, gender: 'F', email: 'nehaj@outlook', signup_date: '2024-04-18', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'email', _reason: 'Invalid Domain', _fix: 'nehaj@outlook.com' },
-                { _rid: 'r7', id: 7, user_id: 7, name: 'Aditya Rao', age: 29, gender: 'M', email: 'aditya@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 2300, device: 'laptop' },
-                { _rid: 'r8', id: 8, user_id: 8, name: 'Sneha Patil', age: 34, gender: 'F', email: 'sneha@outlook.com', signup_date: '2024-02-29', country: 'India', total_spent: 4100, device: 'desktop' },
-                { _rid: 'r9', id: 9, user_id: 9, name: 'Vikas More', age: 60, gender: 'M', email: 'vikasm@outlook.com', signup_date: '2024-01-10', country: 'India', total_spent: 12000, device: 'mobile' },
-                { _rid: 'r10', id: 10, user_id: 10, name: 'Kiran Kale', age: 60, gender: 'F', email: 'kiran@outlook.com', signup_date: '2024-01-15', country: 'India', total_spent: 800, device: 'tablet' }
-            ];
-            setData(demoRows);
-            dataRef.current = demoRows;
 
-            const demoTasks: SuggestionTask[] = [
-                {
-                    id: 'task-missing',
-                    datasetId: 'products-50',
-                    type: 'missing_value_detection',
-                    status: 'pending_review',
-                    affectedRows: 2341,
-                    confidence: 95,
-                    severity: 'Medium',
-                    columnAffected: 'total_spent',
-                    suggestedAction: 'AI suggests imputing missing total_spent using median (2300) based on country and age group.',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'task-anomaly',
-                    datasetId: 'products-50',
-                    type: 'anomaly_detection',
-                    status: 'pending_review',
-                    affectedRows: 6,
-                    confidence: 94,
-                    severity: 'High',
-                    suggestedAction: 'AI Scan flagged anomaly formats in fields. Correct invalid format structures.',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'task-dupes',
-                    datasetId: 'products-50',
-                    type: 'duplicate_removal',
-                    status: 'pending_review',
-                    affectedRows: 1,
-                    confidence: 98,
-                    severity: 'Low',
-                    suggestedAction: 'Duplicate groups verified. Deduplicate rows to keep dataset clean.',
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            setTasks(demoTasks);
+            // Try to load products-50 data from localStorage
+            const localData = localStorage.getItem('dataset_data_products-50');
+            if (localData) {
+                const parsed = JSON.parse(localData);
+                setData(parsed);
+                dataRef.current = parsed;
+                initHistory(parsed);
+            } else {
+                const demoRows = [
+                    { _rid: 'r1', id: 1, user_id: 1, name: 'Rahul Sharma', age: 23, gender: 'M', email: 'rahuls@gmail.com', signup_date: '2024-01-05', country: 'India', total_spent: 1200, device: 'mobile' },
+                    { _rid: 'r2', id: 2, user_id: 2, name: 'ankita patil', age: 27, gender: 'F', email: 'ankita@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 3400, device: 'desktop' },
+                    { _rid: 'r3', id: 3, user_id: 3, name: 'Aman Verma', age: 18, gender: 'M', email: 'aman.verma@gmail.com', signup_date: '2024-03-12', country: 'India', total_spent: 500, device: 'laptop' },
+                    { _rid: 'r4', id: 4, user_id: 4, name: 'Pooja Singh', age: 18, gender: 'M', email: 'pooja@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'total_spent', _reason: 'Missing Value', _fix: 2300 },
+                    { _rid: 'r5', id: 5, user_id: 5, name: 'Rakesh Kumar', age: 45, gender: 'M', email: 'rakesh@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 9800, device: 'mobile' },
+                    { _rid: 'r6', id: 6, user_id: 6, name: 'Neha Joshi', age: 19, gender: 'F', email: 'nehaj@outlook', signup_date: '2024-04-18', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'email', _reason: 'Invalid Domain', _fix: 'nehaj@outlook.com' },
+                    { _rid: 'r7', id: 7, user_id: 7, name: 'Aditya Rao', age: 29, gender: 'M', email: 'aditya@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 2300, device: 'laptop' },
+                    { _rid: 'r8', id: 8, user_id: 8, name: 'Sneha Patil', age: 34, gender: 'F', email: 'sneha@outlook.com', signup_date: '2024-02-29', country: 'India', total_spent: 4100, device: 'desktop' },
+                    { _rid: 'r9', id: 9, user_id: 9, name: 'Vikas More', age: 60, gender: 'M', email: 'vikasm@outlook.com', signup_date: '2024-01-10', country: 'India', total_spent: 12000, device: 'mobile' },
+                    { _rid: 'r10', id: 10, user_id: 10, name: 'Kiran Kale', age: 60, gender: 'F', email: 'kiran@outlook.com', signup_date: '2024-01-15', country: 'India', total_spent: 800, device: 'tablet' }
+                ];
+                setData(demoRows);
+                dataRef.current = demoRows;
+                initHistory(demoRows);
+            }
+
+            const localTasks = localStorage.getItem('dataset_tasks_products-50');
+            if (localTasks) {
+                setTasks(JSON.parse(localTasks));
+            } else {
+                const demoTasks: SuggestionTask[] = [
+                    {
+                        id: 'task-missing',
+                        datasetId: 'products-50',
+                        type: 'missing_value_detection',
+                        status: 'pending_review',
+                        affectedRows: 2341,
+                        confidence: 95,
+                        severity: 'Medium',
+                        columnAffected: 'total_spent',
+                        suggestedAction: 'AI suggests imputing missing total_spent using median (2300) based on country and age group.',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'task-anomaly',
+                        datasetId: 'products-50',
+                        type: 'anomaly_detection',
+                        status: 'pending_review',
+                        affectedRows: 6,
+                        confidence: 94,
+                        severity: 'High',
+                        suggestedAction: 'AI Scan flagged anomaly formats in fields. Correct invalid format structures.',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'task-dupes',
+                        datasetId: 'products-50',
+                        type: 'duplicate_removal',
+                        status: 'pending_review',
+                        affectedRows: 1,
+                        confidence: 98,
+                        severity: 'Low',
+                        suggestedAction: 'Duplicate groups verified. Deduplicate rows to keep dataset clean.',
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                setTasks(demoTasks);
+            }
+
+            const localActivities = localStorage.getItem('dataset_activities_products-50');
+            if (localActivities) {
+                setActivities(JSON.parse(localActivities));
+            }
+
             addActivity('Switched back to products-50.csv (Demo)', 'upload');
             showToast('Loaded demo dataset products-50.csv', 'success');
             return;
@@ -337,39 +478,37 @@ export default function PreprocessingPage() {
                     }));
                     setData(preparedRows);
                     dataRef.current = preparedRows;
+                    initHistory(preparedRows);
                 } else {
                     setData([]);
                     dataRef.current = [];
+                    initHistory([]);
                 }
 
                 const generatedTasks: SuggestionTask[] = [];
                 const rawRows = res.data.rawData || [];
                 const schema = res.data.schema || [];
 
-                let missingCount = 0;
-                let missingCol = '';
                 schema.forEach((s: any) => {
-                    const nullCount = rawRows.filter((r: any) => r[s.name] === null || r[s.name] === undefined || String(r[s.name]).trim() === '').length;
-                    if (nullCount > 0 && !missingCol) {
-                        missingCount = nullCount;
-                        missingCol = s.name;
+                    const nullCount = rawRows.filter((r: any) => {
+                        const colType = s.type || 'STRING';
+                        return isValueMissing(r[s.name], colType);
+                    }).length;
+                    if (nullCount > 0) {
+                        generatedTasks.push({
+                            id: `task-missing-${s.name}-${id}`,
+                            datasetId: id,
+                            type: 'missing_value_detection',
+                            status: 'pending_review',
+                            affectedRows: nullCount,
+                            confidence: 91,
+                            severity: 'Medium',
+                            columnAffected: s.name,
+                            suggestedAction: `AI suggests imputing missing values in column "${s.name}" using statistical defaults.`,
+                            createdAt: new Date().toISOString()
+                        });
                     }
                 });
-
-                if (missingCount > 0) {
-                    generatedTasks.push({
-                        id: `task-missing-${id}`,
-                        datasetId: id,
-                        type: 'missing_value_detection',
-                        status: 'pending_review',
-                        affectedRows: missingCount,
-                        confidence: 91,
-                        severity: 'Medium',
-                        columnAffected: missingCol,
-                        suggestedAction: `AI suggests imputing missing values in column "${missingCol}" using statistical defaults.`,
-                        createdAt: new Date().toISOString()
-                    });
-                }
 
                 const seen = new Set();
                 let dupCount = 0;
@@ -396,29 +535,26 @@ export default function PreprocessingPage() {
                     });
                 }
 
-                let anomalyCount = 0;
                 schema.forEach((s: any) => {
-                    if (s.name.toLowerCase().includes('email')) {
-                        const invalidEmailCount = rawRows.filter((r: any) => r[s.name] && !String(r[s.name]).includes('@')).length;
-                        if (invalidEmailCount > 0) {
-                            anomalyCount += invalidEmailCount;
-                        }
+                    const invalidCount = rawRows.filter((r: any) => {
+                        const colType = s.type || 'STRING';
+                        return isValueAnomaly(r[s.name], s.name, colType);
+                    }).length;
+                    if (invalidCount > 0) {
+                        generatedTasks.push({
+                            id: `task-anomaly-${s.name}-${id}`,
+                            datasetId: id,
+                            type: 'anomaly_detection',
+                            status: 'pending_review',
+                            affectedRows: invalidCount,
+                            confidence: 94,
+                            severity: 'High',
+                            columnAffected: s.name,
+                            suggestedAction: `AI Scan flagged ${invalidCount} format anomalies in column "${s.name}". Correct invalid format structures.`,
+                            createdAt: new Date().toISOString()
+                        });
                     }
                 });
-
-                if (anomalyCount > 0) {
-                    generatedTasks.push({
-                        id: `task-anomaly-${id}`,
-                        datasetId: id,
-                        type: 'anomaly_detection',
-                        status: 'pending_review',
-                        affectedRows: anomalyCount,
-                        confidence: 94,
-                        severity: 'High',
-                        suggestedAction: `AI Scan flagged ${anomalyCount} format anomalies. Correct invalid format structures.`,
-                        createdAt: new Date().toISOString()
-                    });
-                }
 
                 setTasks(generatedTasks);
                 addActivity(`Loaded dataset ${target.name} from DB`, 'upload');
@@ -439,77 +575,111 @@ export default function PreprocessingPage() {
             try {
                 // Fetch existing datasets from API
                 const r = await apiClient.get('/data/datasets');
+                let loadedDatasets: DatasetMeta[] = [];
                 if (r?.length) {
-                    setDatasets(r.map((d: any) => ({
+                    loadedDatasets = r.map((d: any) => ({
                         id: d.id,
                         name: d.name,
                         source: d.source || 'file',
                         status: d.status || 'Active'
-                    })));
+                    }));
+                    setDatasets(loadedDatasets);
                 }
 
-                // Seed specific demo rows matching the screenshot
-                const demoRows: DataRow[] = [
-                    { _rid: 'r1', id: 1, user_id: 1, name: 'Rahul Sharma', age: 23, gender: 'M', email: 'rahuls@gmail.com', signup_date: '2024-01-05', country: 'India', total_spent: 1200, device: 'mobile' },
-                    { _rid: 'r2', id: 2, user_id: 2, name: 'ankita patil', age: 27, gender: 'F', email: 'ankita@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 3400, device: 'desktop' },
-                    { _rid: 'r3', id: 3, user_id: 3, name: 'Aman Verma', age: 18, gender: 'M', email: 'aman.verma@gmail.com', signup_date: '2024-03-12', country: 'India', total_spent: 500, device: 'laptop' },
-                    // Flagged Row 4: total_spent = 0
-                    { _rid: 'r4', id: 4, user_id: 4, name: 'Pooja Singh', age: 18, gender: 'M', email: 'pooja@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'total_spent', _reason: 'Missing Value', _fix: 2300 },
-                    { _rid: 'r5', id: 5, user_id: 5, name: 'Rakesh Kumar', age: 45, gender: 'M', email: 'rakesh@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 9800, device: 'mobile' },
-                    // Flagged Row 6: email format error & total_spent = 0
-                    { _rid: 'r6', id: 6, user_id: 6, name: 'Neha Joshi', age: 19, gender: 'F', email: 'nehaj@outlook', signup_date: '2024-04-18', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'email', _reason: 'Invalid Domain', _fix: 'nehaj@outlook.com' },
-                    { _rid: 'r7', id: 7, user_id: 7, name: 'Aditya Rao', age: 29, gender: 'M', email: 'aditya@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 2300, device: 'laptop' },
-                    { _rid: 'r8', id: 8, user_id: 8, name: 'Sneha Patil', age: 34, gender: 'F', email: 'sneha@outlook.com', signup_date: '2024-02-29', country: 'India', total_spent: 4100, device: 'desktop' },
-                    { _rid: 'r9', id: 9, user_id: 9, name: 'Vikas More', age: 60, gender: 'M', email: 'vikasm@outlook.com', signup_date: '2024-01-10', country: 'India', total_spent: 12000, device: 'mobile' },
-                    { _rid: 'r10', id: 10, user_id: 10, name: 'Kiran Kale', age: 60, gender: 'F', email: 'kiran@outlook.com', signup_date: '2024-01-15', country: 'India', total_spent: 800, device: 'tablet' }
-                ];
-                setData(demoRows);
-                dataRef.current = demoRows;
+                // Check localStorage for previously selected dataset
+                const savedDsId = localStorage.getItem('selected_dsId');
 
-                // Seed specific demo suggestions matching the screenshot
-                const demoTasks: SuggestionTask[] = [
-                    {
-                        id: 'task-missing',
-                        datasetId: 'products-50',
-                        type: 'missing_value_detection',
-                        status: 'pending_review',
-                        affectedRows: 2341,
-                        confidence: 95,
-                        severity: 'Medium',
-                        columnAffected: 'total_spent',
-                        suggestedAction: 'AI suggests imputing missing total_spent using median (2300) based on country and age group.',
-                        createdAt: new Date().toISOString()
-                    },
-                    {
-                        id: 'task-anomaly',
-                        datasetId: 'products-50',
-                        type: 'anomaly_detection',
-                        status: 'pending_review',
-                        affectedRows: 6,
-                        confidence: 94,
-                        severity: 'High',
-                        suggestedAction: 'AI Scan flagged anomaly formats in fields. Correct invalid format structures.',
-                        createdAt: new Date().toISOString()
-                    },
-                    {
-                        id: 'task-dupes',
-                        datasetId: 'products-50',
-                        type: 'duplicate_removal',
-                        status: 'pending_review',
-                        affectedRows: 1,
-                        confidence: 98,
-                        severity: 'Low',
-                        suggestedAction: 'Duplicate groups verified. Deduplicate rows to keep dataset clean.',
-                        createdAt: new Date().toISOString()
+                if (savedDsId && savedDsId !== 'products-50' && loadedDatasets.some(d => d.id === savedDsId)) {
+                    // Load the saved DB dataset
+                    await switchDataset(savedDsId);
+                } else {
+                    // Load 'products-50'
+                    setDsId('products-50');
+                    setDsName('products-50.csv');
+                    setColumnsSchema(defaultSchema);
+
+                    // Try to load products-50 data from localStorage
+                    const localData = localStorage.getItem('dataset_data_products-50');
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        setData(parsed);
+                        dataRef.current = parsed;
+                        initHistory(parsed);
+                    } else {
+                        const demoRows: DataRow[] = [
+                            { _rid: 'r1', id: 1, user_id: 1, name: 'Rahul Sharma', age: 23, gender: 'M', email: 'rahuls@gmail.com', signup_date: '2024-01-05', country: 'India', total_spent: 1200, device: 'mobile' },
+                            { _rid: 'r2', id: 2, user_id: 2, name: 'ankita patil', age: 27, gender: 'F', email: 'ankita@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 3400, device: 'desktop' },
+                            { _rid: 'r3', id: 3, user_id: 3, name: 'Aman Verma', age: 18, gender: 'M', email: 'aman.verma@gmail.com', signup_date: '2024-03-12', country: 'India', total_spent: 500, device: 'laptop' },
+                            // Flagged Row 4: total_spent = 0
+                            { _rid: 'r4', id: 4, user_id: 4, name: 'Pooja Singh', age: 18, gender: 'M', email: 'pooja@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'total_spent', _reason: 'Missing Value', _fix: 2300 },
+                            { _rid: 'r5', id: 5, user_id: 5, name: 'Rakesh Kumar', age: 45, gender: 'M', email: 'rakesh@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 9800, device: 'mobile' },
+                            // Flagged Row 6: email format error & total_spent = 0
+                            { _rid: 'r6', id: 6, user_id: 6, name: 'Neha Joshi', age: 19, gender: 'F', email: 'nehaj@outlook', signup_date: '2024-04-18', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'email', _reason: 'Invalid Domain', _fix: 'nehaj@outlook.com' },
+                            { _rid: 'r7', id: 7, user_id: 7, name: 'Aditya Rao', age: 29, gender: 'M', email: 'aditya@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 2300, device: 'laptop' },
+                            { _rid: 'r8', id: 8, user_id: 8, name: 'Sneha Patil', age: 34, gender: 'F', email: 'sneha@outlook.com', signup_date: '2024-02-29', country: 'India', total_spent: 4100, device: 'desktop' },
+                            { _rid: 'r9', id: 9, user_id: 9, name: 'Vikas More', age: 60, gender: 'M', email: 'vikasm@outlook.com', signup_date: '2024-01-10', country: 'India', total_spent: 12000, device: 'mobile' },
+                            { _rid: 'r10', id: 10, user_id: 10, name: 'Kiran Kale', age: 60, gender: 'F', email: 'kiran@outlook.com', signup_date: '2024-01-15', country: 'India', total_spent: 800, device: 'tablet' }
+                        ];
+                        setData(demoRows);
+                        dataRef.current = demoRows;
+                        initHistory(demoRows);
                     }
-                ];
-                setTasks(demoTasks);
 
-                // Setup Copilot chatbot messages
-                setChatMsgs([
-                    { role: 'ai', text: '👋 Hi! I can help you with data preprocessing.' }
-                ]);
+                    // Try to load products-50 tasks from localStorage
+                    const localTasks = localStorage.getItem('dataset_tasks_products-50');
+                    if (localTasks) {
+                        setTasks(JSON.parse(localTasks));
+                    } else {
+                        const demoTasks: SuggestionTask[] = [
+                            {
+                                id: 'task-missing',
+                                datasetId: 'products-50',
+                                type: 'missing_value_detection',
+                                status: 'pending_review',
+                                affectedRows: 2341,
+                                confidence: 95,
+                                severity: 'Medium',
+                                columnAffected: 'total_spent',
+                                suggestedAction: 'AI suggests imputing missing total_spent using median (2300) based on country and age group.',
+                                createdAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'task-anomaly',
+                                datasetId: 'products-50',
+                                type: 'anomaly_detection',
+                                status: 'pending_review',
+                                affectedRows: 6,
+                                confidence: 94,
+                                severity: 'High',
+                                suggestedAction: 'AI Scan flagged anomaly formats in fields. Correct invalid format structures.',
+                                createdAt: new Date().toISOString()
+                            },
+                            {
+                                id: 'task-dupes',
+                                datasetId: 'products-50',
+                                type: 'duplicate_removal',
+                                status: 'pending_review',
+                                affectedRows: 1,
+                                confidence: 98,
+                                severity: 'Low',
+                                suggestedAction: 'Duplicate groups verified. Deduplicate rows to keep dataset clean.',
+                                createdAt: new Date().toISOString()
+                            }
+                        ];
+                        setTasks(demoTasks);
+                    }
 
+                    // Try to load activities from localStorage
+                    const localActivities = localStorage.getItem('dataset_activities_products-50');
+                    if (localActivities) {
+                        setActivities(JSON.parse(localActivities));
+                    }
+
+                    // Setup Copilot chatbot messages
+                    setChatMsgs([
+                        { role: 'ai', text: '👋 Hi! I can help you with data preprocessing.' }
+                    ]);
+                }
             } catch (err) {
                 console.error(err);
                 showToast('Failed to connect to APIs.', 'error');
@@ -518,6 +688,25 @@ export default function PreprocessingPage() {
             }
         })();
     }, []);
+
+    // Sync products-50 state changes reactively to localStorage
+    useEffect(() => {
+        if (dsId === 'products-50' && data.length > 0) {
+            localStorage.setItem('dataset_data_products-50', JSON.stringify(data));
+        }
+    }, [data, dsId]);
+
+    useEffect(() => {
+        if (dsId === 'products-50' && tasks.length > 0) {
+            localStorage.setItem('dataset_tasks_products-50', JSON.stringify(tasks));
+        }
+    }, [tasks, dsId]);
+
+    useEffect(() => {
+        if (dsId === 'products-50' && activities.length > 0) {
+            localStorage.setItem('dataset_activities_products-50', JSON.stringify(activities));
+        }
+    }, [activities, dsId]);
 
     /* ── Real-Time Self-Healing Status Mapper ── */
     const pendingCount = tasks.filter(t => t.status === "pending_review").length;
@@ -567,41 +756,102 @@ export default function PreprocessingPage() {
         let updated = d;
 
         if (type === 'missing_value_detection') {
-            // Impute missing values inside row 4 and row 6
             updated = d.map(r => {
-                if (r.id === 4 && r.total_spent === 0) {
-                    const u = { ...r, total_spent: 2300 };
-                    // Clear warning flag since value is corrected
-                    delete u._flag; delete u._reason; delete u._field; delete u._fix;
+                if (dsId === 'products-50') {
+                    let u = { ...r };
+                    if (u.id === 4 && u.total_spent === 0) {
+                        u.total_spent = 2300;
+                        delete u._flag; delete u._reason; delete u._field; delete u._fix;
+                    }
+                    if (u.id === 6 && u.total_spent === 0) {
+                        u.total_spent = 12000;
+                        if (u._field === 'total_spent') {
+                            delete u._flag; delete u._reason; delete u._field; delete u._fix;
+                        }
+                    }
                     return u;
                 }
-                if (r.id === 6 && r.total_spent === 0) {
-                    return { ...r, total_spent: 12000 };
-                }
-                return r;
+
+                let u = { ...r };
+                columnsSchema.forEach(col => {
+                    const colName = col.name;
+                    const colType = col.type || 'STRING';
+                    if (isValueMissing(u[colName], colType)) {
+                        const tLower = colType.toLowerCase();
+                        if (['int', 'float', 'integer', 'number', 'double'].includes(tLower)) {
+                            const vals = d.map(x => Number(x[colName])).filter(v => !isNaN(v) && v !== 0);
+                            const avg = vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 100;
+                            u[colName] = avg === 0 ? 100 : avg;
+                        } else if (tLower.includes('date')) {
+                            u[colName] = new Date().toISOString().split('T')[0];
+                        } else if (tLower.includes('bool')) {
+                            u[colName] = true;
+                        } else {
+                            u[colName] = 'Imputed Value';
+                        }
+                        if (u._field === colName) {
+                            delete u._flag; delete u._reason; delete u._field; delete u._fix;
+                        }
+                    }
+                });
+                return u;
             });
             markDone('nulls');
+            setTasks(prev => prev.map(t => t.type === 'missing_value_detection' ? { ...t, status: 'approved' } : t));
         }
         else if (type === 'anomaly_detection') {
-            // Fix invalid email format in row 6
             updated = d.map(r => {
-                if (r.id === 6 && r.email === 'nehaj@outlook') {
-                    const u = { ...r, email: 'nehaj@outlook.com' };
-                    // Clear email warning flag
-                    delete u._flag; delete u._reason; delete u._field; delete u._fix;
+                if (dsId === 'products-50') {
+                    let u = { ...r };
+                    if (u.id === 6 && u.email === 'nehaj@outlook') {
+                        u.email = 'nehaj@outlook.com';
+                        delete u._flag; delete u._reason; delete u._field; delete u._fix;
+                    }
                     return u;
                 }
-                return r;
+
+                let u = { ...r };
+                columnsSchema.forEach(col => {
+                    const colName = col.name;
+                    const colType = col.type || 'STRING';
+                    if (isValueAnomaly(u[colName], colName, colType)) {
+                        if (colName.toLowerCase().includes('email')) {
+                            const valStr = String(u[colName]).trim();
+                            u[colName] = valStr.includes('@') ? valStr + '.com' : valStr + '@example.com';
+                        } else if (colName.toLowerCase().includes('date') || colType.toLowerCase().includes('date')) {
+                            u[colName] = new Date().toISOString().split('T')[0];
+                        } else if (['int', 'float', 'integer', 'number', 'double'].includes(colType.toLowerCase())) {
+                            const vals = d.map(x => Number(x[colName])).filter(v => !isNaN(v));
+                            const avg = vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 100;
+                            u[colName] = avg;
+                        } else {
+                            u[colName] = 'Corrected Value';
+                        }
+                        if (u._field === colName) {
+                            delete u._flag; delete u._reason; delete u._field; delete u._fix;
+                        }
+                    }
+                });
+                return u;
             });
             markDone('scan');
+            setTasks(prev => prev.map(t => t.type === 'anomaly_detection' ? { ...t, status: 'approved' } : t));
         }
         else if (type === 'duplicate_removal') {
-            // Handle row duplication cleanups
+            const seenKeys = new Set();
+            updated = d.filter(r => {
+                const key = columns.filter(c => c !== '_rid' && c !== 'id').map(c => String(r[c] ?? '')).join('||');
+                if (seenKeys.has(key)) {
+                    return false;
+                }
+                seenKeys.add(key);
+                return true;
+            });
             markDone('dupes');
+            setTasks(prev => prev.map(t => t.type === 'duplicate_removal' ? { ...t, status: 'approved' } : t));
         }
 
-        setData(updated);
-        dataRef.current = updated;
+        updateDataAndHistory(updated);
     };
 
     /* ── AI Copilot Sidebar Commands ── */
@@ -631,12 +881,11 @@ export default function PreprocessingPage() {
     }
 
     async function runOutlierScan() {
-        setChatBusy(true);
-        push({ role: 'ai', text: '🔍 Outlier scan active. Processing metrics...' });
+        setIsScanModalOpen(true);
+        setScanState('scanning');
         setTimeout(() => {
-            setChatBusy(false);
-            push({ role: 'ai', text: '✅ Outlier scanning finalised. No additional anomalies found.' });
-        }, 1000);
+            setScanState('completed');
+        }, 2200);
     }
 
     async function generatePlatformInsights() {
@@ -682,13 +931,20 @@ export default function PreprocessingPage() {
                 return c;
             });
             // Persist back to the backend
-            const datasetToSave = datasets.find(d => d.name === dsName) || datasets[0];
+            const datasetToSave = datasets.find(d => d.name === dsName || d.id === dsId);
             if (datasetToSave) {
                 await apiClient.patch(`/data/datasets/${datasetToSave.id}`, { rawData: clean });
+                showToast('Saved modifications to database!', 'success');
+            } else if (dsId === 'products-50') {
+                localStorage.setItem('dataset_data_products-50', JSON.stringify(clean));
+                localStorage.setItem('dataset_tasks_products-50', JSON.stringify(tasks));
+                localStorage.setItem('dataset_activities_products-50', JSON.stringify(activities));
+                showToast('Saved modifications to local storage!', 'success');
+            } else {
+                showToast('Dataset not found in database.', 'error');
             }
-            showToast('Saved modifications to database!', 'success');
         } catch {
-            showToast('Failed to save to database.', 'error');
+            showToast('Failed to save modifications.', 'error');
         } finally {
             setSaving(false);
         }
@@ -698,8 +954,7 @@ export default function PreprocessingPage() {
     function manualDelete() {
         if (!selectedRows.size) return;
         const filtered = dataRef.current.filter(r => !selectedRows.has(r._rid));
-        setData(filtered);
-        dataRef.current = filtered;
+        updateDataAndHistory(filtered);
         setSelectedRows(new Set());
         showToast('Dropped selected rows.', 'info');
     }
@@ -720,17 +975,17 @@ export default function PreprocessingPage() {
             device: 'mobile'
         };
         const updated = [...dataRef.current, nr];
-        setData(updated);
-        dataRef.current = updated;
+        updateDataAndHistory(updated);
         showToast('Inserted blank row.', 'success');
     }
 
     /* ── Render list filters ── */
     const filteredTasks = useMemo(() => {
-        if (selectedCategory === 'all') return tasks;
-        if (selectedCategory === 'missing') return tasks.filter(t => t.type === 'missing_value_detection');
-        if (selectedCategory === 'dupes') return tasks.filter(t => t.type === 'duplicate_removal');
-        if (selectedCategory === 'anomaly') return tasks.filter(t => t.type === 'anomaly_detection');
+        const pending = tasks.filter(t => t.status === 'pending_review');
+        if (selectedCategory === 'all') return pending;
+        if (selectedCategory === 'missing') return pending.filter(t => t.type === 'missing_value_detection');
+        if (selectedCategory === 'dupes') return pending.filter(t => t.type === 'duplicate_removal');
+        if (selectedCategory === 'anomaly') return pending.filter(t => t.type === 'anomaly_detection');
         return [];
     }, [tasks, selectedCategory]);
 
@@ -762,7 +1017,8 @@ export default function PreprocessingPage() {
     }
 
     function saveEdit(rid: string, col: string) {
-        setData(prev => prev.map(r => r._rid !== rid ? r : { ...r, [col]: editVal }));
+        const updated = data.map(r => r._rid !== rid ? r : { ...r, [col]: editVal });
+        updateDataAndHistory(updated);
         setEditCell(null);
     }
 
@@ -1069,7 +1325,9 @@ export default function PreprocessingPage() {
                             padding: '0.5rem 1rem',
                             borderRadius: '12px',
                             border: '1px solid var(--border-color)',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.01)',
+                            height: '56px',
+                            boxSizing: 'border-box'
                         }}
                     >
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1254,6 +1512,83 @@ export default function PreprocessingPage() {
 
                             {/* Suggestions Cards listing */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+                                {filteredTasks.length === 0 && (
+                                    <motion.div
+                                        variants={itemVariants}
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            textAlign: 'center',
+                                            padding: '4rem 2rem',
+                                            backgroundColor: 'white',
+                                            borderRadius: '16px',
+                                            border: '1px dashed #cbd5e1',
+                                            boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
+                                        }}
+                                    >
+                                        {/* Premium Glowing Success Check Badge */}
+                                        <div style={{
+                                            width: '64px',
+                                            height: '64px',
+                                            borderRadius: '50%',
+                                            backgroundColor: '#d1fae5',
+                                            color: '#10b981',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginBottom: '1.25rem',
+                                            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.2)'
+                                        }}>
+                                            <CheckCircle size={32} />
+                                        </div>
+
+                                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+                                            Dataset is 100% Clean!
+                                        </h3>
+                                        <p style={{ fontSize: '0.8rem', color: '#64748b', maxWidth: '320px', lineHeight: 1.5, margin: '0 0 1.5rem 0', fontWeight: 500 }}>
+                                            Excellent! No pending warnings, missing values, or formatting anomalies are present in this view.
+                                        </p>
+
+                                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                            <Button
+                                                onClick={runOutlierScan}
+                                                style={{
+                                                    backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                                                    color: 'var(--primary-color)',
+                                                    border: 'none',
+                                                    padding: '0.45rem 1rem',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 700,
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                icon={<Sparkles size={12} />}
+                                            >
+                                                Run Clean Scan
+                                            </Button>
+                                            <Button
+                                                onClick={() => setActiveTab('spreadsheet')}
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    padding: '0.45rem 1.25rem',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 700,
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    boxShadow: '0 4px 10px rgba(79, 70, 229, 0.15)'
+                                                }}
+                                                icon={<FileText size={12} />}
+                                            >
+                                                Explore Spreadsheet
+                                            </Button>
+                                        </div>
+                                    </motion.div>
+                                )}
 
                                 {/* Toolbar actions for bulk approval */}
                                 {pendingCount > 0 && (
@@ -1484,18 +1819,69 @@ export default function PreprocessingPage() {
                             </div>
                         </div>
                     ) : (
-                        /* Awesome Bottom Spreadsheet Grid Editor */
-                        <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column' }}>
-                            <Card style={{ display: 'flex', flexDirection: 'column', boxShadow: '0 2px 6px rgba(0,0,0,0.015)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                        <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+                            <Card style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '480px', boxShadow: '0 2px 6px rgba(0,0,0,0.015)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                                 <CardHeader
-                                    style={{ padding: '1rem 1.25rem', backgroundColor: '#fafbfe', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                    style={{ padding: '0.75rem 1.25rem', backgroundColor: '#fafbfe', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                     actions={
                                         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                                            <button style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Undo size={11} /> Undo</button>
-                                            <button disabled style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'white', opacity: 0.5, cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Redo size={11} /> Redo</button>
+                                            <button
+                                                onClick={handleUndo}
+                                                disabled={historyIndex <= 0}
+                                                style={{
+                                                    padding: '0.35rem 0.6rem',
+                                                    fontSize: '0.72rem',
+                                                    fontWeight: 700,
+                                                    borderRadius: '6px',
+                                                    border: '1px solid var(--border-color)',
+                                                    backgroundColor: 'white',
+                                                    cursor: historyIndex <= 0 ? 'not-allowed' : 'pointer',
+                                                    opacity: historyIndex <= 0 ? 0.5 : 1,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.2rem'
+                                                }}
+                                            >
+                                                <Undo size={11} /> Undo
+                                            </button>
+                                            <button
+                                                onClick={handleRedo}
+                                                disabled={historyIndex >= history.length - 1}
+                                                style={{
+                                                    padding: '0.35rem 0.6rem',
+                                                    fontSize: '0.72rem',
+                                                    fontWeight: 700,
+                                                    borderRadius: '6px',
+                                                    border: '1px solid var(--border-color)',
+                                                    backgroundColor: 'white',
+                                                    cursor: historyIndex >= history.length - 1 ? 'not-allowed' : 'pointer',
+                                                    opacity: historyIndex >= history.length - 1 ? 0.5 : 1,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.2rem'
+                                                }}
+                                            >
+                                                <Redo size={11} /> Redo
+                                            </button>
                                             <button onClick={manualAddRow} style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><PlusCircle size={11} color="var(--primary-color)" /> Insert Row</button>
                                             <button onClick={manualDelete} disabled={!selectedRows.size} style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'white', cursor: !selectedRows.size ? 'not-allowed' : 'pointer', opacity: !selectedRows.size ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Trash2 size={11} color="#ef4444" /> Delete Row</button>
-                                            <button style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Search size={11} /> Find & Replace</button>
+                                            <button
+                                                onClick={() => setIsFindReplaceOpen(true)}
+                                                style={{
+                                                    padding: '0.35rem 0.6rem',
+                                                    fontSize: '0.72rem',
+                                                    fontWeight: 700,
+                                                    borderRadius: '6px',
+                                                    border: '1px solid var(--border-color)',
+                                                    backgroundColor: 'white',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.2rem'
+                                                }}
+                                            >
+                                                <Search size={11} /> Find & Replace
+                                            </button>
                                             <button
                                                 onClick={handleSave}
                                                 style={{
@@ -1527,7 +1913,7 @@ export default function PreprocessingPage() {
                                         </span>
                                     </div>
                                 </CardHeader>
-                                <CardContent style={{ padding: 0, overflow: 'auto', maxHeight: '420px', backgroundColor: 'white' }}>
+                                <CardContent style={{ padding: 0, overflow: 'auto', flex: 1, backgroundColor: 'white' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem' }}>
                                         <thead>
                                             <tr style={{ position: 'sticky', top: 0, backgroundColor: '#f8fafc', zIndex: 3, borderBottom: '2px solid var(--border-color)' }}>
@@ -1576,7 +1962,9 @@ export default function PreprocessingPage() {
                                         <tbody>
                                             {viewData.map((row, idx) => {
                                                 // Determine row background highlights
-                                                const hasRowWarning = row.id === 4 || row.id === 6;
+                                                const isRowMissing = columns.some(col => row[col] === null || row[col] === undefined || String(row[col]).trim() === '' || (col === 'total_spent' && row[col] === 0));
+                                                const isRowAnomaly = (row.email && !String(row.email).includes('@')) || (row._reason && row._reason.toLowerCase().includes('anomaly'));
+                                                const hasRowWarning = isRowMissing || isRowAnomaly;
                                                 const rowBg = selectedRows.has(row._rid)
                                                     ? 'rgba(79,70,229,0.05)'
                                                     : hasRowWarning
@@ -1608,9 +1996,15 @@ export default function PreprocessingPage() {
                                                         </td>
                                                         {columns.map(c => {
                                                             const editing = editCell?.rid === row._rid && editCell.col === c;
-                                                            // Highlight cells with warnings!
-                                                            const isFlaggedSpentNull = row.id === 4 && c === 'total_spent' && row.total_spent === 0;
-                                                            const isFlaggedEmailBad = row.id === 6 && c === 'email' && row.email === 'nehaj@outlook';
+                                                            // Highlight cells with warnings dynamically!
+                                                            const colType = columnsSchema.find(cs => cs.name === c)?.type || 'STRING';
+                                                            const isFlaggedSpentNull = isValueMissing(row[c], colType);
+                                                            const isFlaggedEmailBad = isValueAnomaly(row[c], c, colType);
+                                                            const isMatch = isFindReplaceOpen && findText && (findCol === 'all' || findCol === c) && (
+                                                                matchCase
+                                                                    ? String(row[c] ?? '').includes(findText)
+                                                                    : String(row[c] ?? '').toLowerCase().includes(findText.toLowerCase())
+                                                            );
 
                                                             return (
                                                                 <td
@@ -1619,8 +2013,9 @@ export default function PreprocessingPage() {
                                                                     style={{
                                                                         padding: editing ? 0 : '0.5rem 0.625rem',
                                                                         cursor: c === 'id' ? 'default' : 'text',
-                                                                        outline: editing ? '2px solid var(--primary-color)' : 'none',
+                                                                        outline: editing ? '2px solid var(--primary-color)' : isMatch ? '2px solid #eab308' : 'none',
                                                                         outlineOffset: '-2px',
+                                                                        backgroundColor: isMatch ? '#fef9c3' : 'inherit',
                                                                         whiteSpace: 'nowrap',
                                                                         maxWidth: '180px',
                                                                         overflow: 'hidden',
@@ -1649,11 +2044,11 @@ export default function PreprocessingPage() {
                                                                         />
                                                                     ) : isFlaggedSpentNull ? (
                                                                         <div style={{ border: '1px solid #fee2e2', color: '#ef4444', backgroundColor: '#fff5f5', padding: '0.1rem 0.4rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', fontWeight: 700 }}>
-                                                                            <AlertTriangle size={10} /> 0
+                                                                            <AlertTriangle size={10} /> {row[c] === 0 || row[c] === '0' ? '0' : String(row[c] || 'empty')}
                                                                         </div>
                                                                     ) : isFlaggedEmailBad ? (
                                                                         <div style={{ border: '1px solid #fee2e2', color: '#ef4444', backgroundColor: '#fff5f5', padding: '0.1rem 0.4rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', fontWeight: 700 }}>
-                                                                            <AlertTriangle size={10} /> nehaj@outlook
+                                                                            <AlertTriangle size={10} /> {String(row[c] || 'invalid')}
                                                                         </div>
                                                                     ) : (
                                                                         String(row[c])
@@ -1686,6 +2081,11 @@ export default function PreprocessingPage() {
                         minHeight: 0
                     }}
                 >
+                    {/* Spacer to align AI Copilot with Spreadsheet Editor when tab is active */}
+                    {activeTab === 'spreadsheet' && (
+                        <div style={{ height: '56px', boxSizing: 'border-box', flexShrink: 0 }} />
+                    )}
+
                     {/* 1. ChatGPT Copilot */}
                     {activeTab === 'spreadsheet' && (
                         <Card style={{
@@ -1695,7 +2095,9 @@ export default function PreprocessingPage() {
                             borderRadius: '12px',
                             overflow: 'hidden',
                             border: '1px solid var(--border-color)',
-                            background: 'white'
+                            background: 'white',
+                            flex: 1,
+                            minHeight: '480px'
                         }}>
                             <CardHeader
                                 style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
@@ -1709,7 +2111,7 @@ export default function PreprocessingPage() {
                                     <Sparkles size={13} color="var(--primary-color)" /> AI Copilot
                                 </div>
                             </CardHeader>
-                            <CardContent style={{ padding: 0, display: 'flex', flexDirection: 'column', height: '280px', overflow: 'hidden' }}>
+                            <CardContent style={{ padding: 0, display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
                                 {/* Chat bubble list */}
                                 <div style={{ flex: 1, overflowY: 'auto', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     {chatMsgs.map((m, i) => (
@@ -1810,114 +2212,118 @@ export default function PreprocessingPage() {
                     )}
 
                     {/* 2. Awesome Circular Donut SVG Quality Chart */}
-                    <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
-                        <CardHeader
-                            style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
-                            actions={
-                                <button
-                                    onClick={() => setIsQualityModalOpen(true)}
-                                    style={{ border: 'none', background: 'transparent', color: 'var(--primary-color)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
-                                >
-                                    View All
-                                </button>
-                            }
-                        >
-                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Data Quality Overview</span>
-                        </CardHeader>
-                        <CardContent style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                            {/* Circular Donut chart SVG representation */}
-                            <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <svg width="90" height="90" viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="41" fill="none" stroke="#f1f5f9" strokeWidth="8" />
-                                    {/* Green valid circle segment */}
-                                    <circle cx="50" cy="50" r="41" fill="none" stroke="#10b981" strokeWidth="8" strokeDasharray={`${validDash} 257.6`} strokeDashoffset={validOffset} strokeLinecap="round" />
-                                    {/* Yellow missing segment */}
-                                    <circle cx="50" cy="50" r="41" fill="none" stroke="#f59e0b" strokeWidth="8" strokeDasharray={`${missingDash} 257.6`} strokeDashoffset={missingOffset} />
-                                    {/* Blue duplicate segment */}
-                                    <circle cx="50" cy="50" r="41" fill="none" stroke="#4f46e5" strokeWidth="8" strokeDasharray={`${duplicateDash} 257.6`} strokeDashoffset={duplicateOffset} />
-                                    {/* Red anomaly segment */}
-                                    <circle cx="50" cy="50" r="41" fill="none" stroke="#ef4444" strokeWidth="8" strokeDasharray={`${anomalyDash} 257.6`} strokeDashoffset={anomalyOffset} />
-                                </svg>
-                                <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{qualityMetrics.score}%</span>
-                                    <span style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '0.05rem' }}>Score</span>
+                    {activeTab !== 'spreadsheet' && (
+                        <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
+                            <CardHeader
+                                style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
+                                actions={
+                                    <button
+                                        onClick={() => setIsQualityModalOpen(true)}
+                                        style={{ border: 'none', background: 'transparent', color: 'var(--primary-color)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                                    >
+                                        View All
+                                    </button>
+                                }
+                            >
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Data Quality Overview</span>
+                            </CardHeader>
+                            <CardContent style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                {/* Circular Donut chart SVG representation */}
+                                <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <svg width="90" height="90" viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="41" fill="none" stroke="#f1f5f9" strokeWidth="8" />
+                                        {/* Green valid circle segment */}
+                                        <circle cx="50" cy="50" r="41" fill="none" stroke="#10b981" strokeWidth="8" strokeDasharray={`${validDash} 257.6`} strokeDashoffset={validOffset} strokeLinecap="round" />
+                                        {/* Yellow missing segment */}
+                                        <circle cx="50" cy="50" r="41" fill="none" stroke="#f59e0b" strokeWidth="8" strokeDasharray={`${missingDash} 257.6`} strokeDashoffset={missingOffset} />
+                                        {/* Blue duplicate segment */}
+                                        <circle cx="50" cy="50" r="41" fill="none" stroke="#4f46e5" strokeWidth="8" strokeDasharray={`${duplicateDash} 257.6`} strokeDashoffset={duplicateOffset} />
+                                        {/* Red anomaly segment */}
+                                        <circle cx="50" cy="50" r="41" fill="none" stroke="#ef4444" strokeWidth="8" strokeDasharray={`${anomalyDash} 257.6`} strokeDashoffset={anomalyOffset} />
+                                    </svg>
+                                    <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{qualityMetrics.score}%</span>
+                                        <span style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '0.05rem' }}>Score</span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Legend details */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} /> Valid
-                                    </span>
-                                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.validPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.validCount})</span></span>
+                                {/* Legend details */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} /> Valid
+                                        </span>
+                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.validPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.validCount})</span></span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} /> Missing
+                                        </span>
+                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.missingPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.missingCount})</span></span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4f46e5' }} /> Duplicate
+                                        </span>
+                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.duplicatePct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.duplicateCount})</span></span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> Anomaly
+                                        </span>
+                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.anomalyPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.anomalyCount})</span></span>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} /> Missing
-                                    </span>
-                                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.missingPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.missingCount})</span></span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4f46e5' }} /> Duplicate
-                                    </span>
-                                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.duplicatePct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.duplicateCount})</span></span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
-                                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> Anomaly
-                                    </span>
-                                    <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.anomalyPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.anomalyCount})</span></span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* 3. Recent Activity Log timeline */}
-                    <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
-                        <CardHeader
-                            style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
-                            actions={
-                                <button
-                                    onClick={() => setIsActivityModalOpen(true)}
-                                    style={{ border: 'none', background: 'transparent', color: 'var(--primary-color)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
-                                >
-                                    View All
-                                </button>
-                            }
-                        >
-                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Recent Activity</span>
-                        </CardHeader>
-                        <CardContent style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', maxHeight: '240px', overflowY: 'auto' }}>
-                            {/* Dynamic Timeline Activity List */}
-                            {activities.map((act, index) => (
-                                <div key={act.id} style={{ display: 'flex', gap: '0.75rem', position: 'relative' }}>
-                                    {index < activities.length - 1 && (
-                                        <div style={{ position: 'absolute', left: '10px', top: '16px', bottom: '-20px', width: '2px', backgroundColor: '#e2e8f0', zIndex: 1 }} />
-                                    )}
-                                    <div style={{
-                                        width: '22px',
-                                        height: '22px',
-                                        borderRadius: '50%',
-                                        backgroundColor: act.type === 'anomaly' ? '#fee2e2' : act.type === 'save' || act.type === 'upload' ? '#dbeafe' : '#d1fae5',
-                                        color: act.type === 'anomaly' ? '#ef4444' : act.type === 'save' || act.type === 'upload' ? '#3b82f6' : '#10b981',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        zIndex: 2,
-                                        flexShrink: 0
-                                    }}>
-                                        {act.type === 'anomaly' ? <AlertTriangle size={11} /> : act.type === 'save' || act.type === 'upload' ? <Database size={11} /> : <Check size={11} />}
+                    {activeTab !== 'spreadsheet' && (
+                        <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
+                            <CardHeader
+                                style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
+                                actions={
+                                    <button
+                                        onClick={() => setIsActivityModalOpen(true)}
+                                        style={{ border: 'none', background: 'transparent', color: 'var(--primary-color)', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                                    >
+                                        View All
+                                    </button>
+                                }
+                            >
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Recent Activity</span>
+                            </CardHeader>
+                            <CardContent style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', maxHeight: '240px', overflowY: 'auto' }}>
+                                {/* Dynamic Timeline Activity List */}
+                                {activities.map((act, index) => (
+                                    <div key={act.id} style={{ display: 'flex', gap: '0.75rem', position: 'relative' }}>
+                                        {index < activities.length - 1 && (
+                                            <div style={{ position: 'absolute', left: '10px', top: '16px', bottom: '-20px', width: '2px', backgroundColor: '#e2e8f0', zIndex: 1 }} />
+                                        )}
+                                        <div style={{
+                                            width: '22px',
+                                            height: '22px',
+                                            borderRadius: '50%',
+                                            backgroundColor: act.type === 'anomaly' ? '#fee2e2' : act.type === 'save' || act.type === 'upload' ? '#dbeafe' : '#d1fae5',
+                                            color: act.type === 'anomaly' ? '#ef4444' : act.type === 'save' || act.type === 'upload' ? '#3b82f6' : '#10b981',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            zIndex: 2,
+                                            flexShrink: 0
+                                        }}>
+                                            {act.type === 'anomaly' ? <AlertTriangle size={11} /> : act.type === 'save' || act.type === 'upload' ? <Database size={11} /> : <Check size={11} />}
+                                        </div>
+                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                                            <span style={{ fontSize: '0.74rem', color: '#1e293b', fontWeight: 700 }}>{act.text}</span>
+                                            <span style={{ fontSize: '0.625rem', color: '#94a3b8' }}>{act.time}</span>
+                                        </div>
                                     </div>
-                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                                        <span style={{ fontSize: '0.74rem', color: '#1e293b', fontWeight: 700 }}>{act.text}</span>
-                                        <span style={{ fontSize: '0.625rem', color: '#94a3b8' }}>{act.time}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
 
@@ -2149,6 +2555,305 @@ export default function PreprocessingPage() {
                         </table>
                     </div>
                 </div>
+            </Modal>
+
+            {/* Find & Replace Modal */}
+            <Modal
+                isOpen={isFindReplaceOpen}
+                onClose={() => setIsFindReplaceOpen(false)}
+                title="Find & Replace in Spreadsheet"
+                maxWidth="400px"
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsFindReplaceOpen(false)}
+                            style={{ padding: '0.4rem 1rem', fontSize: '0.74rem', borderRadius: '8px' }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleReplaceAll}
+                            style={{
+                                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                color: 'white',
+                                padding: '0.4rem 1.25rem',
+                                border: 'none',
+                                fontWeight: 700,
+                                fontSize: '0.74rem',
+                                borderRadius: '8px'
+                            }}
+                        >
+                            Replace All
+                        </Button>
+                    </div>
+                }
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: '#1e293b' }}>
+                    {/* Find Input */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Find text</label>
+                        <input
+                            className="input-field"
+                            placeholder="Text to search for..."
+                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'white' }}
+                            value={findText}
+                            onChange={e => setFindText(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Replace Input */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Replace with</label>
+                        <input
+                            className="input-field"
+                            placeholder="Text to replace with..."
+                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'white' }}
+                            value={replaceText}
+                            onChange={e => setReplaceText(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Column Select */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Search Column</label>
+                        <select
+                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'white', cursor: 'pointer', outline: 'none' }}
+                            value={findCol}
+                            onChange={e => setFindCol(e.target.value)}
+                        >
+                            <option value="all">All Columns</option>
+                            {columns.map(c => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Match Case Checkbox */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                        <input
+                            type="checkbox"
+                            id="matchCase"
+                            checked={matchCase}
+                            onChange={e => setMatchCase(e.target.checked)}
+                            style={{ accentColor: 'var(--primary-color)', cursor: 'pointer', width: '14px', height: '14px' }}
+                        />
+                        <label htmlFor="matchCase" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', cursor: 'pointer', userSelect: 'none' }}>
+                            Match exact case
+                        </label>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* AI Scan Progress & Results Modal */}
+            <Modal
+                isOpen={isScanModalOpen}
+                onClose={() => {
+                    if (scanState !== 'scanning') {
+                        setIsScanModalOpen(false);
+                        setScanState('idle');
+                    }
+                }}
+                title={scanState === 'scanning' ? "AI Quality Scan in Progress..." : "AI Quality Scan Results"}
+                maxWidth="500px"
+                footer={
+                    scanState === 'completed' && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <Button
+                                onClick={() => {
+                                    setIsScanModalOpen(false);
+                                    setScanState('idle');
+                                }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                                    color: 'white',
+                                    padding: '0.5rem 1.5rem',
+                                    border: 'none',
+                                    fontWeight: 700,
+                                    fontSize: '0.76rem',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Done
+                            </Button>
+                        </div>
+                    )
+                }
+            >
+                {scanState === 'scanning' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1rem', textAlign: 'center', gap: '1.25rem' }}>
+                        {/* Beautiful custom radar/scanning glowing loader */}
+                        <div style={{ position: 'relative', width: '80px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {/* Outer pulsing ring */}
+                            <div className="animate-pulse" style={{
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '50%',
+                                border: '2px solid rgba(79, 70, 229, 0.15)'
+                            }} />
+                            {/* Middle rotating ring */}
+                            <div className="animate-spin" style={{
+                                position: 'absolute',
+                                width: '75%',
+                                height: '75%',
+                                borderRadius: '50%',
+                                border: '2px dashed var(--primary-color)'
+                            }} />
+                            {/* Center glowing dot */}
+                            <div style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--primary-color)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                boxShadow: '0 0 16px rgba(79, 70, 229, 0.4)'
+                            }}>
+                                <Loader2 className="animate-spin" size={16} />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>Running Deep Clean Audit...</span>
+                            <span style={{ fontSize: '0.74rem', color: '#64748b', maxWidth: '300px', lineHeight: 1.4 }}>
+                                Scanning columns for missing fields, row duplicates, format drift, and outlier metrics...
+                            </span>
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', color: '#1e293b', padding: '0.5rem 0' }}>
+                        {/* Result Header Card */}
+                        {tasks.filter(t => t.status === 'pending_review').length === 0 ? (
+                            <div style={{
+                                display: 'flex',
+                                gap: '1rem',
+                                alignItems: 'center',
+                                backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                                border: '1px solid rgba(16, 185, 129, 0.15)',
+                                borderRadius: '12px',
+                                padding: '1rem'
+                            }}>
+                                <div style={{
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#d1fae5',
+                                    color: '#10b981',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0
+                                }}>
+                                    <CheckCircle size={22} />
+                                </div>
+                                <div style={{ textAlign: 'left' }}>
+                                    <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.15rem 0' }}>Dataset is 100% Clean!</h4>
+                                    <p style={{ fontSize: '0.74rem', color: '#475569', margin: 0 }}>Zero anomalies or quality issues were found inside this dataset scan.</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{
+                                display: 'flex',
+                                gap: '1rem',
+                                alignItems: 'center',
+                                backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                                border: '1px solid rgba(245, 158, 11, 0.15)',
+                                borderRadius: '12px',
+                                padding: '1rem'
+                            }}>
+                                <div style={{
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#fef3c7',
+                                    color: '#f59e0b',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0
+                                }}>
+                                    <AlertTriangle size={20} />
+                                </div>
+                                <div style={{ textAlign: 'left' }}>
+                                    <h4 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.15rem 0' }}>Scan Completed with Warnings</h4>
+                                    <p style={{ fontSize: '0.74rem', color: '#475569', margin: 0 }}>
+                                        Found {tasks.filter(t => t.status === 'pending_review').length} outstanding issues requiring attention.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Breakdown Metrics */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'left' }}>Scan Details Breakdown</span>
+                            <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem', textAlign: 'left' }}>
+                                    <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border-color)' }}>
+                                        <tr>
+                                            <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, color: '#475569' }}>Dimension Checked</th>
+                                            <th style={{ padding: '0.5rem 0.75rem', fontWeight: 700, color: '#475569' }}>Result Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} /> Missing Values
+                                            </td>
+                                            <td style={{ padding: '0.5rem 0.75rem', color: tasks.filter(t => t.type === 'missing_value_detection' && t.status === 'pending_review').length > 0 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
+                                                {tasks.filter(t => t.type === 'missing_value_detection' && t.status === 'pending_review').length > 0
+                                                    ? `Found ${tasks.filter(t => t.type === 'missing_value_detection' && t.status === 'pending_review').length} issues`
+                                                    : 'Clean (0)'}
+                                            </td>
+                                        </tr>
+                                        <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                            <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4f46e5' }} /> Duplicate Records
+                                            </td>
+                                            <td style={{ padding: '0.5rem 0.75rem', color: tasks.filter(t => t.type === 'duplicate_removal' && t.status === 'pending_review').length > 0 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
+                                                {tasks.filter(t => t.type === 'duplicate_removal' && t.status === 'pending_review').length > 0
+                                                    ? 'Duplicates found'
+                                                    : 'Clean (0)'}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> Format Drift & Anomalies
+                                            </td>
+                                            <td style={{ padding: '0.5rem 0.75rem', color: tasks.filter(t => t.type === 'anomaly_detection' && t.status === 'pending_review').length > 0 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
+                                                {tasks.filter(t => t.type === 'anomaly_detection' && t.status === 'pending_review').length > 0
+                                                    ? `Found ${tasks.filter(t => t.type === 'anomaly_detection' && t.status === 'pending_review').length} anomalies`
+                                                    : 'Clean (0)'}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Direct Guidance Callout */}
+                        {tasks.filter(t => t.status === 'pending_review').length > 0 && (
+                            <div style={{
+                                backgroundColor: 'rgba(79, 70, 229, 0.04)',
+                                border: '1px dashed rgba(79, 70, 229, 0.2)',
+                                borderRadius: '8px',
+                                padding: '0.75rem 1rem',
+                                display: 'flex',
+                                gap: '0.5rem',
+                                alignItems: 'flex-start',
+                                textAlign: 'left'
+                            }}>
+                                <Sparkles size={15} color="var(--primary-color)" style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                                <span style={{ fontSize: '0.72rem', color: '#475569', lineHeight: 1.4 }}>
+                                    Review the generated suggestions inside the **AI Suggestion Panel** to apply auto-cleansing transformations and reach a **100% quality score**!
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </Modal>
         </motion.div>
     );

@@ -69,9 +69,12 @@ export const apiClient = {
         }
     },
 
-    async delete(endpoint: string) {
+    async delete<T = unknown>(endpoint: string, body?: T) {
         try {
-            return await request(endpoint, { method: 'DELETE' });
+            return await request(endpoint, {
+                method: 'DELETE',
+                ...(body ? { body: JSON.stringify(body) } : {})
+            });
         } catch (error) {
             console.error('API Client DELETE Error:', error);
             throw error;

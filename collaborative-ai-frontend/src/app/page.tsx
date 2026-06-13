@@ -324,7 +324,7 @@ export default function LandingPage() {
                         <div className="landing-role-avatar landing-role-avatar--engineer">
                             <Code2 size={28} />
                         </div>
-                        <h3>Data Engineer</h3>
+                        <h3>Data Steward</h3>
                         <p>Full pipeline control — ingestion, contracts, preprocessing, and workflows.</p>
                         <div className="landing-role-perms">
                             <span className="landing-role-perm">dataset:manage</span>
@@ -337,11 +337,11 @@ export default function LandingPage() {
                         <div className="landing-role-avatar landing-role-avatar--analyst">
                             <BarChart3 size={28} />
                         </div>
-                        <h3>Data Analyst</h3>
-                        <p>Analyze data, create contracts, and track workflows with view access.</p>
+                        <h3>Analyst</h3>
+                        <p>Analyze data, view contracts, and track workflows with manage access.</p>
                         <div className="landing-role-perms">
+                            <span className="landing-role-perm">dataset:manage</span>
                             <span className="landing-role-perm">dataset:view</span>
-                            <span className="landing-role-perm">contract:edit</span>
                             <span className="landing-role-perm">workflow:view</span>
                         </div>
                     </div>
@@ -350,7 +350,7 @@ export default function LandingPage() {
                         <div className="landing-role-avatar landing-role-avatar--business">
                             <Users size={28} />
                         </div>
-                        <h3>Business User</h3>
+                        <h3>Viewer</h3>
                         <p>View datasets, monitor analytics, and track workflow progress.</p>
                         <div className="landing-role-perms">
                             <span className="landing-role-perm">dataset:view</span>

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { useAuth } from '@/components/providers/AuthProvider';
 
-export type Role = 'Data Engineer' | 'Data Analyst' | 'Business User' | 'Admin';
+export type Role = 'Data Steward' | 'Analyst' | 'Viewer' | 'Admin';
 
 interface RoleContextType {
     role: Role;
@@ -20,8 +20,11 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 
     const role = useMemo<Role>(() => {
         if (overrideRole) return overrideRole;
-        if (user?.role) return user.role as Role;
-        return 'Data Engineer';
+        const dbRole = user?.role;
+        if (dbRole === 'Data Analyst' || dbRole === 'Analyst') return 'Analyst';
+        if (dbRole === 'Business User' || dbRole === 'Viewer') return 'Viewer';
+        if (dbRole === 'Admin') return 'Admin';
+        return 'Viewer';
     }, [overrideRole, user]);
 
     const permissions = useMemo(() => user?.permissions || [], [user]);

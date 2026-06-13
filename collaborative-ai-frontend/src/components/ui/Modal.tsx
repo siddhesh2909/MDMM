@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import './Modal.css';
 
@@ -12,18 +13,24 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, footer, maxWidth = '500px' }: ModalProps) {
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
         if (isOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = '';
         }
-        return () => { document.body.style.overflow = ''; };
+        return () => {
+            document.body.style.overflow = '';
+        };
     }, [isOpen]);
 
     if (!isOpen) return null;
+    if (!mounted) return null;
 
-    return (
+    const modalJSX = (
         <div className="modal-overlay" onClick={onClose}>
             <div
                 className="modal-content"
@@ -43,4 +50,6 @@ export function Modal({ isOpen, onClose, title, children, footer, maxWidth = '50
             </div>
         </div>
     );
+
+    return createPortal(modalJSX, document.body);
 }

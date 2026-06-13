@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <main className="page-content animate-fade-in">
                     {children}
                 </main>
-                <ChatWidget />
+                {pathname !== '/analytics' && <ChatWidget />}
             </div>
         </div>
     );

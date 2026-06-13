@@ -10,7 +10,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const [role, setRole] = useState('Data Engineer');
+    const [role, setRole] = useState('Data Analyst');
     const [department, setDepartment] = useState('');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -99,7 +99,6 @@ export default function LoginPage() {
                             <div className="login-field">
                                 <label>Role</label>
                                 <select value={role} onChange={e => setRole(e.target.value)}>
-                                    <option>Data Engineer</option>
                                     <option>Data Analyst</option>
                                     <option>Business User</option>
                                     <option>Admin</option>
@@ -146,9 +145,6 @@ export default function LoginPage() {
                     <div className="login-demo-info">
                         <p style={{ marginBottom: '0.75rem' }}>Quick Login (Dev Mode):</p>
                         <div className="login-quick-btns">
-                            <button type="button" onClick={() => login('alice@ecommerce.ai', 'password123')} title="Data Engineer">
-                                Alice (Engineer)
-                            </button>
                             <button type="button" onClick={() => login('bob@ecommerce.ai', 'password123')} title="Data Analyst">
                                 Bob (Analyst)
                             </button>
