@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // Check authorization dynamically when pathname or role changes
     React.useEffect(() => {
         if (!mounted || !token || isLoading) return;
-        
+
         const isPublicPage = PUBLIC_PATHS.includes(pathname);
         if (isPublicPage) {
             setIsAuthorized(true);
@@ -105,13 +105,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </div>
                             <h2 style={{ fontSize: '1.75rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Access Denied</h2>
                             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
-                                You do not have the required permissions to access this module (<strong>{pathname}</strong>). 
+                                You do not have the required permissions to access this module (<strong>{pathname}</strong>).
                                 This unauthorized attempt has been logged for security audit purposes.
                             </p>
                             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                                <button 
-                                    className="btn btn-primary" 
-                                    onClick={() => window.location.href = role === 'Business User' ? '/analytics' : '/ingestion'}
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => window.location.href = role === 'Viewer' ? '/analytics' : '/ingestion'}
                                 >
                                     Go to Dashboard
                                 </button>

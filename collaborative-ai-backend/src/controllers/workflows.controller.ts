@@ -100,7 +100,7 @@ export const updateWorkflow = async (req: AuthenticatedRequest, res: express.Res
         try {
             const titleStr = workflow.title;
             const updatedAssignee = workflow.assignee;
-            
+
             if (workflow.status === 'Approved' || workflow.progress === 100) {
                 await notifyAssignee(
                     updatedAssignee,

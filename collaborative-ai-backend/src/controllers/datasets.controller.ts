@@ -253,7 +253,6 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
 
         const rowCount = parsedData.length;
         const colCount = schemaFields.length;
-        
         const completeness = lastReport ? lastReport.completeness : 98;
         const validity = lastReport ? lastReport.validity : 95;
         const uniqueness = lastReport ? lastReport.uniqueness : 100;
@@ -300,7 +299,7 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
                     "Dataset is 100% clean. No further preprocessing actions required.",
                     "Maintain strict schema enforcement for incoming data streams.",
                     "Monitor real-time schema evolution alerts."
-                  ]
+                ]
                 : suggestions.slice(0, 3),
             anomaly_warnings: overallScore === 100
                 ? ["No critical anomalies found. Schema meets all standard requirements."]
