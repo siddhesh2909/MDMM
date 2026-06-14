@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { validateDataAgainstSchema, SchemaField, runPipelineValidation } from '../services/validation.engine';
 import { notifyUser } from '../services/notification.service';
+import { canViewDataset, canEditDataset } from '../utils/permission';
 
 /**
  * Validation Controller
@@ -32,6 +33,11 @@ export const validateDataset = async (req: AuthenticatedRequest, res: express.Re
             where: { id: datasetId, organizationId: user.organizationId }
         });
         if (!dataset) return res.status(404).json({ error: 'Dataset not found' });
+
+        // Check permission
+        if (!canEditDataset(dataset as any, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to validate this dataset' });
+        }
 
         // Parse
         let data: Record<string, any>[];
@@ -139,6 +145,19 @@ export const getValidationReport = async (req: AuthenticatedRequest, res: expres
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
         const datasetId = String(req.params.id);
+
+        // Load dataset first to check permission
+        const dataset = await prisma.dataset.findFirst({
+            where: { id: datasetId, organizationId: user.organizationId }
+        });
+
+        if (!dataset) {
+            return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        }
+
+        if (!canViewDataset(dataset as any, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to view validation reports for this dataset' });
+        }
 
         const reports = await prisma.validationReport.findMany({
             where: { datasetId, organizationId: user.organizationId },

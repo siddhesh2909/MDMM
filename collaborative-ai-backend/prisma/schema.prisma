@@ -43,6 +43,8 @@ model User {
   datasets       Dataset[]
   contracts      DataContract[]
   notifications  Notification[]
+  conversations  Conversation[]
+  sentMessages   Message[]
 }
 
 model WorkflowTask {
@@ -75,6 +77,10 @@ model Dataset {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt      DateTime     @default(now())
+  
+  createdBy      String       @default("")
+  visibility     String       @default("private")
+  sharedWith     String       @default("[]")
 }
 
 model DataContract {
@@ -150,27 +156,6 @@ model ContractVersion {
   createdAt  DateTime @default(now())
 }
 
-// ─── NEW: Data Lineage ───────────────────────────────
-
-model LineageNode {
-  id             String   @id @default(uuid())
-  nodeType       String   // source, dataset, contract, transform, output
-  label          String
-  entityId       String?  // ID of related dataset/contract/etc
-  metadata       String   @default("{}") // JSON (row count, score, etc.)
-  organizationId String
-  createdAt      DateTime @default(now())
-}
-
-model LineageEdge {
-  id             String   @id @default(uuid())
-  sourceNodeId   String
-  targetNodeId   String
-  relationship   String   // ingested_from, validated_by, transformed_into, rejected_by
-  metadata       String   @default("{}")
-  organizationId String
-  createdAt      DateTime @default(now())
-}
 
 // ─── NEW: Quality Snapshots ──────────────────────────
 
@@ -217,5 +202,44 @@ model Notification {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
+// ─── NEW: Collaboration / Direct Messaging ──────────────────
+
+model Conversation {
+  id             String    @id @default(uuid())
+  type           String    @default("direct") // "direct" | "group"
+  name           String?
+  description    String?
+  organizationId String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  participants   User[]
+  messages       Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now())
+  status         String       @default("sent") // "sent" | "delivered" | "read"
+  isPinned       Boolean      @default(false)
+  attachments    Attachment[]
+}
+
+model Attachment {
+  id             String   @id @default(uuid())
+  messageId      String
+  message        Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileName       String
+  fileType       String
+  fileSize       Int
+  fileUrl        String
+  createdAt      DateTime @default(now())
+}
+
 
 

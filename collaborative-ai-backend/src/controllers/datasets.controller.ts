@@ -5,6 +5,7 @@ import { runIngestionPipeline, EnforcementMode } from '../services/ingestion.pip
 import { runPipelineValidation } from '../services/validation.engine';
 import { notifyUser, notifyAdmins } from '../services/notification.service';
 import { logAction } from '../utils/auditLogger';
+import { canViewDataset, canEditDataset, canDeleteDataset } from '../utils/permission';
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -48,8 +49,10 @@ export const getDatasets = async (req: AuthenticatedRequest, res: express.Respon
             }
         });
 
+        const filteredDatasets = datasets.filter(d => canViewDataset(d as any, req.user!));
+
         // Fetch the last validation report score dynamically for each dataset
-        const datasetsWithQuality = await Promise.all(datasets.map(async (d) => {
+        const datasetsWithQuality = await Promise.all(filteredDatasets.map(async (d) => {
             const lastReport = await prisma.validationReport.findFirst({
                 where: { datasetId: d.id, organizationId: orgId },
                 orderBy: { createdAt: 'desc' },
@@ -169,6 +172,10 @@ export const updateDataset = async (req: AuthenticatedRequest, res: express.Resp
             return res.status(404).json({ error: 'Dataset not found or unauthorized' });
         }
 
+        if (!canEditDataset(existing as any, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to edit this dataset' });
+        }
+
         const dataString = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
 
         const updated = await prisma.dataset.update({
@@ -216,6 +223,10 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
 
         if (!dataset) {
             return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        }
+
+        if (!canViewDataset(dataset as any, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have access to view this dataset' });
         }
 
         const dbUser = await prisma.user.findUnique({
@@ -360,6 +371,10 @@ export const deleteDataset = async (req: AuthenticatedRequest, res: express.Resp
 
         if (!existing) {
             return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        }
+
+        if (!canDeleteDataset(existing as any, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this dataset' });
         }
 
         // Delete related validation reports

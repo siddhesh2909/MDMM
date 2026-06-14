@@ -1,6 +1,7 @@
 import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import { canViewDataset } from '../utils/permission';
 
 /**
  * Quality Controller
@@ -14,6 +15,19 @@ export const getDatasetQuality = async (req: AuthenticatedRequest, res: express.
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
         const datasetId = String(req.params.id);
+
+        // Get dataset info first to check permission
+        const dataset = await prisma.dataset.findFirst({
+            where: { id: datasetId, organizationId: user.organizationId },
+        });
+
+        if (!dataset) {
+            return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        }
+
+        if (!canViewDataset(dataset as any, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have access to view this dataset' });
+        }
 
         // Get latest quality snapshot
         const snapshot = await prisma.qualitySnapshot.findFirst({
@@ -34,14 +48,9 @@ export const getDatasetQuality = async (req: AuthenticatedRequest, res: express.
             orderBy: { createdAt: 'desc' },
         });
 
-        // Get dataset info
-        const dataset = await prisma.dataset.findFirst({
-            where: { id: datasetId, organizationId: user.organizationId },
-        });
-
         res.status(200).json({
             datasetId,
-            datasetName: dataset?.name || 'Unknown',
+            datasetName: dataset.name,
             status: dataset?.status || 'INGESTED',
             current: snapshot ? {
                 completeness: snapshot.completeness,
@@ -82,8 +91,10 @@ export const getQualityOverview = async (req: AuthenticatedRequest, res: express
             orderBy: { createdAt: 'desc' },
         });
 
+        const filteredDatasets = datasets.filter(ds => canViewDataset(ds as any, user));
+
         // For each dataset, get latest quality snapshot
-        const datasetHealth = await Promise.all(datasets.map(async (ds) => {
+        const datasetHealth = await Promise.all(filteredDatasets.map(async (ds) => {
             const snapshot = await prisma.qualitySnapshot.findFirst({
                 where: { datasetId: ds.id },
                 orderBy: { recordedAt: 'desc' },

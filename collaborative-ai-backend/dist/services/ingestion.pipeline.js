@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runIngestionPipeline = runIngestionPipeline;
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const validation_engine_1 = require("./validation.engine");
-const lineage_controller_1 = require("../controllers/lineage.controller");
 // ─────────────────────────────────────────────────────────────
 // Auto Contract Resolution
 // ─────────────────────────────────────────────────────────────
@@ -176,13 +175,6 @@ async function runIngestionPipeline(params) {
             organizationId,
         },
     });
-    // ── Step 9: Lineage ───────────────────────────────────────
-    try {
-        await (0, lineage_controller_1.createIngestionLineage)(organizationId, dataset.id, name, source, sourceUri || name, contract.id, contract.name, dataToStore.length);
-    }
-    catch (e) {
-        console.error('Lineage creation error (non-blocking):', e);
-    }
     // ── Return ────────────────────────────────────────────────
     return {
         dataset: {

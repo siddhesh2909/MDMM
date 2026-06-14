@@ -11,7 +11,6 @@ const auth_1 = require("../middleware/auth");
 // New controllers
 const validation_controller_1 = require("../controllers/validation.controller");
 const quality_controller_1 = require("../controllers/quality.controller");
-const lineage_controller_1 = require("../controllers/lineage.controller");
 const versioning_controller_1 = require("../controllers/versioning.controller");
 const evolution_controller_1 = require("../controllers/evolution.controller");
 const pipeline_logs_controller_1 = require("../controllers/pipeline-logs.controller");
@@ -54,9 +53,6 @@ router.get('/datasets/:id/validation-report', validation_controller_1.getValidat
 // ── Dataset Quality Metrics (Part 3) ──
 router.get('/datasets/:id/quality', quality_controller_1.getDatasetQuality);
 router.get('/quality/overview', quality_controller_1.getQualityOverview);
-// ── Dataset Lineage (Part 4) ──
-router.get('/datasets/:id/lineage', lineage_controller_1.getDatasetLineage);
-router.get('/lineage/full', lineage_controller_1.getFullLineage);
 // ── Workflows ──
 router.get('/workflows', workflows_controller_1.getWorkflows);
 router.post('/workflows', (0, auth_1.requirePermission)('workflow:edit'), workflows_controller_1.createWorkflow);

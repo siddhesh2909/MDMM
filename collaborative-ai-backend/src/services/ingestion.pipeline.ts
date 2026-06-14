@@ -1,6 +1,5 @@
 import prisma from '../lib/prisma';
 import { validateDataAgainstSchema, SchemaField, ValidationResult } from './validation.engine';
-import { createIngestionLineage } from '../controllers/lineage.controller';
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -150,8 +149,8 @@ function applyEnforcement(
         dataToStore.length === 0
             ? 'FAILED'
             : dataToStore.length < parsedData.length
-            ? 'PARTIAL_SUCCESS'
-            : 'VALIDATED';
+                ? 'PARTIAL_SUCCESS'
+                : 'VALIDATED';
 
     return { dataToStore, finalStatus };
 }
@@ -223,6 +222,9 @@ export async function runIngestionPipeline(
             boundContractId: contract.id,
             ownerId: userId,
             organizationId,
+            createdBy: userId,
+            visibility: 'private',
+            sharedWith: '[]',
         },
     });
 
@@ -264,8 +266,8 @@ export async function runIngestionPipeline(
         finalStatus === 'FAILED'
             ? 'error'
             : validationResult.invalidRows > 0
-            ? 'warning'
-            : 'info';
+                ? 'warning'
+                : 'info';
 
     await prisma.pipelineLog.create({
         data: {
@@ -286,21 +288,6 @@ export async function runIngestionPipeline(
         },
     });
 
-    // ── Step 9: Lineage ───────────────────────────────────────
-    try {
-        await createIngestionLineage(
-            organizationId,
-            dataset.id,
-            name,
-            source,
-            sourceUri || name,
-            contract.id,
-            contract.name,
-            dataToStore.length
-        );
-    } catch (e) {
-        console.error('Lineage creation error (non-blocking):', e);
-    }
 
     // ── Return ────────────────────────────────────────────────
     return {
