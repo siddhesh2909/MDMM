@@ -6,7 +6,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/providers/ToastProvider';
 import { apiClient } from '@/lib/apiClient';
-import { 
+import {
     Bell, Search, ShieldAlert, Database, CheckCircle2, Wand2, GitMerge,
     Network, BarChart3, FileText, Sparkles, Settings, Eye, Check,
     Archive, Trash2, SlidersHorizontal, CheckCheck, Loader2, AlertTriangle, ArrowLeft
@@ -35,7 +35,7 @@ export default function NotificationsCenterPage() {
     const [statusFilter, setStatusFilter] = useState<'all' | 'unread' | 'read' | 'archived'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'priority'>('newest');
-    
+
     // Category checklist
     const categoriesList = [
         { key: 'security', label: 'Security' },
@@ -43,7 +43,6 @@ export default function NotificationsCenterPage() {
         { key: 'contract', label: 'Data Contracts' },
         { key: 'preprocessing', label: 'Preprocessing' },
         { key: 'workflow', label: 'Workflow' },
-        { key: 'lineage', label: 'Lineage' },
         { key: 'analytics', label: 'Analytics' },
         { key: 'reports', label: 'Reports' },
         { key: 'ai', label: 'AI Assistant' },
@@ -122,7 +121,7 @@ export default function NotificationsCenterPage() {
     };
 
     const toggleCategory = (catKey: string) => {
-        setSelectedCategories(prev => 
+        setSelectedCategories(prev =>
             prev.includes(catKey) ? prev.filter(k => k !== catKey) : [...prev, catKey]
         );
     };
@@ -137,12 +136,12 @@ export default function NotificationsCenterPage() {
 
     // Client-side filtering for category checkbox list and search query
     const filteredNotifications = notifications.filter(notif => {
-        const matchesCategory = selectedCategories.includes(notif.type.toLowerCase()) || 
-                               (notif.type.toLowerCase() === 'ai assistant' && selectedCategories.includes('ai')) ||
-                               (notif.type.toLowerCase() === 'data sources' && selectedCategories.includes('dataset')) ||
-                               (notif.type.toLowerCase() === 'data contracts' && selectedCategories.includes('contract'));
-        const matchesSearch = notif.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                             notif.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategories.includes(notif.type.toLowerCase()) ||
+            (notif.type.toLowerCase() === 'ai assistant' && selectedCategories.includes('ai')) ||
+            (notif.type.toLowerCase() === 'data sources' && selectedCategories.includes('dataset')) ||
+            (notif.type.toLowerCase() === 'data contracts' && selectedCategories.includes('contract'));
+        const matchesSearch = notif.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            notif.description.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
     });
 
@@ -161,8 +160,6 @@ export default function NotificationsCenterPage() {
                 return { icon: <Wand2 size={14} style={{ color: '#a855f7' }} />, label: 'Preprocessing', bg: 'rgba(168, 85, 247, 0.08)' };
             case 'workflow':
                 return { icon: <GitMerge size={14} style={{ color: '#6366f1' }} />, label: 'Workflow', bg: 'rgba(99, 102, 241, 0.08)' };
-            case 'lineage':
-                return { icon: <Network size={14} style={{ color: '#06b6d4' }} />, label: 'Lineage', bg: 'rgba(6, 182, 212, 0.08)' };
             case 'analytics':
                 return { icon: <BarChart3 size={14} style={{ color: '#0ea5e9' }} />, label: 'Analytics', bg: 'rgba(14, 165, 233, 0.08)' };
             case 'reports':
@@ -251,7 +248,7 @@ export default function NotificationsCenterPage() {
                     <Card>
                         <CardHeader style={{ padding: '1.25rem', borderBottom: '1px solid var(--border-color)', fontSize: '0.875rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span>Categories</span>
-                            <button 
+                            <button
                                 onClick={toggleAllCategories}
                                 style={{ fontSize: '0.72rem', color: 'var(--accent-color)', fontWeight: 600 }}
                             >
@@ -413,11 +410,11 @@ export default function NotificationsCenterPage() {
 
                                                 {/* Timestamp */}
                                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                    {new Date(notif.createdAt).toLocaleString(undefined, { 
-                                                        month: 'short', 
-                                                        day: 'numeric', 
-                                                        hour: '2-digit', 
-                                                        minute: '2-digit' 
+                                                    {new Date(notif.createdAt).toLocaleString(undefined, {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
                                                     })}
                                                 </span>
                                             </div>

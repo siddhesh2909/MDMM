@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Sun, Moon, User, Shield, LogOut, ChevronDown } from 'lucide-react';
+import { Search, Sun, Moon, User, Shield, LogOut, ChevronDown, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -78,6 +78,15 @@ export function Header() {
                     aria-label="Toggle Theme"
                 >
                     {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                </button>
+
+                <button
+                    className="icon-btn"
+                    onClick={() => router.push('/collaboration/direct-messages')}
+                    aria-label="Collaboration Channels"
+                    title="Collaboration Hub"
+                >
+                    <MessageSquare size={20} />
                 </button>
 
                 <NotificationCenter />

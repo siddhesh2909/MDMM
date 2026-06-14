@@ -6,7 +6,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/providers/ToastProvider';
 import { apiClient } from '@/lib/apiClient';
-import { 
+import {
     Bell, ArrowLeft, ShieldAlert, Database, CheckCircle2, Wand2, GitMerge,
     Network, BarChart3, FileText, Sparkles, Settings, Check, Archive, Trash2,
     Calendar, AlertTriangle, Info, Shield, Layers, HelpCircle
@@ -35,7 +35,7 @@ export default function NotificationDetailsPage() {
 
     useEffect(() => {
         if (!id) return;
-        
+
         const fetchDetails = async () => {
             setLoading(true);
             setError(false);
@@ -131,9 +131,6 @@ export default function NotificationDetailsPage() {
                 return { icon: <Wand2 size={18} />, label: 'Preprocessing Pipeline', bg: 'rgba(168, 85, 247, 0.08)', color: '#a855f7', module: 'AI Preprocessing & Standardizer' };
             case 'workflow':
                 return { icon: <GitMerge size={18} />, label: 'Workflow Task', bg: 'rgba(99, 102, 241, 0.08)', color: '#6366f1', module: 'Workflow & Ingest Pipeline' };
-            case 'lineage':
-                return { icon: <Network size={18} />, label: 'Lineage Map', bg: 'rgba(6, 182, 212, 0.08)', color: '#06b6d4', module: 'Data Lineage Trace System' };
-            case 'analytics':
                 return { icon: <BarChart3 size={18} />, label: 'Analytics Dashboard', bg: 'rgba(14, 165, 233, 0.08)', color: '#0ea5e9', module: 'Visual Analytics Studio' };
             case 'reports':
                 return { icon: <FileText size={18} />, label: 'Enterprise Report', bg: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b', module: 'Reports & Scheduled Distributions' };
@@ -162,8 +159,6 @@ export default function NotificationDetailsPage() {
                 return 'Go to the Preprocessing tab to apply statistical imputation standardizations, categorical encoding operations, and fix schema anomalies.';
             case 'workflow':
                 return 'Verify task progression checklist in Workflows, update assignee status mappings, or request validation reports.';
-            case 'lineage':
-                return 'Check the Lineage network map to trace downstream impact analysis, schema dependency relations, and quality index scores.';
             case 'analytics':
                 return 'Open the Analytics Dashboard to view newly published charts and metric rollup distributions.';
             case 'reports':
@@ -193,7 +188,7 @@ export default function NotificationDetailsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px', margin: '0 auto' }}>
             {/* Back Row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <button 
+                <button
                     onClick={() => router.push('/notifications')}
                     style={{
                         display: 'flex',
@@ -215,7 +210,7 @@ export default function NotificationDetailsPage() {
             {/* Main Detail Card */}
             <Card style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
                 <CardContent style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    
+
                     {/* Category & Priority Row */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                         {/* Category badge */}
@@ -253,14 +248,14 @@ export default function NotificationDetailsPage() {
                         <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                             {notification.title}
                         </h2>
-                        <p style={{ 
-                            fontSize: '1rem', 
-                            color: 'var(--text-primary)', 
-                            lineHeight: '1.6', 
-                            margin: 0, 
-                            whiteSpace: 'pre-wrap', 
-                            backgroundColor: 'var(--bg-secondary)', 
-                            padding: '1.25rem 1.5rem', 
+                        <p style={{
+                            fontSize: '1rem',
+                            color: 'var(--text-primary)',
+                            lineHeight: '1.6',
+                            margin: 0,
+                            whiteSpace: 'pre-wrap',
+                            backgroundColor: 'var(--bg-secondary)',
+                            padding: '1.25rem 1.5rem',
                             borderRadius: '8px',
                             border: '1px solid var(--border-color)'
                         }}>
@@ -275,13 +270,13 @@ export default function NotificationDetailsPage() {
                             <div>
                                 <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Date Generated</span>
                                 <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
-                                    {new Date(notification.createdAt).toLocaleString(undefined, { 
-                                        weekday: 'long', 
-                                        year: 'numeric', 
-                                        month: 'long', 
-                                        day: 'numeric', 
-                                        hour: '2-digit', 
-                                        minute: '2-digit' 
+                                    {new Date(notification.createdAt).toLocaleString(undefined, {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
                                     })}
                                 </span>
                             </div>
@@ -301,9 +296,9 @@ export default function NotificationDetailsPage() {
                             <Info size={18} style={{ color: 'var(--text-secondary)', marginTop: '2px' }} />
                             <div>
                                 <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Status Parameters</span>
-                                <span style={{ 
-                                    fontSize: '0.9rem', 
-                                    color: notification.read ? 'var(--text-secondary)' : 'var(--primary-color)', 
+                                <span style={{
+                                    fontSize: '0.9rem',
+                                    color: notification.read ? 'var(--text-secondary)' : 'var(--primary-color)',
                                     fontWeight: 600,
                                     display: 'inline-flex',
                                     alignItems: 'center',
@@ -335,11 +330,11 @@ export default function NotificationDetailsPage() {
                     </div>
 
                     {/* Operations Action Bar */}
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        borderTop: '1px solid var(--border-color)', 
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderTop: '1px solid var(--border-color)',
                         paddingTop: '1.5rem',
                         marginTop: '1rem',
                         flexWrap: 'wrap',
@@ -353,8 +348,8 @@ export default function NotificationDetailsPage() {
                                 </Button>
                             )}
                             {notification.actionUrl && (
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     onClick={() => router.push(notification.actionUrl || '')}
                                 >
                                     Open Related Module
@@ -364,16 +359,16 @@ export default function NotificationDetailsPage() {
 
                         {/* Right action: Archive / Delete */}
                         <div style={{ display: 'flex', gap: '0.75rem' }}>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 icon={<Archive size={16} />}
                                 style={{ color: 'var(--warning-color)', borderColor: 'var(--warning-color)' }}
                                 onClick={handleArchive}
                             >
                                 {notification.archived ? 'Restore from Archive' : 'Archive Alert'}
                             </Button>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 icon={<Trash2 size={16} />}
                                 style={{ color: 'var(--danger-color)', borderColor: 'var(--danger-color)' }}
                                 onClick={handleDelete}

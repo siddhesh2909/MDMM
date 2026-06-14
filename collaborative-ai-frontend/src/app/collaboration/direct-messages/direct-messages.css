@@ -779,3 +779,381 @@
         display: inline-flex;
     }
 }
+
+/* --- Slack/Notion Channels, Mentions, Pinning CSS Extensions --- */
+
+/* Sidebar Sections Styling */
+.dm-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.dm-section-title {
+    font-size: 0.675rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+.dm-section-action-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.dm-section-action-btn:hover {
+    color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.dm-section-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.dm-section-empty {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 0.5rem 0.75rem;
+    text-align: center;
+}
+
+/* Channel Icons & Avatars */
+.dm-channel-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.channel-card.active .dm-channel-icon-wrapper {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.channel-card.active .dm-channel-icon-wrapper svg {
+    color: var(--primary-color) !important;
+}
+
+.dm-channel-header-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.channel-avatar {
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)) !important;
+    border-radius: var(--radius-lg) !important;
+}
+
+/* Header Message Search Box */
+.dm-header-search-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.25rem 0.5rem;
+    gap: 0.35rem;
+    max-width: 240px;
+    animation: slide-left var(--transition-fast) forwards;
+}
+
+@keyframes slide-left {
+    from {
+        transform: translateX(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.dm-header-search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    width: 130px;
+}
+
+/* Sender details on channel messages */
+.dm-message-sender-info {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: 0.725rem;
+    margin-bottom: 0.15rem;
+    padding-left: 0.35rem;
+}
+
+.dm-message-sender-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dm-message-sender-role {
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+/* Pin Action & Pinned Indicator Styles */
+.dm-message-content-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    position: relative;
+}
+
+.dm-message-action-btn {
+    opacity: 0;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    z-index: 2;
+}
+
+.dm-message-group:hover .dm-message-action-btn {
+    opacity: 1;
+}
+
+.dm-message-action-btn:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+    transform: scale(1.05);
+}
+
+.dm-message-action-btn.pinned {
+    opacity: 1 !important;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-color: rgba(99, 102, 241, 0.25);
+}
+
+.dm-message-bubble.pinned {
+    border-left: 3px solid var(--primary-color) !important;
+    background: rgba(99, 102, 241, 0.03) !important;
+}
+
+/* Pinned messages side panel */
+.dm-right-pinned-section {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.dm-pinned-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.dm-pinned-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.625rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: background var(--transition-fast);
+}
+
+.dm-pinned-item:hover {
+    background: var(--primary-light);
+    border-color: rgba(99, 102, 241, 0.1);
+}
+
+.dm-pinned-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dm-pinned-item-author {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dm-pinned-item-time {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+.dm-pinned-item-content {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.dm-pinned-item-attachments {
+    font-size: 0.65rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* User Mentions Autocomplete Popover */
+.dm-mention-popover {
+    position: absolute;
+    bottom: 100%;
+    left: 1rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+    width: 220px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    animation: fade-in-up var(--transition-fast) forwards;
+}
+
+@keyframes fade-in-up {
+    from {
+        transform: translateY(10px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.dm-mention-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.dm-mention-item:hover, .dm-mention-item.active {
+    background: var(--primary-light);
+}
+
+.dm-mention-item.active .dm-mention-name {
+    color: var(--primary-color);
+}
+
+.dm-mention-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.725rem;
+    font-weight: 600;
+}
+
+.dm-mention-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.dm-mention-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dm-mention-role {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+
+.dm-mention-pill {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary-color);
+    padding: 0 4px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+/* Local Message search highlight */
+.dm-message-highlight {
+    background-color: rgba(254, 240, 138, 0.8) !important;
+    color: #1a1a1a !important;
+    padding: 0 2px;
+    border-radius: 2px;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .dm-message-highlight {
+    background-color: rgba(234, 179, 8, 0.4) !important;
+    color: #ffffff !important;
+}
+
+/* Modals Form Layouts */
+.dm-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.dm-form-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

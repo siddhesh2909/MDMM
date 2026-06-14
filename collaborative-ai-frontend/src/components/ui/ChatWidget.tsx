@@ -14,7 +14,7 @@ interface Message {
 export function ChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { id: '1', sender: 'bot', text: 'Hi there! I am your AI assistant. I can help you query datasets, build dashboards, or explore lineage. What can I do for you today?' }
+        { id: '1', sender: 'bot', text: 'Hi there! I am your AI assistant. I can help you query datasets, build dashboards. What can I do for you today?' }
     ]);
     const [inputVal, setInputVal] = useState('');
     const [isThinking, setIsThinking] = useState(false);

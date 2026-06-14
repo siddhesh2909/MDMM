@@ -33,12 +33,15 @@ import {
     X,
     User,
     Brain,
-    Link2
+    Link2,
+    Lock,
+    Users
 } from 'lucide-react';
 import { useToast } from '@/components/providers/ToastProvider';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/components/providers/AuthProvider';
 import * as XLSX from 'xlsx';
+import { ShareModal } from '@/components/ui/ShareModal';
 import './ingestion.css';
 
 function getRoleDisplayName(role: string): string {
@@ -203,6 +206,11 @@ export default function IngestionPage() {
     const { user } = useAuth();
     const { showToast } = useToast();
 
+    // Dataset Sharing States
+    const [sharingDatasetId, setSharingDatasetId] = useState<string | null>(null);
+    const [sharingDatasetName, setSharingDatasetName] = useState<string>('');
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
     // ── Fetch active connected datasets ──────────────────────
     const fetchDatasets = useCallback(async () => {
         setLoadingList(true);
@@ -231,6 +239,7 @@ export default function IngestionPage() {
                         quality: d.quality ?? 95,
                         status: d.status ? d.status.toLowerCase() : 'ingested',
                         owner: d.owner?.role ? getRoleDisplayName(d.owner.role) : (d.owner?.name || 'System'),
+                        visibility: d.visibility || 'private',
                         createdAt: d.createdAt
                     };
                 });
@@ -858,6 +867,24 @@ export default function IngestionPage() {
                                                  <span>{dataset.columns} columns</span>
                                                  <span>•</span>
                                                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><User size={12} /> {dataset.owner}</span>
+                                                 <span>•</span>
+                                                 <span style={{ 
+                                                     display: 'flex', 
+                                                     alignItems: 'center', 
+                                                     gap: '0.25rem',
+                                                     padding: '0.15rem 0.4rem',
+                                                     borderRadius: '4px',
+                                                     fontSize: '0.7rem',
+                                                     fontWeight: 600,
+                                                     backgroundColor: (dataset as any).visibility === 'private' ? 'rgba(239, 68, 68, 0.08)' :
+                                                                      (dataset as any).visibility === 'organization' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(59, 130, 246, 0.08)',
+                                                     color: (dataset as any).visibility === 'private' ? 'var(--danger-color)' :
+                                                            (dataset as any).visibility === 'organization' ? '#10b981' : 'var(--accent-color)'
+                                                 }}>
+                                                     {(dataset as any).visibility === 'private' ? <Lock size={10} /> : 
+                                                      (dataset as any).visibility === 'organization' ? <Globe size={10} /> : <Users size={10} />}
+                                                     <span style={{ textTransform: 'capitalize' }}>{(dataset as any).visibility || 'private'}</span>
+                                                 </span>
                                              </div>
                                         </div>
                                     </div>
@@ -883,6 +910,19 @@ export default function IngestionPage() {
                                          >
                                              <Table size={13} />
                                              Schema &amp; AI
+                                         </Button>
+
+                                         <Button
+                                             variant="outline"
+                                             onClick={() => {
+                                                 setSharingDatasetId(dataset.id);
+                                                 setSharingDatasetName(dataset.name);
+                                                 setIsShareModalOpen(true);
+                                             }}
+                                             style={{ display: 'flex', gap: '0.375rem', alignItems: 'center', fontSize: '0.75rem', height: '32px', cursor: 'pointer' }}
+                                         >
+                                             <Share2 size={13} />
+                                             Share
                                          </Button>
 
                                          <Button
@@ -1086,6 +1126,19 @@ export default function IngestionPage() {
                         </div>
                     </div>
                 </div>
+            )}
+            {/* Share Modal Popup */}
+            {sharingDatasetId && (
+                <ShareModal
+                    isOpen={isShareModalOpen}
+                    onClose={() => {
+                        setIsShareModalOpen(false);
+                        setSharingDatasetId(null);
+                    }}
+                    datasetId={sharingDatasetId}
+                    datasetName={sharingDatasetName}
+                    onSaveCallback={fetchDatasets}
+                />
             )}
         </div>
     );

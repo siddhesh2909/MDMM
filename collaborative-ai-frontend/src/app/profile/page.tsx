@@ -443,7 +443,7 @@ export default function ProfilePage() {
             case 'Analyst':
                 return 'Standard access. Permission to ingest, clean, and view datasets, manage validation contracts, track workflows, and review analytics.';
             case 'Business User':
-                return 'Read-only visitor. Restricted view permissions over datasets, contracts, and lineage networks. All profile configurations are read-only.';
+                return 'Read-only visitor. Restricted view permissions over datasets, contracts. All profile configurations are read-only.';
             default:
                 return 'Limited operational clearance.';
         }
@@ -1134,10 +1134,10 @@ export default function ProfilePage() {
                                 <div className="input-wrapper">
                                     <label className="input-label">Clearance Role</label>
                                     <select className="input-field" value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
-                                         <option value="Analyst">Analyst</option>
-                                         <option value="Business User">Business User</option>
-                                         <option value="Admin">Admin</option>
-                                     </select>
+                                        <option value="Analyst">Analyst</option>
+                                        <option value="Business User">Business User</option>
+                                        <option value="Admin">Admin</option>
+                                    </select>
                                 </div>
                                 <div className="input-wrapper">
                                     <label className="input-label">Department Assignment (Optional)</label>

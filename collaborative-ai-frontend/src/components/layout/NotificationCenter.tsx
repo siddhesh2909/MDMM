@@ -30,7 +30,7 @@ interface Notification {
     id: string;
     title: string;
     description: string;
-    type: string; // Category (e.g. security, dataset, contract, preprocessing, workflow, lineage, analytics, reports, ai, system)
+    type: string; // Category (e.g. security, dataset, contract, preprocessing, workflow, analytics, reports, ai, system)
     read: boolean;
     archived: boolean;
     priority: string; // Critical, High, Medium, Low
@@ -89,8 +89,8 @@ export function NotificationCenter() {
                     setTimeout(() => setShouldRing(false), 500);
 
                     // Trigger real-time compact toast alert
-                    const toastType = newNotif.priority === 'Critical' || newNotif.type === 'error' ? 'error' : 
-                                      newNotif.priority === 'High' || newNotif.type === 'contract' ? 'success' : 'info';
+                    const toastType = newNotif.priority === 'Critical' || newNotif.type === 'error' ? 'error' :
+                        newNotif.priority === 'High' || newNotif.type === 'contract' ? 'success' : 'info';
                     showToast(newNotif.title, toastType);
 
                     // Prepend new notification if not archived
@@ -214,8 +214,6 @@ export function NotificationCenter() {
                 return { icon: <Wand2 size={13} style={{ color: '#a855f7' }} />, label: 'Preprocessing Pipeline', bg: 'rgba(168, 85, 247, 0.08)' };
             case 'workflow':
                 return { icon: <GitMerge size={13} style={{ color: '#6366f1' }} />, label: 'Workflow Automation', bg: 'rgba(99, 102, 241, 0.08)' };
-            case 'lineage':
-                return { icon: <Network size={13} style={{ color: '#06b6d4' }} />, label: 'Lineage Network', bg: 'rgba(6, 182, 212, 0.08)' };
             case 'analytics':
                 return { icon: <BarChart3 size={13} style={{ color: '#0ea5e9' }} />, label: 'Analytics Insights', bg: 'rgba(14, 165, 233, 0.08)' };
             case 'reports':
@@ -407,11 +405,11 @@ export function NotificationCenter() {
                                                     padding: '1px 5px',
                                                     borderRadius: '3px',
                                                     backgroundColor: notif.priority === 'Critical' ? 'rgba(239, 68, 68, 0.1)' :
-                                                                    notif.priority === 'High' ? 'rgba(245, 158, 11, 0.1)' :
-                                                                    notif.priority === 'Medium' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                                                        notif.priority === 'High' ? 'rgba(245, 158, 11, 0.1)' :
+                                                            notif.priority === 'Medium' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(100, 116, 139, 0.1)',
                                                     color: notif.priority === 'Critical' ? 'var(--danger-color)' :
-                                                           notif.priority === 'High' ? 'var(--warning-color)' :
-                                                           notif.priority === 'Medium' ? 'var(--accent-color)' : 'var(--text-secondary)'
+                                                        notif.priority === 'High' ? 'var(--warning-color)' :
+                                                            notif.priority === 'Medium' ? 'var(--accent-color)' : 'var(--text-secondary)'
                                                 }}>
                                                     {notif.priority}
                                                 </span>

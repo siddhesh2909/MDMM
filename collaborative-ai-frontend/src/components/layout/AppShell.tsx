@@ -22,7 +22,6 @@ function checkAuthorization(role: string, path: string): boolean {
         '/contracts',
         '/preprocessing',
         '/workflows',
-        '/lineage',
         '/analytics',
         '/ai-assistant',
         '/profile',
@@ -33,7 +32,6 @@ function checkAuthorization(role: string, path: string): boolean {
         '/analytics',
         '/reports',
         '/ai-business-assistant',
-        '/lineage',
         '/profile',
         '/notifications',
         '/collaboration'

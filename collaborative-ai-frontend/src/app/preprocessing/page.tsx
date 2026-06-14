@@ -15,12 +15,15 @@ import { useToast } from '@/components/providers/ToastProvider';
 import { apiClient } from '@/lib/apiClient';
 
 /* ── Types ── */
-const isValueMissing = (val: any, type: string) => {
+const isValueMissing = (val: any, type: string, colName?: string, currentDsId?: string) => {
     if (val === null || val === undefined) return true;
     const s = String(val).trim();
     if (s === '' || s.toLowerCase() === 'omitted' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'nan' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return true;
     const t = String(type).toLowerCase();
-    if (['int', 'float', 'integer', 'number', 'double'].includes(t) && Number(val) === 0) return true;
+    // Only treat 0 as missing for the demo dataset's total_spent column
+    if (currentDsId === 'products-50' && colName === 'total_spent') {
+        if (Number(val) === 0) return true;
+    }
     return false;
 };
 
@@ -30,7 +33,13 @@ const isValueAnomaly = (val: any, colName: string, type: string) => {
     if (s === '' || s.toLowerCase() === 'omitted' || s.toLowerCase() === 'n/a' || s.toLowerCase() === 'nan' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return false;
     const t = String(type).toLowerCase();
     const isNumericType = ['int', 'float', 'integer', 'number', 'double'].includes(t);
-    if (isNumericType && isNaN(Number(s))) return true;
+    if (isNumericType) {
+        return isNaN(Number(s));
+    }
+    const isDateType = t.includes('date') || t.includes('time');
+    if (isDateType) {
+        return isNaN(Date.parse(s));
+    }
     if (colName.toLowerCase().includes('email') && !s.includes('@')) return true;
     if (colName.toLowerCase().includes('date') && isNaN(Date.parse(s))) return true;
     return false;
@@ -307,7 +316,7 @@ export default function PreprocessingPage() {
             // Missing
             const hasMissing = columns.some(col => {
                 const colType = columnsSchema.find(cs => cs.name === col)?.type || 'STRING';
-                return isValueMissing(r[col], colType);
+                return isValueMissing(r[col], colType, col, dsId);
             });
             if (hasMissing) {
                 missing++;
@@ -492,7 +501,7 @@ export default function PreprocessingPage() {
                 schema.forEach((s: any) => {
                     const nullCount = rawRows.filter((r: any) => {
                         const colType = s.type || 'STRING';
-                        return isValueMissing(r[s.name], colType);
+                        return isValueMissing(r[s.name], colType, s.name, id);
                     }).length;
                     if (nullCount > 0) {
                         generatedTasks.push({
@@ -776,7 +785,7 @@ export default function PreprocessingPage() {
                 columnsSchema.forEach(col => {
                     const colName = col.name;
                     const colType = col.type || 'STRING';
-                    if (isValueMissing(u[colName], colType)) {
+                    if (isValueMissing(u[colName], colType, colName, dsId)) {
                         const tLower = colType.toLowerCase();
                         if (['int', 'float', 'integer', 'number', 'double'].includes(tLower)) {
                             const vals = d.map(x => Number(x[colName])).filter(v => !isNaN(v) && v !== 0);
@@ -1998,7 +2007,7 @@ export default function PreprocessingPage() {
                                                             const editing = editCell?.rid === row._rid && editCell.col === c;
                                                             // Highlight cells with warnings dynamically!
                                                             const colType = columnsSchema.find(cs => cs.name === c)?.type || 'STRING';
-                                                            const isFlaggedSpentNull = isValueMissing(row[c], colType);
+                                                            const isFlaggedSpentNull = isValueMissing(row[c], colType, c, dsId);
                                                             const isFlaggedEmailBad = isValueAnomaly(row[c], c, colType);
                                                             const isMatch = isFindReplaceOpen && findText && (findCol === 'all' || findCol === c) && (
                                                                 matchCase
