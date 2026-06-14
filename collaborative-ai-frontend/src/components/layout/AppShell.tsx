@@ -26,7 +26,8 @@ function checkAuthorization(role: string, path: string): boolean {
         '/analytics',
         '/ai-assistant',
         '/profile',
-        '/notifications'
+        '/notifications',
+        '/collaboration'
     ];
     const viewerPaths = [
         '/analytics',
@@ -34,13 +35,14 @@ function checkAuthorization(role: string, path: string): boolean {
         '/ai-business-assistant',
         '/lineage',
         '/profile',
-        '/notifications'
+        '/notifications',
+        '/collaboration'
     ];
 
-    if (role === 'Analyst' || role === 'Data Steward') {
+    if (role === 'Analyst') {
         return analystPaths.some(p => path === p || path.startsWith(p + '/'));
     }
-    if (role === 'Viewer') {
+    if (role === 'Business User') {
         return viewerPaths.some(p => path === p || path.startsWith(p + '/'));
     }
     return false;
@@ -109,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                                 <button 
                                     className="btn btn-primary" 
-                                    onClick={() => window.location.href = role === 'Viewer' ? '/analytics' : '/ingestion'}
+                                    onClick={() => window.location.href = role === 'Business User' ? '/analytics' : '/ingestion'}
                                 >
                                     Go to Dashboard
                                 </button>

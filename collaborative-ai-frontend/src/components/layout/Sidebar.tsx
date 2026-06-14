@@ -18,11 +18,19 @@ import {
     LogOut,
     Globe,
     FileText,
-    Sparkles
+    Sparkles,
+    MessageSquare
 } from 'lucide-react';
 import './layout.css';
 
-const navConfig = [
+interface NavItem {
+    name: string;
+    path: string;
+    icon: React.ComponentType<any>;
+    subItems?: { name: string; path: string }[];
+}
+
+const navConfig: NavItem[] = [
     { name: 'Data Sources', path: '/ingestion', icon: Globe },
     { name: 'Data Contracts', path: '/data-contracts', icon: Database },
     { name: 'Preprocessing', path: '/preprocessing', icon: Wand2 },
@@ -32,6 +40,14 @@ const navConfig = [
     { name: 'Reports', path: '/reports', icon: FileText },
     { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
     { name: 'AI Business Assistant', path: '/ai-business-assistant', icon: Sparkles },
+    {
+        name: 'Collaboration',
+        path: '/collaboration/direct-messages',
+        icon: MessageSquare,
+        subItems: [
+            { name: 'Direct Messages', path: '/collaboration/direct-messages' }
+        ]
+    },
     { name: 'Admin', path: '/admin', icon: Settings },
 ];
 
@@ -46,7 +62,7 @@ export function Sidebar() {
             if (item.name === 'AI Business Assistant') return false;
             return true;
         }
-        if (role === 'Analyst' || role === 'Data Steward') {
+        if (role === 'Analyst') {
             return [
                 'Data Sources',
                 'Data Contracts',
@@ -54,15 +70,17 @@ export function Sidebar() {
                 'Workflows',
                 'Lineage',
                 'Analytics',
-                'AI Assistant'
+                'AI Assistant',
+                'Collaboration'
             ].includes(item.name);
         }
-        if (role === 'Viewer') {
+        if (role === 'Business User') {
             return [
                 'Analytics',
                 'Reports',
                 'AI Business Assistant',
-                'Lineage'
+                'Lineage',
+                'Collaboration'
             ].includes(item.name);
         }
         return false;
@@ -79,13 +97,29 @@ export function Sidebar() {
 
             <nav className="sidebar-nav">
                 {allowedNavs.map((item) => {
-                    const isActive = pathname.startsWith(item.path);
+                    const isActive = pathname.startsWith(item.path) || (item.subItems && item.subItems.some(sub => pathname.startsWith(sub.path)));
                     const Icon = item.icon;
                     return (
-                        <Link key={item.path} href={item.path} className={`nav-item ${isActive ? 'active' : ''}`} title={collapsed ? item.name : undefined}>
-                            <Icon className="nav-icon" />
-                            <span className="nav-label">{item.name}</span>
-                        </Link>
+                        <div key={item.name} className="nav-group" style={{ display: 'flex', flexDirection: 'column' }}>
+                            <Link href={item.path} className={`nav-item ${isActive ? 'active' : ''}`} title={collapsed ? item.name : undefined}>
+                                <Icon className="nav-icon" />
+                                <span className="nav-label">{item.name}</span>
+                            </Link>
+                            
+                            {item.subItems && !collapsed && (
+                                <div className="nav-sub-list">
+                                    {item.subItems.map((sub) => {
+                                        const isSubActive = pathname === sub.path;
+                                        return (
+                                            <Link key={sub.path} href={sub.path} className={`nav-sub-item ${isSubActive ? 'active' : ''}`}>
+                                                <span className="nav-sub-dot" />
+                                                <span>{sub.name}</span>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     );
                 })}
             </nav>

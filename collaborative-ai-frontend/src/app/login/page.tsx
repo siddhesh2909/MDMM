@@ -10,7 +10,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const [role, setRole] = useState('Data Analyst');
+    const [role, setRole] = useState('Analyst');
     const [department, setDepartment] = useState('');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -99,9 +99,9 @@ export default function LoginPage() {
                             <div className="login-field">
                                 <label>Role</label>
                                 <select value={role} onChange={e => setRole(e.target.value)}>
-                                    <option>Data Analyst</option>
-                                    <option>Business User</option>
-                                    <option>Admin</option>
+                                    <option value="Analyst">Analyst</option>
+                                    <option value="Business User">Business User</option>
+                                    <option value="Admin">Admin</option>
                                 </select>
                             </div>
                             <div className="login-field">
@@ -145,8 +145,8 @@ export default function LoginPage() {
                     <div className="login-demo-info">
                         <p style={{ marginBottom: '0.75rem' }}>Quick Login (Dev Mode):</p>
                         <div className="login-quick-btns">
-                            <button type="button" onClick={() => login('bob@ecommerce.ai', 'password123')} title="Data Analyst">
-                                Data Analyst
+                            <button type="button" onClick={() => login('alice@ecommerce.ai', 'password123')} title="Analyst">
+                                Analyst
                             </button>
                             <button type="button" onClick={() => login('charlie@ecommerce.ai', 'password123')} title="Business User">
                                 Business User

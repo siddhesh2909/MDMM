@@ -11,9 +11,7 @@ import './layout.css';
 
 function getRoleDisplayName(role: string): string {
     if (role === 'Admin') return 'Admin';
-    if (role === 'Analyst' || role === 'Data Steward' || role === 'Data Engineer' || role === 'Data Analyst') {
-        return 'Data Analyst';
-    }
+    if (role === 'Analyst') return 'Analyst';
     return 'Business User';
 }
 

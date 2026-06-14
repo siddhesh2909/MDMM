@@ -113,7 +113,7 @@ export default function LandingPage() {
 
                 <div className="landing-hero-metrics">
                     <div className="landing-hero-metric">
-                        <div className="landing-hero-metric-value">4</div>
+                        <div className="landing-hero-metric-value">3</div>
                         <div className="landing-hero-metric-label">User Roles</div>
                     </div>
                     <div className="landing-hero-metric">
@@ -314,18 +314,18 @@ export default function LandingPage() {
                     <span className="landing-section-label">Access Control</span>
                     <h2 className="landing-section-title">Role-Based Collaboration</h2>
                     <p className="landing-section-desc">
-                        Four distinct roles with granular permissions ensure every team member
+                        Three distinct roles with granular permissions ensure every team member
                         has the right access to the right data at the right time.
                     </p>
                 </div>
 
-                <div className="landing-roles-grid">
+                <div className="landing-roles-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                     <div className="landing-role-card animate-on-scroll stagger-1">
-                        <div className="landing-role-avatar landing-role-avatar--engineer">
-                            <Code2 size={28} />
+                        <div className="landing-role-avatar landing-role-avatar--analyst">
+                            <BarChart3 size={28} />
                         </div>
-                        <h3>Data Steward</h3>
-                        <p>Full pipeline control — ingestion, contracts, preprocessing, and workflows.</p>
+                        <h3>Analyst</h3>
+                        <p>Full pipeline control and analysis — ingestion, contracts, preprocessing, and workflows.</p>
                         <div className="landing-role-perms">
                             <span className="landing-role-perm">dataset:manage</span>
                             <span className="landing-role-perm">contract:edit</span>
@@ -334,31 +334,18 @@ export default function LandingPage() {
                     </div>
 
                     <div className="landing-role-card animate-on-scroll stagger-2">
-                        <div className="landing-role-avatar landing-role-avatar--analyst">
-                            <BarChart3 size={28} />
+                        <div className="landing-role-avatar landing-role-avatar--business">
+                            <Users size={28} />
                         </div>
-                        <h3>Analyst</h3>
-                        <p>Analyze data, view contracts, and track workflows with manage access.</p>
+                        <h3>Business User</h3>
+                        <p>Restricted viewing access — view datasets, monitor analytics, and track workflow progress.</p>
                         <div className="landing-role-perms">
-                            <span className="landing-role-perm">dataset:manage</span>
                             <span className="landing-role-perm">dataset:view</span>
                             <span className="landing-role-perm">workflow:view</span>
                         </div>
                     </div>
 
                     <div className="landing-role-card animate-on-scroll stagger-3">
-                        <div className="landing-role-avatar landing-role-avatar--business">
-                            <Users size={28} />
-                        </div>
-                        <h3>Viewer</h3>
-                        <p>View datasets, monitor analytics, and track workflow progress.</p>
-                        <div className="landing-role-perms">
-                            <span className="landing-role-perm">dataset:view</span>
-                            <span className="landing-role-perm">workflow:view</span>
-                        </div>
-                    </div>
-
-                    <div className="landing-role-card animate-on-scroll stagger-4">
                         <div className="landing-role-avatar landing-role-avatar--admin">
                             <Shield size={28} />
                         </div>
