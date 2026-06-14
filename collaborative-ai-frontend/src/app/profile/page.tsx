@@ -18,7 +18,7 @@ import './profile.css';
 function getRoleDisplayName(role: string): string {
     if (role === 'Admin') return 'Admin';
     if (role === 'Analyst' || role === 'Data Steward' || role === 'Data Engineer' || role === 'Data Analyst') {
-        return 'Data Analyst';
+        return 'Analyst';
     }
     return 'Business User';
 }
@@ -106,7 +106,7 @@ export default function ProfilePage() {
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteName, setInviteName] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
-    const [inviteRole, setInviteRole] = useState('Viewer');
+    const [inviteRole, setInviteRole] = useState('Business User');
     const [inviteDept, setInviteDept] = useState('');
 
     // Admin Audit Logs List
@@ -118,7 +118,7 @@ export default function ProfilePage() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const isViewer = role === 'Viewer';
+    const isViewer = role === 'Business User';
 
     // Check if form is dirty (has unsaved modifications)
     const isDirty = () => {
@@ -441,9 +441,8 @@ export default function ProfilePage() {
             case 'Admin':
                 return 'Root access privileges. Grant access, define governance contracts, review security metrics, and modify global parameters.';
             case 'Analyst':
-            case 'Data Steward':
                 return 'Standard access. Permission to ingest, clean, and view datasets, manage validation contracts, track workflows, and review analytics.';
-            case 'Viewer':
+            case 'Business User':
                 return 'Read-only visitor. Restricted view permissions over datasets, contracts, and lineage networks. All profile configurations are read-only.';
             default:
                 return 'Limited operational clearance.';
@@ -917,7 +916,7 @@ export default function ProfilePage() {
                                                         <td>
                                                             <select className="select-role-inline" value={u.role} onChange={e => handleUpdateUserRole(u.id, e.target.value)} disabled={u.id === user?.id || u.status === 'Inactive'}>
                                                                 <option value="Admin">Admin</option>
-                                                                <option value="Data Analyst">Data Analyst</option>
+                                                                <option value="Analyst">Analyst</option>
                                                                 <option value="Business User">Business User</option>
                                                             </select>
                                                         </td>
@@ -1135,10 +1134,10 @@ export default function ProfilePage() {
                                 <div className="input-wrapper">
                                     <label className="input-label">Clearance Role</label>
                                     <select className="input-field" value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
-                                        <option value="Data Analyst">Data Analyst</option>
-                                        <option value="Business User">Business User</option>
-                                        <option value="Admin">Admin</option>
-                                    </select>
+                                         <option value="Analyst">Analyst</option>
+                                         <option value="Business User">Business User</option>
+                                         <option value="Admin">Admin</option>
+                                     </select>
                                 </div>
                                 <div className="input-wrapper">
                                     <label className="input-label">Department Assignment (Optional)</label>

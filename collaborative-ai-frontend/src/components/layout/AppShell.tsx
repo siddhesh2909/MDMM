@@ -26,7 +26,8 @@ function checkAuthorization(role: string, path: string): boolean {
         '/analytics',
         '/ai-assistant',
         '/profile',
-        '/notifications'
+        '/notifications',
+        '/collaboration'
     ];
     const viewerPaths = [
         '/analytics',
@@ -34,13 +35,14 @@ function checkAuthorization(role: string, path: string): boolean {
         '/ai-business-assistant',
         '/lineage',
         '/profile',
-        '/notifications'
+        '/notifications',
+        '/collaboration'
     ];
 
-    if (role === 'Analyst' || role === 'Data Steward') {
+    if (role === 'Analyst') {
         return analystPaths.some(p => path === p || path.startsWith(p + '/'));
     }
-    if (role === 'Viewer') {
+    if (role === 'Business User') {
         return viewerPaths.some(p => path === p || path.startsWith(p + '/'));
     }
     return false;

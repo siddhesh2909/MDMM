@@ -622,3 +622,42 @@
     background-color: var(--border-color);
     margin: 0.5rem 0;
 }
+
+/* Sub-navigation styling */
+.nav-sub-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-left: 2.25rem;
+    margin-top: 0.25rem;
+}
+
+.nav-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.nav-sub-item:hover,
+.nav-sub-item.active {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.nav-sub-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+    transition: background-color var(--transition-fast);
+}
+
+.nav-sub-item.active .nav-sub-dot {
+    background-color: var(--primary-color);
+}

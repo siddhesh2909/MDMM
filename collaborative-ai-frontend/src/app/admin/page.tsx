@@ -109,7 +109,7 @@ export default function AdminPage() {
                                             disabled={row.id === currentUser?.id || row.status === 'Inactive'}
                                         >
                                             <option value="Admin">Admin</option>
-                                            <option value="Data Analyst">Data Analyst</option>
+                                            <option value="Analyst">Analyst</option>
                                             <option value="Business User">Business User</option>
                                         </select>
                                     )
@@ -167,7 +167,7 @@ export default function AdminPage() {
                                 <thead>
                                     <tr>
                                         <th>Permission</th>
-                                        <th>Data Analyst</th>
+                                        <th>Analyst</th>
                                         <th>Business User</th>
                                         <th>Admin</th>
                                     </tr>
