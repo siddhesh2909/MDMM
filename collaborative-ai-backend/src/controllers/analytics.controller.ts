@@ -1,6 +1,7 @@
 import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
+import { canViewDataset } from '../utils/permission';
 
 export const getAnalytics = async (req: AuthenticatedRequest, res: express.Response) => {
     try {
@@ -67,6 +68,10 @@ export const getDatasetAnalytics = async (req: AuthenticatedRequest, res: expres
         });
 
         if (!dataset) return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+
+        if (!canViewDataset(dataset as any, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to view analytics for this dataset' });
+        }
 
         const rawData: any[] = typeof dataset.rawData === 'string' ? JSON.parse(dataset.rawData) : dataset.rawData;
         if (!Array.isArray(rawData) || rawData.length === 0) {

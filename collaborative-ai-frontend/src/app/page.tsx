@@ -189,12 +189,12 @@ export default function LandingPage() {
 
                     <div className="landing-feature-card animate-on-scroll stagger-5">
                         <div className="landing-feature-icon landing-feature-icon--amber">
-                            <Network size={22} />
+                            <Users size={22} />
                         </div>
-                        <h3>Data Lineage</h3>
+                        <h3>Direct Messaging</h3>
                         <p>
-                            Visualize end-to-end data flow from source to consumption. Track
-                            transformations and dependencies across your data pipeline.
+                            Communicate in real time with team members and coworkers directly inside the platform
+                            with WebSocket notifications and secure file sharing.
                         </p>
                     </div>
 

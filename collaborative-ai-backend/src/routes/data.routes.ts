@@ -10,7 +10,6 @@ import { authenticateToken, requirePermission, requireRole, AuthenticatedRequest
 // New controllers
 import { validateDataset, getValidationReport } from '../controllers/validation.controller';
 import { getDatasetQuality, getQualityOverview } from '../controllers/quality.controller';
-import { getDatasetLineage, getFullLineage } from '../controllers/lineage.controller';
 import { createVersion, getVersions, compareVersions, rollbackVersion } from '../controllers/versioning.controller';
 import { getSchemaSuggestions, applySuggestion } from '../controllers/evolution.controller';
 import { getErrorLogs, getLogSummary } from '../controllers/pipeline-logs.controller';
@@ -58,16 +57,19 @@ router.patch('/datasets/:id', requirePermission('dataset:manage'), updateDataset
 router.delete('/datasets/:id', requirePermission('dataset:manage'), deleteDataset);
 router.get('/datasets/:id/analytics', getDatasetAnalytics);
 
+// ── Dataset Sharing ──
+import { shareDataset, updateDatasetShare, revokeDatasetShare, getDatasetSharedUsers } from '../controllers/sharing.controller';
+router.post('/datasets/:id/share', shareDataset);
+router.post('/datasets/:id/share/update', updateDatasetShare);
+router.post('/datasets/:id/share/revoke', revokeDatasetShare);
+router.get('/datasets/:id/share/users', getDatasetSharedUsers);
+
 // ── Dataset Validation Report (Part 1) ──
 router.get('/datasets/:id/validation-report', getValidationReport);
 
 // ── Dataset Quality Metrics (Part 3) ──
 router.get('/datasets/:id/quality', getDatasetQuality);
 router.get('/quality/overview', getQualityOverview);
-
-// ── Dataset Lineage (Part 4) ──
-router.get('/datasets/:id/lineage', getDatasetLineage);
-router.get('/lineage/full', getFullLineage);
 
 // ── Workflows ──
 router.get('/workflows', getWorkflows);

@@ -35,7 +35,6 @@ const navConfig: NavItem[] = [
     { name: 'Data Contracts', path: '/data-contracts', icon: Database },
     { name: 'Preprocessing', path: '/preprocessing', icon: Wand2 },
     { name: 'Workflows', path: '/workflows', icon: GitMerge },
-    { name: 'Lineage', path: '/lineage', icon: Network },
     { name: 'Analytics', path: '/analytics', icon: BarChart3 },
     { name: 'Reports', path: '/reports', icon: FileText },
     { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
@@ -68,7 +67,6 @@ export function Sidebar() {
                 'Data Contracts',
                 'Preprocessing',
                 'Workflows',
-                'Lineage',
                 'Analytics',
                 'AI Assistant',
                 'Collaboration'
@@ -79,7 +77,6 @@ export function Sidebar() {
                 'Analytics',
                 'Reports',
                 'AI Business Assistant',
-                'Lineage',
                 'Collaboration'
             ].includes(item.name);
         }
@@ -105,7 +102,7 @@ export function Sidebar() {
                                 <Icon className="nav-icon" />
                                 <span className="nav-label">{item.name}</span>
                             </Link>
-                            
+
                             {item.subItems && !collapsed && (
                                 <div className="nav-sub-list">
                                     {item.subItems.map((sub) => {

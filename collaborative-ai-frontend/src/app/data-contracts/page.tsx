@@ -140,7 +140,7 @@ export default function DataContractsPage() {
     const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
     const [selectedContract, setSelectedContract] = useState<DataContract | null>(null);
     const [contractVersions, setContractVersions] = useState<ContractVersion[]>([]);
-    const [activeTab, setActiveTab] = useState<'schema' | 'rules' | 'comparison' | 'lineage'>('schema');
+    const [activeTab, setActiveTab] = useState<'schema' | 'rules' | 'comparison'>('schema');
 
     // Modals & Drawers States
     const [showNewContractModal, setShowNewContractModal] = useState(false);
@@ -648,7 +648,6 @@ export default function DataContractsPage() {
                                         { id: 'schema', label: 'Schema Editor', icon: Code2 },
                                         { id: 'rules', label: 'Rule Configs', icon: SlidersHorizontal },
                                         { id: 'comparison', label: 'Comparison Diff', icon: History },
-                                        { id: 'lineage', label: 'Data Lineage Flow', icon: GitBranch },
                                     ].map(tab => (
                                         <button
                                             key={tab.id}
@@ -1029,86 +1028,6 @@ export default function DataContractsPage() {
                                                     </table>
                                                 </div>
                                             )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* ─ TAB 4: Data Lineage Flow Graph ─ */}
-                                {activeTab === 'lineage' && (
-                                    <div
-                                        className="animate-fade-in"
-                                        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>End-to-End Data Lineage</h3>
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Displays quality gates enforcing downstream ingestion boundaries</span>
-                                        </div>
-
-                                        <div className="dcs-lineage-container">
-                                            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-                                                {/* Connections from Ingest Nodes to Quality Gate */}
-                                                <path d="M 160 110 C 220 110, 240 190, 310 190" fill="none" stroke="var(--border-color)" strokeWidth="2" strokeDasharray="4 4" style={{ opacity: 0.7 }} />
-                                                <path d="M 160 190 C 220 190, 240 190, 310 190" fill="none" stroke="var(--primary-color)" strokeWidth="2.5" strokeDasharray="5 5" className="animate-pulse" />
-                                                <path d="M 160 270 C 220 270, 240 190, 310 190" fill="none" stroke="var(--border-color)" strokeWidth="2" strokeDasharray="4 4" style={{ opacity: 0.7 }} />
-
-                                                {/* Connections from Quality Gate to Downstreams */}
-                                                <path d="M 450 190 C 500 190, 520 120, 580 120" fill="none" stroke="var(--primary-color)" strokeWidth="2.5" strokeDasharray="5 5" />
-                                                <path d="M 450 190 C 500 190, 520 260, 580 260" fill="none" stroke="rgba(139, 92, 246, 0.4)" strokeWidth="2" strokeDasharray="4 4" />
-                                            </svg>
-
-                                            {/* Node Layer 1: Ingest Connections */}
-                                            <div className="dcs-lineage-node" style={{ left: '3%', top: '15%' }}>
-                                                <div style={{ background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9', width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.375rem' }}>
-                                                    <Database size={16} />
-                                                </div>
-                                                <h5 style={{ fontWeight: 600, fontSize: '0.75rem', margin: 0 }}>MySQL Ingestion</h5>
-                                                <span style={{ fontSize: '0.625rem', color: 'var(--text-secondary)' }}>Source Connection</span>
-                                            </div>
-
-                                            <div className="dcs-lineage-node" style={{ left: '3%', top: '40%' }}>
-                                                <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-color)', width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.375rem' }}>
-                                                    <Link2 size={16} />
-                                                </div>
-                                                <h5 style={{ fontWeight: 600, fontSize: '0.75rem', margin: 0 }}>{selectedContract.dataset?.name || 'Local File Upload'}</h5>
-                                                <span style={{ fontSize: '0.625rem', color: 'var(--text-secondary)' }}>Bound Dataset</span>
-                                            </div>
-
-                                            <div className="dcs-lineage-node" style={{ left: '3%', top: '65%' }}>
-                                                <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.375rem' }}>
-                                                    <RefreshCw size={16} />
-                                                </div>
-                                                <h5 style={{ fontWeight: 600, fontSize: '0.75rem', margin: 0 }}>REST API</h5>
-                                                <span style={{ fontSize: '0.625rem', color: 'var(--text-secondary)' }}>Webhook Stream</span>
-                                            </div>
-
-                                            {/* Node Layer 2: Schema Contract Gate */}
-                                            <div className="dcs-lineage-node gate" style={{ left: '42%', top: '38%' }}>
-                                                <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-color)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.5rem' }}>
-                                                    <Shield size={20} />
-                                                </div>
-                                                <h5 style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--primary-color)', margin: 0 }}>{selectedContract.name}</h5>
-                                                <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', display: 'block', marginTop: '0.125rem' }}>Spec Version {selectedContract.version}</span>
-                                                <span className={`dc-recent-badge ${selectedContract.status === 'Active' ? 'success' : 'warning'}`} style={{ marginTop: '0.375rem', fontSize: '0.5625rem', padding: '1px 6px' }}>
-                                                    {selectedContract.status === 'Active' ? 'ENFORCING' : 'MONITOR ONLY'}
-                                                </span>
-                                            </div>
-
-                                            {/* Node Layer 3: Destinations */}
-                                            <div className="dcs-lineage-node" style={{ left: '76%', top: '18%' }}>
-                                                <div style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary-color)', width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.375rem' }}>
-                                                    <CheckCircle2 size={16} />
-                                                </div>
-                                                <h5 style={{ fontWeight: 600, fontSize: '0.75rem', margin: 0 }}>Production Warehouse</h5>
-                                                <span style={{ fontSize: '0.625rem', color: 'var(--success-color)', fontWeight: 500 }}>Clean Data Mart</span>
-                                            </div>
-
-                                            <div className="dcs-lineage-node" style={{ left: '76%', top: '55%' }}>
-                                                <div style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6', width: '32px', height: '32px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.375rem' }}>
-                                                    <Brain size={16} />
-                                                </div>
-                                                <h5 style={{ fontWeight: 600, fontSize: '0.75rem', margin: 0 }}>AI Pipeline Models</h5>
-                                                <span style={{ fontSize: '0.625rem', color: 'var(--text-secondary)' }}>Automated Training</span>
-                                            </div>
                                         </div>
                                     </div>
                                 )}
