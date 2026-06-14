@@ -11,9 +11,7 @@ import './layout.css';
 
 function getRoleDisplayName(role: string): string {
     if (role === 'Admin') return 'Admin';
-    if (role === 'Analyst' || role === 'Data Steward' || role === 'Data Engineer' || role === 'Data Analyst') {
-        return 'Data Analyst';
-    }
+    if (role === 'Analyst') return 'Analyst';
     return 'Business User';
 }
 
@@ -92,22 +90,22 @@ export function Header() {
                                     <span className="profile-dropdown-email">{user?.email || ''}</span>
                                 </div>
                             </div>
-
+                            
                             <div className="profile-dropdown-content">
                                 <button className="profile-dropdown-item" onClick={handleProfileClick}>
                                     <User size={16} />
                                     <span>My Profile</span>
                                 </button>
-
+                                
                                 {role === 'Admin' && (
                                     <button className="profile-dropdown-item" onClick={handleAdminClick}>
                                         <Shield size={16} />
                                         <span>Admin Panel</span>
                                     </button>
                                 )}
-
+                                
                                 <div className="profile-dropdown-divider" />
-
+                                
                                 <button className="profile-dropdown-item logout-item" onClick={handleLogoutClick}>
                                     <LogOut size={16} />
                                     <span>Sign Out</span>
