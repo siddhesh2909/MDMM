@@ -11,16 +11,7 @@ import './layout.css';
 
 function getRoleDisplayName(role: string): string {
     if (role === 'Admin') return 'Admin';
-
-    if (
-        role === 'Analyst' ||
-        role === 'Data Steward' ||
-        role === 'Data Engineer' ||
-        role === 'Data Analyst'
-    ) {
-        return 'Data Analyst';
-    }
-
+    if (role === 'Analyst') return 'Analyst';
     return 'Business User';
 }
 
@@ -141,7 +132,7 @@ export function Header() {
                                     </span>
                                 </div>
                             </div>
-
+                            
                             <div className="profile-dropdown-content">
                                 <button
                                     className="profile-dropdown-item"
@@ -150,7 +141,7 @@ export function Header() {
                                     <User size={16} />
                                     <span>My Profile</span>
                                 </button>
-
+                                
                                 {role === 'Admin' && (
                                     <button
                                         className="profile-dropdown-item"
@@ -160,13 +151,10 @@ export function Header() {
                                         <span>Admin Panel</span>
                                     </button>
                                 )}
-
+                                
                                 <div className="profile-dropdown-divider" />
-
-                                <button
-                                    className="profile-dropdown-item logout-item"
-                                    onClick={handleLogoutClick}
-                                >
+                                
+                                <button className="profile-dropdown-item logout-item" onClick={handleLogoutClick}>
                                     <LogOut size={16} />
                                     <span>Sign Out</span>
                                 </button>
