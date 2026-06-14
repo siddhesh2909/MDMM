@@ -32,7 +32,7 @@ async function main() {
     const hashedPassword = await bcrypt.hash('password123', 10);
     const [alice, bob, charlie, admin] = await Promise.all([
         prisma.user.create({ data: { name: 'Data Analyst', email: 'alice@ecommerce.ai', password: hashedPassword, role: 'Data Engineer', department: 'Engineering', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'contract:edit', 'workflow:view', 'workflow:edit']) } }),
-        prisma.user.create({ data: { name: 'Data Analyst', email: 'bob@ecommerce.ai', password: hashedPassword, role: 'Data Analyst', department: 'Data Science', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'contract:view', 'workflow:view', 'query:run', 'report:create']) } }),
+        prisma.user.create({ data: { name: 'Data Analyst', email: 'bob@ecommerce.ai', password: hashedPassword, role: 'Data Analyst', department: 'Data Science', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'query:run', 'report:create']) } }),
         prisma.user.create({ data: { name: 'Business User', email: 'charlie@ecommerce.ai', password: hashedPassword, role: 'Business User', department: 'Marketing', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'dashboard:view', 'contract:approve', 'kpi:monitor']) } }),
         prisma.user.create({ data: { name: 'Admin', email: 'admin@ecommerce.ai', password: hashedPassword, role: 'Admin', department: 'IT', organizationId: orgId, permissions: JSON.stringify(['*']) } })
     ]);
