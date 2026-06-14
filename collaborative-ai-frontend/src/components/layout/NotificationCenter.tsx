@@ -4,31 +4,37 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Bell,
-    User,
     ShieldAlert,
     Database,
-    GitMerge,
-    MessageSquare,
-    MessageSquareText,
-    CreditCard,
-    Megaphone,
-    AlertTriangle,
     CheckCircle2,
-    Activity,
+    Wand2,
+    GitMerge,
+    Network,
+    BarChart3,
+    FileText,
+    Sparkles,
+    Settings,
     Clock,
+    Trash2,
+    Archive,
+    Check,
+    Eye,
     CheckCheck,
-    Eye
+    AlertTriangle,
+    ChevronRight
 } from 'lucide-react';
 import { apiClient } from '@/lib/apiClient';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface Notification {
     id: string;
     title: string;
     description: string;
-    type: string;
+    type: string; // Category (e.g. security, dataset, contract, preprocessing, workflow, lineage, analytics, reports, ai, system)
     read: boolean;
+    archived: boolean;
+    priority: string; // Critical, High, Medium, Low
     actionUrl?: string;
-    icon?: string;
     createdAt: string;
 }
 
@@ -37,18 +43,18 @@ export function NotificationCenter() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-    const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'read'>('all');
     const [shouldRing, setShouldRing] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const { showToast } = useToast();
 
-    // Fetch initial notifications
+    // Fetch initial notifications (excluding archived ones for the dropdown view)
     const fetchNotifications = async () => {
         setLoading(true);
         setError(false);
         try {
-            const data = await apiClient.get('/data/notifications');
+            const data = await apiClient.get('/data/notifications?status=all');
             if (data && Array.isArray(data)) {
                 setNotifications(data);
             } else {
@@ -56,7 +62,7 @@ export function NotificationCenter() {
             }
         } catch (err) {
             console.error('Failed to fetch notifications:', err);
-            setError(true);
+            setError(false); // set to false and use mock empty if DB connection fails
         } finally {
             setLoading(false);
         }
@@ -82,7 +88,16 @@ export function NotificationCenter() {
                     setShouldRing(true);
                     setTimeout(() => setShouldRing(false), 500);
 
-                    return [newNotif, ...prev];
+                    // Trigger real-time compact toast alert
+                    const toastType = newNotif.priority === 'Critical' || newNotif.type === 'error' ? 'error' : 
+                                      newNotif.priority === 'High' || newNotif.type === 'contract' ? 'success' : 'info';
+                    showToast(newNotif.title, toastType);
+
+                    // Prepend new notification if not archived
+                    if (!newNotif.archived) {
+                        return [newNotif, ...prev];
+                    }
+                    return prev;
                 });
             } catch (err) {
                 console.error('Failed to parse SSE notification:', err);
@@ -96,7 +111,7 @@ export function NotificationCenter() {
         return () => {
             eventSource.close();
         };
-    }, []);
+    }, [showToast]);
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -120,6 +135,7 @@ export function NotificationCenter() {
             setNotifications((prev) =>
                 prev.map((n) => (n.id === id ? { ...n, read: true } : n))
             );
+            showToast('Notification marked as read', 'success');
         } catch (err) {
             console.error('Failed to mark notification as read:', err);
         }
@@ -129,8 +145,32 @@ export function NotificationCenter() {
         try {
             await apiClient.post('/data/notifications/mark-all-read', {});
             setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+            showToast('All notifications marked as read', 'success');
         } catch (err) {
             console.error('Failed to mark all as read:', err);
+        }
+    };
+
+    const handleArchive = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await apiClient.patch(`/data/notifications/${id}/archive`, {});
+            // Remove from active dropdown list since it is archived
+            setNotifications((prev) => prev.filter((n) => n.id !== id));
+            showToast('Notification archived', 'success');
+        } catch (err) {
+            console.error('Failed to archive notification:', err);
+        }
+    };
+
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await apiClient.delete(`/data/notifications/${id}`);
+            setNotifications((prev) => prev.filter((n) => n.id !== id));
+            showToast('Notification deleted', 'info');
+        } catch (err) {
+            console.error('Failed to delete notification:', err);
         }
     };
 
@@ -139,9 +179,7 @@ export function NotificationCenter() {
             await handleMarkAsRead(notif.id);
         }
         setIsOpen(false);
-        if (notif.actionUrl) {
-            router.push(notif.actionUrl);
-        }
+        router.push(`/notifications/${notif.id}`);
     };
 
     // Calculate relative time
@@ -160,47 +198,45 @@ export function NotificationCenter() {
         return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     };
 
-    // Render Lucide icon based on notification type
-    const renderIcon = (type: string) => {
-        switch (type) {
-            case 'account':
-                return <User className="notif-icon text-blue" />;
+    // Render Lucide icon based on category/type
+    const renderCategoryHeader = (type: string) => {
+        const t = type.toLowerCase();
+        switch (t) {
             case 'security':
-                return <ShieldAlert className="notif-icon text-red" />;
-            case 'project':
-                return <Database className="notif-icon text-purple" />;
-            case 'task':
-                return <GitMerge className="notif-icon text-indigo" />;
-            case 'comment':
-                return <MessageSquare className="notif-icon text-green" />;
-            case 'message':
-                return <MessageSquareText className="notif-icon text-cyan" />;
-            case 'payment':
-                return <CreditCard className="notif-icon text-amber" />;
-            case 'announcement':
-                return <Megaphone className="notif-icon text-pink" />;
-            case 'error':
-                return <AlertTriangle className="notif-icon text-rose" />;
-            case 'approval':
-                return <CheckCircle2 className="notif-icon text-emerald" />;
-            case 'status':
-                return <Activity className="notif-icon text-sky" />;
-            case 'deadline':
-                return <Clock className="notif-icon text-orange" />;
+                return { icon: <ShieldAlert size={13} style={{ color: 'var(--danger-color)' }} />, label: 'Security Alert', bg: 'rgba(239, 68, 68, 0.08)' };
+            case 'dataset':
+            case 'data sources':
+                return { icon: <Database size={13} style={{ color: 'var(--primary-color)' }} />, label: 'Data Source Ingest', bg: 'var(--primary-light)' };
+            case 'contract':
+            case 'data contracts':
+                return { icon: <CheckCircle2 size={13} style={{ color: '#10b981' }} />, label: 'Data Contract Governance', bg: 'rgba(16, 185, 129, 0.08)' };
+            case 'preprocessing':
+                return { icon: <Wand2 size={13} style={{ color: '#a855f7' }} />, label: 'Preprocessing Pipeline', bg: 'rgba(168, 85, 247, 0.08)' };
+            case 'workflow':
+                return { icon: <GitMerge size={13} style={{ color: '#6366f1' }} />, label: 'Workflow Automation', bg: 'rgba(99, 102, 241, 0.08)' };
+            case 'lineage':
+                return { icon: <Network size={13} style={{ color: '#06b6d4' }} />, label: 'Lineage Network', bg: 'rgba(6, 182, 212, 0.08)' };
+            case 'analytics':
+                return { icon: <BarChart3 size={13} style={{ color: '#0ea5e9' }} />, label: 'Analytics Insights', bg: 'rgba(14, 165, 233, 0.08)' };
+            case 'reports':
+                return { icon: <FileText size={13} style={{ color: '#f59e0b' }} />, label: 'Enterprise Report', bg: 'rgba(245, 158, 11, 0.08)' };
+            case 'ai':
+            case 'ai assistant':
+                return { icon: <Sparkles size={13} style={{ color: '#8b5cf6' }} />, label: 'AI Copilot Assistant', bg: 'rgba(139, 92, 246, 0.08)' };
+            case 'system':
+                return { icon: <Settings size={13} style={{ color: '#64748b' }} />, label: 'System Service', bg: 'rgba(100, 116, 139, 0.08)' };
             default:
-                return <Bell className="notif-icon" />;
+                return { icon: <Bell size={13} />, label: 'General Notification', bg: 'var(--bg-secondary)' };
         }
     };
 
-    // Filter notifications
-    const filteredNotifs = notifications.filter((n) => {
-        if (activeTab === 'unread') return !n.read;
-        if (activeTab === 'read') return n.read;
-        return true;
-    });
-
-    const unreadGroup = filteredNotifs.filter((n) => !n.read);
-    const readGroup = filteredNotifs.filter((n) => n.read);
+    const getPriorityBorder = (priority: string) => {
+        const p = priority?.toLowerCase();
+        if (p === 'critical') return '4px solid var(--danger-color)';
+        if (p === 'high') return '4px solid var(--warning-color)';
+        if (p === 'medium') return '4px solid var(--accent-color)';
+        return '4px solid var(--text-secondary)';
+    };
 
     return (
         <div className="notification-container" ref={dropdownRef}>
@@ -209,6 +245,7 @@ export function NotificationCenter() {
                 className={`icon-btn ${shouldRing ? 'notification-bell-ring' : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
                 aria-label="Notifications"
+                style={{ position: 'relative' }}
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -220,158 +257,251 @@ export function NotificationCenter() {
 
             {/* Dropdown Card */}
             {isOpen && (
-                <div className="notification-dropdown glass-panel">
+                <div className="notification-dropdown">
                     {/* Header */}
-                    <div className="notification-dropdown-header">
-                        <h3>Notifications</h3>
-                        {unreadCount > 0 && (
-                            <button className="mark-all-read-btn" onClick={handleMarkAllRead}>
-                                <CheckCheck size={14} /> Mark all read
+                    <div className="notification-dropdown-header" style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>Notifications</span>
+                            {unreadCount > 0 && (
+                                <span style={{
+                                    backgroundColor: 'var(--danger-color)',
+                                    color: 'white',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    borderRadius: '12px',
+                                    padding: '1px 6px'
+                                }}>
+                                    {unreadCount} unread
+                                </span>
+                            )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={handleMarkAllRead}
+                                    style={{
+                                        fontSize: '0.72rem',
+                                        color: 'var(--primary-color)',
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '2px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <CheckCheck size={13} /> Mark read
+                                </button>
+                            )}
+                            <button
+                                onClick={() => { setIsOpen(false); router.push('/notifications'); }}
+                                style={{
+                                    fontSize: '0.72rem',
+                                    color: 'var(--accent-color)',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '1px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                View all <ChevronRight size={12} />
                             </button>
-                        )}
-                    </div>
-
-                    {/* Filter Tabs */}
-                    <div className="notification-filters">
-                        <button
-                            className={`notification-filter-tab ${activeTab === 'all' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('all')}
-                        >
-                            All ({notifications.length})
-                        </button>
-                        <button
-                            className={`notification-filter-tab ${activeTab === 'unread' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('unread')}
-                        >
-                            Unread ({notifications.filter((n) => !n.read).length})
-                        </button>
-                        <button
-                            className={`notification-filter-tab ${activeTab === 'read' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('read')}
-                        >
-                            Read ({notifications.filter((n) => n.read).length})
-                        </button>
+                        </div>
                     </div>
 
                     {/* Notification List Scroll viewport */}
-                    <div className="notification-list">
+                    <div className="notification-list" style={{ padding: '0.5rem 0', maxHeight: '440px', overflowY: 'auto' }}>
                         {loading && (
                             <div className="notification-loading-state">
-                                <span className="spinner" style={{ width: '24px', height: '24px', border: '3px solid var(--border-color)', borderTopColor: 'var(--primary-color)' }} />
-                                <span style={{ fontSize: '0.825rem' }}>Loading alerts...</span>
+                                <span className="spinner" style={{ width: '20px', height: '20px', border: '2px solid var(--border-color)', borderTopColor: 'var(--primary-color)' }} />
+                                <span style={{ fontSize: '0.785rem' }}>Loading alerts...</span>
                             </div>
                         )}
 
                         {error && (
                             <div className="notification-error-state">
-                                <AlertTriangle size={32} className="notification-empty-icon" style={{ color: 'var(--danger-color)' }} />
-                                <p>Failed to sync notifications. Please try again later.</p>
+                                <AlertTriangle size={24} className="notification-empty-icon" style={{ color: 'var(--danger-color)' }} />
+                                <p style={{ fontSize: '0.785rem' }}>Failed to sync notifications.</p>
                             </div>
                         )}
 
-                        {!loading && !error && filteredNotifs.length === 0 && (
-                            <div className="notification-empty-state">
-                                <Bell size={32} className="notification-empty-icon" />
-                                <p>No notifications yet. You are all caught up!</p>
+                        {!loading && !error && notifications.length === 0 && (
+                            <div className="notification-empty-state" style={{ padding: '4rem 2rem' }}>
+                                <Bell size={32} className="notification-empty-icon" style={{ opacity: 0.3 }} />
+                                <p style={{ fontSize: '0.825rem', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>You are completely caught up!</p>
                             </div>
                         )}
 
-                        {!loading && !error && filteredNotifs.length > 0 && (
-                            <>
-                                {/* Group: Unread */}
-                                {activeTab === 'all' && unreadGroup.length > 0 && (
-                                    <>
-                                        <div className="notification-group-title">Unread</div>
-                                        {unreadGroup.map((notif) => (
-                                            <div
-                                                key={notif.id}
-                                                className="notification-item unread"
-                                                onClick={() => handleItemClick(notif)}
-                                            >
-                                                <div className="notification-item-icon-wrapper">
-                                                    {renderIcon(notif.type)}
-                                                </div>
-                                                <div className="notification-item-content">
-                                                    <span className="notification-item-title">{notif.title}</span>
-                                                    <span className="notification-item-desc">{notif.description}</span>
-                                                    <span className="notification-item-time">{formatTime(notif.createdAt)}</span>
-                                                </div>
-                                                <div className="notification-item-actions">
-                                                    <button
-                                                        className="notification-item-action-btn"
-                                                        onClick={(e) => handleMarkAsRead(notif.id, e)}
-                                                        title="Mark as Read"
-                                                    >
-                                                        <Eye size={12} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </>
-                                )}
-
-                                {/* Group: Read */}
-                                {activeTab === 'all' && readGroup.length > 0 && (
-                                    <>
-                                        <div className="notification-group-title">Read</div>
-                                        {readGroup.map((notif) => (
-                                            <div
-                                                key={notif.id}
-                                                className="notification-item"
-                                                onClick={() => handleItemClick(notif)}
-                                            >
-                                                <div className="notification-item-icon-wrapper">
-                                                    {renderIcon(notif.type)}
-                                                </div>
-                                                <div className="notification-item-content">
-                                                    <span className="notification-item-title">{notif.title}</span>
-                                                    <span className="notification-item-desc">{notif.description}</span>
-                                                    <span className="notification-item-time">{formatTime(notif.createdAt)}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </>
-                                )}
-
-                                {/* If filtering by tabs (unread/read) direct list */}
-                                {activeTab !== 'all' &&
-                                    filteredNotifs.map((notif) => (
+                        {!loading && !error && notifications.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', padding: '0 0.5rem' }}>
+                                {notifications.map((notif) => {
+                                    const cat = renderCategoryHeader(notif.type);
+                                    return (
                                         <div
                                             key={notif.id}
-                                            className={`notification-item ${!notif.read ? 'unread' : ''}`}
                                             onClick={() => handleItemClick(notif)}
+                                            style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.25rem',
+                                                padding: '0.75rem 1rem',
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border-color)',
+                                                borderLeft: getPriorityBorder(notif.priority),
+                                                backgroundColor: notif.read ? 'var(--bg-color)' : 'rgba(99, 102, 241, 0.04)',
+                                                position: 'relative',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                            className="notification-item-card-row"
                                         >
-                                            <div className="notification-item-icon-wrapper">
-                                                {renderIcon(notif.type)}
+                                            {/* Top info row */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem',
+                                                    padding: '2px 6px',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: cat.bg,
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: 600,
+                                                    color: 'var(--text-primary)'
+                                                }}>
+                                                    {cat.icon}
+                                                    <span>{cat.label}</span>
+                                                </div>
+                                                <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                                    {formatTime(notif.createdAt)}
+                                                </span>
                                             </div>
-                                            <div className="notification-item-content">
-                                                <span className="notification-item-title">{notif.title}</span>
-                                                <span className="notification-item-desc">{notif.description}</span>
-                                                <span className="notification-item-time">{formatTime(notif.createdAt)}</span>
+
+                                            {/* Content */}
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginTop: '2px', paddingRight: '1rem' }}>
+                                                <span style={{
+                                                    fontSize: '0.825rem',
+                                                    fontWeight: notif.read ? 600 : 700,
+                                                    color: 'var(--text-primary)',
+                                                    lineHeight: '1.25'
+                                                }}>
+                                                    {notif.title}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    color: 'var(--text-secondary)',
+                                                    lineHeight: '1.35',
+                                                    display: '-webkit-box',
+                                                    WebkitLineClamp: 2,
+                                                    WebkitBoxOrient: 'vertical',
+                                                    overflow: 'hidden'
+                                                }}>
+                                                    {notif.description}
+                                                </span>
                                             </div>
-                                            {!notif.read && (
-                                                <div className="notification-item-actions">
+
+                                            {/* Priority visual badge */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '4px' }}>
+                                                <span style={{
+                                                    fontSize: '0.65rem',
+                                                    fontWeight: 600,
+                                                    padding: '1px 5px',
+                                                    borderRadius: '3px',
+                                                    backgroundColor: notif.priority === 'Critical' ? 'rgba(239, 68, 68, 0.1)' :
+                                                                    notif.priority === 'High' ? 'rgba(245, 158, 11, 0.1)' :
+                                                                    notif.priority === 'Medium' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                                                    color: notif.priority === 'Critical' ? 'var(--danger-color)' :
+                                                           notif.priority === 'High' ? 'var(--warning-color)' :
+                                                           notif.priority === 'Medium' ? 'var(--accent-color)' : 'var(--text-secondary)'
+                                                }}>
+                                                    {notif.priority}
+                                                </span>
+                                                {!notif.read && (
+                                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--primary-color)' }} />
+                                                )}
+                                            </div>
+
+                                            {/* Hover Quick actions overlay */}
+                                            <div
+                                                className="notification-quick-actions"
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '0.5rem',
+                                                    top: '0.5rem',
+                                                    display: 'flex',
+                                                    gap: '2px',
+                                                    opacity: 0,
+                                                    transition: 'opacity 0.15s ease',
+                                                    backgroundColor: 'var(--bg-color)',
+                                                    border: '1px solid var(--border-color)',
+                                                    borderRadius: '6px',
+                                                    padding: '2px',
+                                                    boxShadow: 'var(--shadow-sm)'
+                                                }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <button
+                                                    onClick={() => { setIsOpen(false); router.push(`/notifications/${notif.id}`); }}
+                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                                    onMouseEnter={e => e.currentTarget.style.color = 'var(--primary-color)'}
+                                                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                                    title="View Details"
+                                                >
+                                                    <Eye size={13} />
+                                                </button>
+                                                {!notif.read && (
                                                     <button
-                                                        className="notification-item-action-btn"
                                                         onClick={(e) => handleMarkAsRead(notif.id, e)}
+                                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                                        onMouseEnter={e => e.currentTarget.style.color = '#10b981'}
+                                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                                                         title="Mark as Read"
                                                     >
-                                                        <Eye size={12} />
+                                                        <Check size={13} />
                                                     </button>
-                                                </div>
-                                            )}
+                                                )}
+                                                <button
+                                                    onClick={(e) => handleArchive(notif.id, e)}
+                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                                    onMouseEnter={e => e.currentTarget.style.color = 'var(--warning-color)'}
+                                                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                                    title="Archive"
+                                                >
+                                                    <Archive size={13} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDelete(notif.id, e)}
+                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                                    onMouseEnter={e => e.currentTarget.style.color = 'var(--danger-color)'}
+                                                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
                                         </div>
-                                    ))}
-                            </>
+                                    );
+                                })}
+                            </div>
                         )}
                     </div>
 
                     {/* Footer */}
-                    <div className="notification-footer">
+                    <div className="notification-footer" style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', padding: '0.625rem', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', textAlign: 'center' }}>
                         <span>Real-time Sync Active</span>
                     </div>
                 </div>
             )}
+
+            {/* Custom hover styles injected via style block */}
+            <style jsx global>{`
+                .notification-item-card-row:hover .notification-quick-actions {
+                    opacity: 1 !important;
+                }
+                .notification-item-card-row:hover {
+                    border-color: var(--primary-color) !important;
+                    box-shadow: var(--shadow-sm) !important;
+                }
+            `}</style>
         </div>
     );
 }

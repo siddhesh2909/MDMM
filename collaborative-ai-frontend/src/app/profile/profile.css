@@ -1,23 +1,21 @@
-/* Centered Settings Dialog Panel (ChatGPT Style) */
+/* Fluid Full-Width Settings Card Layout */
 .settings-page-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: calc(100vh - var(--header-height) - 3rem);
-    padding: 1.5rem;
+    flex-direction: column;
+    gap: 1.5rem;
     width: 100%;
 }
 
 .settings-dialog-card {
     display: flex;
     width: 100%;
-    max-width: 1000px;
-    height: 720px;
+    min-height: 680px;
+    height: auto;
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm);
     transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 

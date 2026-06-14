@@ -239,13 +239,29 @@
     position: absolute;
     right: 0;
     top: calc(100% + 8px);
-    width: 380px;
-    max-height: 520px;
+    width: 440px;
+    max-height: 70vh;
     display: flex;
     flex-direction: column;
-    z-index: 100;
+    z-index: 9999 !important;
     overflow: hidden;
     animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    background-color: var(--bg-color) !important;
+    background: var(--bg-color) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+.profile-dropdown {
+    background-color: var(--bg-color) !important;
+    background: var(--bg-color) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-lg) !important;
+    z-index: 9999 !important;
 }
 
 @keyframes slideDown {
@@ -499,8 +515,18 @@
 
 @media (max-width: 640px) {
     .notification-dropdown {
-        width: 320px;
-        right: -80px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100vw;
+        max-height: 80vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+        z-index: 99999 !important;
     }
 }
 

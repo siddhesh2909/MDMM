@@ -63,7 +63,7 @@ export default function LoginPage() {
                             <label>Full Name</label>
                             <input
                                 type="text"
-                                placeholder="Alice Engineer"
+                                placeholder="Data Analyst"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 required
@@ -146,13 +146,13 @@ export default function LoginPage() {
                         <p style={{ marginBottom: '0.75rem' }}>Quick Login (Dev Mode):</p>
                         <div className="login-quick-btns">
                             <button type="button" onClick={() => login('bob@ecommerce.ai', 'password123')} title="Data Analyst">
-                                Bob (Analyst)
+                                Data Analyst
                             </button>
                             <button type="button" onClick={() => login('charlie@ecommerce.ai', 'password123')} title="Business User">
-                                Charlie (Biz)
+                                Business User
                             </button>
                             <button type="button" onClick={() => login('admin@ecommerce.ai', 'password123')} title="Admin">
-                                Admin Root
+                                Admin
                             </button>
                         </div>
                     </div>

@@ -55,9 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!token && !isPublic) {
             router.replace('/login');
         } else if (token && isPublic) {
-            router.replace('/ingestion');
+            const isViewer = user?.role === 'Business User' || user?.role === 'Viewer';
+            router.replace(isViewer ? '/analytics' : '/ingestion');
         }
-    }, [token, pathname, isLoading, router]);
+    }, [token, pathname, isLoading, router, user]);
 
     const login = useCallback(async (email: string, password: string) => {
         try {

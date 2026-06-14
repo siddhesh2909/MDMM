@@ -41,6 +41,14 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import * as XLSX from 'xlsx';
 import './ingestion.css';
 
+function getRoleDisplayName(role: string): string {
+    if (role === 'Admin') return 'Admin';
+    if (role === 'Analyst' || role === 'Data Steward' || role === 'Data Engineer' || role === 'Data Analyst') {
+        return 'Data Analyst';
+    }
+    return 'Business User';
+}
+
 /* ─── Types ─────────────────────────────────────────────── */
 
 interface Dataset {
@@ -222,7 +230,7 @@ export default function IngestionPage() {
                         columns: colsCount,
                         quality: d.quality ?? 95,
                         status: d.status ? d.status.toLowerCase() : 'ingested',
-                        owner: d.owner?.name || 'System',
+                        owner: d.owner?.role ? getRoleDisplayName(d.owner.role) : (d.owner?.name || 'System'),
                         createdAt: d.createdAt
                     };
                 });
@@ -335,7 +343,7 @@ export default function IngestionPage() {
                     columns: fields.length,
                     quality: 100,
                     status: 'draft',
-                    owner: user?.name || 'System',
+                    owner: user?.role ? getRoleDisplayName(user.role) : 'System',
                     createdAt: new Date().toISOString()
                 },
                 schema: fields.map(f => ({

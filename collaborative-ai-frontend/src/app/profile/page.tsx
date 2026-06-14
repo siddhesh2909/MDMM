@@ -15,6 +15,14 @@ import {
 } from 'lucide-react';
 import './profile.css';
 
+function getRoleDisplayName(role: string): string {
+    if (role === 'Admin') return 'Admin';
+    if (role === 'Analyst' || role === 'Data Steward' || role === 'Data Engineer' || role === 'Data Analyst') {
+        return 'Data Analyst';
+    }
+    return 'Business User';
+}
+
 interface SessionItem {
     id: string;
     device: string;
@@ -432,9 +440,10 @@ export default function ProfilePage() {
         switch (role) {
             case 'Admin':
                 return 'Root access privileges. Grant access, define governance contracts, review security metrics, and modify global parameters.';
-            case 'Data Analyst':
+            case 'Analyst':
+            case 'Data Steward':
                 return 'Standard access. Permission to ingest, clean, and view datasets, manage validation contracts, track workflows, and review analytics.';
-            case 'Business User':
+            case 'Viewer':
                 return 'Read-only visitor. Restricted view permissions over datasets, contracts, and lineage networks. All profile configurations are read-only.';
             default:
                 return 'Limited operational clearance.';
@@ -448,7 +457,18 @@ export default function ProfilePage() {
 
     return (
         <div className="settings-page-container">
-            {/* Centered Settings Dialog Panel (ChatGPT Style) */}
+            {/* Page Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <div>
+                    <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <Settings size={28} color="var(--primary-color)" />
+                        My Profile Settings
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Manage your personal details, workspace security clearances, and active login sessions.</p>
+                </div>
+            </div>
+
+            {/* Settings Card Panel */}
             <div className="settings-dialog-card glass-panel animate-scale-in">
                 {/* 1. Sidebar Navigation */}
                 <div className="settings-sidebar">
@@ -560,7 +580,7 @@ export default function ProfilePage() {
                                     <div className="settings-grid-columns">
                                         <div className="input-wrapper">
                                             <label className="input-label">Full Name</label>
-                                            <input type="text" className="input-field" value={name} onChange={e => setName(e.target.value)} disabled={isViewer} placeholder="Alice Engineer" />
+                                            <input type="text" className="input-field" value={name} onChange={e => setName(e.target.value)} disabled={isViewer} placeholder="Data Analyst" />
                                         </div>
                                         <div className="input-wrapper">
                                             <label className="input-label">Email Address (Read-only)</label>
@@ -889,8 +909,8 @@ export default function ProfilePage() {
                                                     <tr key={u.id}>
                                                         <td>
                                                             <div className="table-user-cell">
-                                                                <div className="user-avatar">{u.name.charAt(0)}</div>
-                                                                <span>{u.name}</span>
+                                                                <div className="user-avatar">{getRoleDisplayName(u.role).charAt(0)}</div>
+                                                                <span>{getRoleDisplayName(u.role)}</span>
                                                             </div>
                                                         </td>
                                                         <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>

@@ -9,6 +9,14 @@ import { NotificationCenter } from './NotificationCenter';
 import { useRole } from '@/components/providers/RoleProvider';
 import './layout.css';
 
+function getRoleDisplayName(role: string): string {
+    if (role === 'Admin') return 'Admin';
+    if (role === 'Analyst' || role === 'Data Steward' || role === 'Data Engineer' || role === 'Data Analyst') {
+        return 'Data Analyst';
+    }
+    return 'Business User';
+}
+
 export function Header() {
     const { theme, toggleTheme } = useTheme();
     const { user, logout } = useAuth();
@@ -63,35 +71,24 @@ export function Header() {
 
                 {/* User Profile Dropdown Container */}
                 <div className="profile-container" ref={dropdownRef}>
-                    <div className="user-profile" onClick={() => setIsOpen(!isOpen)} title={`Role: ${role}`}>
+                    <div className="user-profile" onClick={() => setIsOpen(!isOpen)} title={`Role: ${role}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <div className="user-avatar">
-                            {user?.name?.charAt(0) || role.charAt(0)}
+                            {role.charAt(0)}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                {user?.name || 'User'}
-                            </span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                    {role}
-                                </span>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.5 }}>•</span>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontWeight: 500 }}>
-                                    {user?.department || 'Member'}
-                                </span>
-                            </div>
-                        </div>
-                        <ChevronDown size={14} color="var(--text-secondary)" style={{ marginLeft: '4px', transition: 'transform 0.2s' }} className={isOpen ? 'rotate-180' : ''} />
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {getRoleDisplayName(role)}
+                        </span>
+                        <ChevronDown size={14} color="var(--text-secondary)" style={{ transition: 'transform 0.2s' }} className={isOpen ? 'rotate-180' : ''} />
                     </div>
 
                     {isOpen && (
                         <div className="profile-dropdown glass-panel">
                             <div className="profile-dropdown-header">
                                 <div className="user-avatar large">
-                                    {user?.name?.charAt(0) || role.charAt(0)}
+                                    {role.charAt(0)}
                                 </div>
                                 <div className="profile-dropdown-user-details">
-                                    <span className="profile-dropdown-name">{user?.name || 'User'}</span>
+                                    <span className="profile-dropdown-name">{getRoleDisplayName(role)}</span>
                                     <span className="profile-dropdown-email">{user?.email || ''}</span>
                                 </div>
                             </div>
@@ -123,4 +120,3 @@ export function Header() {
         </header>
     );
 }
-

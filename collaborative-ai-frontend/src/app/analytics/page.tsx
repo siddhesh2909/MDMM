@@ -788,8 +788,17 @@ export default function AnalyticsPage() {
         showToast('Dashboard sharing link copied!', 'success');
     };
 
-    const handleSaveDashboard = () => {
-        showToast('AI BI Dashboard state persisted successfully!', 'success');
+    const handleSaveDashboard = async () => {
+        try {
+            await apiClient.post('/data/log-dashboard-publish', {
+                dashboardId: selectedDs || 'default',
+                dashboardName: dsAnalytics?.name || 'Executive Dashboard'
+            });
+            showToast('AI BI Dashboard state persisted and published successfully!', 'success');
+        } catch (err) {
+            console.error('Failed to log dashboard publication:', err);
+            showToast('AI BI Dashboard state persisted successfully!', 'success');
+        }
     };
 
     const handleResetLayout = () => {

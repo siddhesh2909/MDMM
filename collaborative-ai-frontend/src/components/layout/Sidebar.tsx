@@ -16,30 +16,56 @@ import {
     ChevronLeft,
     ChevronRight,
     LogOut,
-    Globe
+    Globe,
+    FileText,
+    Sparkles
 } from 'lucide-react';
 import './layout.css';
 
 const navConfig = [
-    { name: 'Data Sources', path: '/ingestion', icon: Globe, permission: 'dataset:manage' },
-    { name: 'Data Contracts', path: '/data-contracts', icon: Database, permission: 'dataset:manage' },
-    { name: 'Preprocessing', path: '/preprocessing', icon: Wand2, permission: 'dataset:manage' },
-    { name: 'Workflows', path: '/workflows', icon: GitMerge, permission: 'workflow:view' },
-    { name: 'Lineage', path: '/lineage', icon: Network, permission: 'dataset:view' },
-    { name: 'Analytics', path: '/analytics', icon: BarChart3, permission: 'dataset:view' },
-    { name: 'Admin', path: '/admin', icon: Settings, role: 'Admin' },
+    { name: 'Data Sources', path: '/ingestion', icon: Globe },
+    { name: 'Data Contracts', path: '/data-contracts', icon: Database },
+    { name: 'Preprocessing', path: '/preprocessing', icon: Wand2 },
+    { name: 'Workflows', path: '/workflows', icon: GitMerge },
+    { name: 'Lineage', path: '/lineage', icon: Network },
+    { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+    { name: 'Reports', path: '/reports', icon: FileText },
+    { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
+    { name: 'AI Business Assistant', path: '/ai-business-assistant', icon: Sparkles },
+    { name: 'Admin', path: '/admin', icon: Settings },
 ];
 
 export function Sidebar() {
     const [collapsed, setCollapsed] = useState(false);
     const pathname = usePathname();
-    const { role, hasPermission } = useRole();
+    const { role } = useRole();
     const { logout } = useAuth();
 
     const allowedNavs = navConfig.filter((item) => {
-        if (item.role && item.role !== role) return false;
-        if (item.permission && !hasPermission(item.permission)) return false;
-        return true;
+        if (role === 'Admin') {
+            if (item.name === 'AI Business Assistant') return false;
+            return true;
+        }
+        if (role === 'Analyst' || role === 'Data Steward') {
+            return [
+                'Data Sources',
+                'Data Contracts',
+                'Preprocessing',
+                'Workflows',
+                'Lineage',
+                'Analytics',
+                'AI Assistant'
+            ].includes(item.name);
+        }
+        if (role === 'Viewer') {
+            return [
+                'Analytics',
+                'Reports',
+                'AI Business Assistant',
+                'Lineage'
+            ].includes(item.name);
+        }
+        return false;
     });
 
     return (
