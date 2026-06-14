@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                                 <button
                                     className="btn btn-primary"
-                                    onClick={() => window.location.href = role === 'Viewer' ? '/analytics' : '/ingestion'}
+                                    onClick={() => window.location.href = role === 'Business User' ? '/analytics' : '/ingestion'}
                                 >
                                     Go to Dashboard
                                 </button>
