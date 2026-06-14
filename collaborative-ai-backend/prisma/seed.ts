@@ -31,10 +31,10 @@ async function main() {
     // 1. Create Users
     const hashedPassword = await bcrypt.hash('password123', 10);
     const [alice, bob, charlie, admin] = await Promise.all([
-        prisma.user.create({ data: { name: 'Alice Engineer', email: 'alice@ecommerce.ai', password: hashedPassword, role: 'Data Engineer', department: 'Engineering', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'contract:edit', 'workflow:view', 'workflow:edit']) } }),
-        prisma.user.create({ data: { name: 'Bob Analyst', email: 'bob@ecommerce.ai', password: hashedPassword, role: 'Data Analyst', department: 'Data Science', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'contract:view', 'workflow:view', 'query:run', 'report:create']) } }),
-        prisma.user.create({ data: { name: 'Charlie Biz', email: 'charlie@ecommerce.ai', password: hashedPassword, role: 'Business User', department: 'Marketing', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'dashboard:view', 'contract:approve', 'kpi:monitor']) } }),
-        prisma.user.create({ data: { name: 'Admin Root', email: 'admin@ecommerce.ai', password: hashedPassword, role: 'Admin', department: 'IT', organizationId: orgId, permissions: JSON.stringify(['*']) } })
+        prisma.user.create({ data: { name: 'Data Analyst', email: 'alice@ecommerce.ai', password: hashedPassword, role: 'Data Engineer', department: 'Engineering', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'contract:edit', 'workflow:view', 'workflow:edit']) } }),
+        prisma.user.create({ data: { name: 'Data Analyst', email: 'bob@ecommerce.ai', password: hashedPassword, role: 'Data Analyst', department: 'Data Science', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'contract:view', 'workflow:view', 'query:run', 'report:create']) } }),
+        prisma.user.create({ data: { name: 'Business User', email: 'charlie@ecommerce.ai', password: hashedPassword, role: 'Business User', department: 'Marketing', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'dashboard:view', 'contract:approve', 'kpi:monitor']) } }),
+        prisma.user.create({ data: { name: 'Admin', email: 'admin@ecommerce.ai', password: hashedPassword, role: 'Admin', department: 'IT', organizationId: orgId, permissions: JSON.stringify(['*']) } })
     ]);
     console.log("✅ Seeded Users");
 
@@ -66,7 +66,7 @@ async function main() {
             {
                 title: 'Review Q3 Revenue Schema Changes',
                 description: 'The upstream revenue table added 3 new columns. Validate schema compatibility with our data contracts.',
-                assignee: 'Alice Engineer',
+                assignee: 'Data Analyst',
                 status: 'Pending',
                 priority: 'High',
                 category: 'Schema Validation',
@@ -77,7 +77,7 @@ async function main() {
             {
                 title: 'Clean Marketing Leads Dataset',
                 description: 'Run data quality checks on the marketing_leads.csv file. Handle missing emails and duplicates.',
-                assignee: 'Bob Analyst',
+                assignee: 'Data Analyst',
                 status: 'In Progress',
                 priority: 'Medium',
                 category: 'Data Cleaning',
@@ -88,7 +88,7 @@ async function main() {
             {
                 title: 'Ingest Stripe Payment Dump',
                 description: 'Import Q3 Stripe payment records into the data warehouse. ~50K rows expected.',
-                assignee: 'Alice Engineer',
+                assignee: 'Data Analyst',
                 status: 'Approved',
                 priority: 'High',
                 category: 'Data Ingestion',
@@ -117,6 +117,146 @@ async function main() {
         ]
     });
     console.log("✅ Seeded Audit Logs");
+
+    // 5.5 Seed Notifications
+    await prisma.notification.deleteMany();
+    await prisma.notification.createMany({
+        data: [
+            {
+                userId: admin.id,
+                organizationId: orgId,
+                title: "🛡️ Unauthorized Route Access Blocked",
+                description: "User bob@ecommerce.ai attempted to access administrative panel /admin. Request was blocked and logged.",
+                type: "security",
+                priority: "Critical",
+                read: false,
+                archived: false,
+                actionUrl: "/profile"
+            },
+            {
+                userId: admin.id,
+                organizationId: orgId,
+                title: "🔑 Admin Login Session Initialized",
+                description: "A new administrative login session was successfully authenticated from IP 192.168.1.104.",
+                type: "security",
+                priority: "High",
+                read: true,
+                archived: false,
+                actionUrl: "/profile"
+            },
+            {
+                userId: bob.id,
+                organizationId: orgId,
+                title: "🛡️ Security Warning: Login Location",
+                description: "Your account was accessed from a new IP address location. If this wasn't you, revoke sessions.",
+                type: "security",
+                priority: "High",
+                read: false,
+                archived: false,
+                actionUrl: "/profile"
+            },
+            {
+                userId: bob.id,
+                organizationId: orgId,
+                title: "📦 Dataset Ingest: products-50.csv completed",
+                description: "Dataset products-50.csv has been successfully parsed and ingested (50 rows, 10 columns).",
+                type: "dataset",
+                priority: "Medium",
+                read: true,
+                archived: false,
+                actionUrl: "/ingestion"
+            },
+            {
+                userId: bob.id,
+                organizationId: orgId,
+                title: "📜 Data Contract Approved: Core Orders",
+                description: "Governance contract Core Orders Dataset v2.1.0 was approved and set to Active status.",
+                type: "contract",
+                priority: "High",
+                read: false,
+                archived: false,
+                actionUrl: "/data-contracts"
+            },
+            {
+                userId: bob.id,
+                organizationId: orgId,
+                title: "⚙️ Schema Drift Alert in Preprocessing",
+                description: "Column 'signup_date' holds ISO Dates but was cast as String. Suggested fix is available.",
+                type: "preprocessing",
+                priority: "Medium",
+                read: false,
+                archived: false,
+                actionUrl: "/preprocessing"
+            },
+            {
+                userId: bob.id,
+                organizationId: orgId,
+                title: "🚀 Ingest Stripe Dump Task Approved",
+                description: "Workflow task 'Ingest Stripe Payment Dump' was approved by Admin and marked Completed.",
+                type: "workflow",
+                priority: "Low",
+                read: true,
+                archived: true,
+                actionUrl: "/workflows"
+            },
+            {
+                userId: charlie.id,
+                organizationId: orgId,
+                title: "📈 Financial KPI Dashboard Published",
+                description: "Data Analyst has published the Executive Financial KPI rollup dashboard. View recent sales trends.",
+                type: "analytics",
+                priority: "Medium",
+                read: false,
+                archived: false,
+                actionUrl: "/analytics"
+            },
+            {
+                userId: charlie.id,
+                organizationId: orgId,
+                title: "📊 Quality Brief Report Scheduled",
+                description: "Weekly Data Quality & Compliance Audit has been scheduled for automated email delivery.",
+                type: "reports",
+                priority: "Low",
+                read: true,
+                archived: false,
+                actionUrl: "/reports"
+            },
+            {
+                userId: bob.id,
+                organizationId: orgId,
+                title: "🤖 Copilot Schema Review Completed",
+                description: "AI Data Analyst assistant has completed review of marketing_leads.csv and recommends 3 standardizations.",
+                type: "ai",
+                priority: "Low",
+                read: false,
+                archived: false,
+                actionUrl: "/ai-assistant"
+            },
+            {
+                userId: charlie.id,
+                organizationId: orgId,
+                title: "🤖 BI Copilot Growth Report Ready",
+                description: "AI Business Assistant generated strategic growth playbook for the North America region.",
+                type: "ai",
+                priority: "Medium",
+                read: false,
+                archived: false,
+                actionUrl: "/ai-business-assistant"
+            },
+            {
+                userId: charlie.id,
+                organizationId: orgId,
+                title: "⚙️ System Maintenance Scheduled",
+                description: "CollabAI Platform will undergo routine database optimization on June 18 at 02:00 UTC.",
+                type: "system",
+                priority: "Low",
+                read: false,
+                archived: false,
+                actionUrl: "/profile"
+            }
+        ]
+    });
+    console.log("✅ Seeded Notifications");
 
     console.log("Seed complete.");
 }

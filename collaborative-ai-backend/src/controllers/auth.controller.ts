@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { z } from 'zod';
 import { notifyUser, notifyAdmins } from '../services/notification.service';
+import { logAction } from '../utils/auditLogger';
 
 const registerSchema = z.object({
     name: z.string().min(2),
@@ -30,7 +31,7 @@ const generateToken = (user: any) => {
             organizationId: user.organizationId,
             permissions: user.permissions
         },
-        process.env.JWT_SECRET || 'fallback',
+        process.env.JWT_SECRET || 'super_secret_collaborative_ai_key_2026',
         { expiresIn: '1d' }
     );
 };
@@ -52,9 +53,8 @@ export const register = async (req: express.Request, res: express.Response) => {
 
         // Assign default permissions based on role
         const defaultPermissions = role === 'Admin' ? ['*'] :
-            role === 'Data Engineer' || role === 'Data Steward' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'workflow:edit'] :
-                role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:view', 'workflow:view'] :
-                    ['dataset:view'];
+            role === 'Data Engineer' || role === 'Data Steward' || role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'workflow:edit'] :
+                ['dataset:view'];
 
         const user = await prisma.user.create({
             data: {
@@ -128,6 +128,9 @@ export const login = async (req: express.Request, res: express.Response) => {
 
         // Update last active
         await prisma.user.update({ where: { id: user.id }, data: { lastActive: new Date() } });
+
+        // Log login action in audit trail
+        await logAction(user.id, user.role, (user as any).organizationId, 'LOGIN', 'User', user.id, { email: user.email });
 
         // Trigger login security alert notification
         try {

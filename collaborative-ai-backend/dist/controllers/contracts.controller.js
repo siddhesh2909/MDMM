@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getContractDetail = exports.getContractsDashboardStats = exports.toggleContractStatus = exports.duplicateContract = exports.deleteContract = exports.getLatestContract = exports.updateContract = exports.createContract = exports.getContracts = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const notification_service_1 = require("../services/notification.service");
+const auditLogger_1 = require("../utils/auditLogger");
 const getContracts = async (req, res) => {
     try {
         const orgId = req.user?.organizationId;
@@ -42,6 +43,8 @@ const createContract = async (req, res) => {
                 schemaDef: typeof schemaDef === 'string' ? schemaDef : JSON.stringify(schemaDef),
             },
         });
+        // Audit contract creation
+        await (0, auditLogger_1.logAction)(user.id, user.role, user.organizationId, 'CONTRACT_CREATION', 'DataContract', contract.id, { name: name, version: version || '1.0.0' });
         try {
             await (0, notification_service_1.notifyUser)(user.id, 'Data Contract Created', `You created data contract "${name}".`, 'project', '/data-contracts');
             await (0, notification_service_1.notifyAll)(user.organizationId, 'New Data Contract', `A new data contract "${name}" was created by ${user.id}.`, 'project', '/data-contracts');

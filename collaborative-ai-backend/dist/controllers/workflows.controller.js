@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteWorkflow = exports.updateWorkflow = exports.createWorkflow = exports.getWorkflows = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const notification_service_1 = require("../services/notification.service");
+const auditLogger_1 = require("../utils/auditLogger");
 const getWorkflows = async (req, res) => {
     try {
         const orgId = req.user?.organizationId;
@@ -49,6 +50,8 @@ const createWorkflow = async (req, res) => {
                 organizationId: user.organizationId
             }
         });
+        // Audit workflow task creation/execution
+        await (0, auditLogger_1.logAction)(user.id, user.role, user.organizationId, 'WORKFLOW_EXECUTION', 'WorkflowTask', workflow.id, { title: title, action: 'create' });
         try {
             await (0, notification_service_1.notifyAssignee)(assignee, 'New Workflow Task Assigned', `You have been assigned to task: "${title}".`, 'task', '/workflows');
         }
@@ -93,6 +96,8 @@ const updateWorkflow = async (req, res) => {
         if (dueDate !== undefined)
             data.dueDate = dueDate ? new Date(dueDate) : null;
         const workflow = await prisma_1.default.workflowTask.update({ where: { id }, data });
+        // Audit workflow task update/execution
+        await (0, auditLogger_1.logAction)(user.id, user.role, user.organizationId, 'WORKFLOW_EXECUTION', 'WorkflowTask', workflow.id, { title: workflow.title, action: 'update', status: workflow.status, progress: workflow.progress });
         try {
             const titleStr = workflow.title;
             const updatedAssignee = workflow.assignee;

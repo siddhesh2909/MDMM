@@ -2,6 +2,7 @@ import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { notifyAssignee } from '../services/notification.service';
+import { logAction } from '../utils/auditLogger';
 
 export const getWorkflows = async (req: AuthenticatedRequest, res: express.Response) => {
     try {
@@ -44,6 +45,9 @@ export const createWorkflow = async (req: AuthenticatedRequest, res: express.Res
                 organizationId: user.organizationId
             } as any
         });
+
+        // Audit workflow task creation/execution
+        await logAction(user.id, user.role, user.organizationId, 'WORKFLOW_EXECUTION', 'WorkflowTask', workflow.id, { title: title, action: 'create' });
 
         try {
             await notifyAssignee(
@@ -89,6 +93,9 @@ export const updateWorkflow = async (req: AuthenticatedRequest, res: express.Res
         if (dueDate !== undefined) data.dueDate = dueDate ? new Date(dueDate) : null;
 
         const workflow = await prisma.workflowTask.update({ where: { id }, data });
+
+        // Audit workflow task update/execution
+        await logAction(user.id, user.role, user.organizationId, 'WORKFLOW_EXECUTION', 'WorkflowTask', workflow.id, { title: workflow.title, action: 'update', status: workflow.status, progress: workflow.progress });
 
         try {
             const titleStr = workflow.title;

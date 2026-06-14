@@ -9,6 +9,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const zod_1 = require("zod");
 const notification_service_1 = require("../services/notification.service");
+const auditLogger_1 = require("../utils/auditLogger");
 const registerSchema = zod_1.z.object({
     name: zod_1.z.string().min(2),
     email: zod_1.z.string().email(),
@@ -30,7 +31,7 @@ const generateToken = (user) => {
         role: roleMapped,
         organizationId: user.organizationId,
         permissions: user.permissions
-    }, process.env.JWT_SECRET || 'fallback', { expiresIn: '1d' });
+    }, process.env.JWT_SECRET || 'super_secret_collaborative_ai_key_2026', { expiresIn: '1d' });
 };
 const register = async (req, res) => {
     try {
@@ -46,9 +47,8 @@ const register = async (req, res) => {
         const hashedPassword = await bcryptjs_1.default.hash(password, 10);
         // Assign default permissions based on role
         const defaultPermissions = role === 'Admin' ? ['*'] :
-            role === 'Data Engineer' || role === 'Data Steward' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'workflow:edit'] :
-                role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:view', 'workflow:view'] :
-                    ['dataset:view'];
+            role === 'Data Engineer' || role === 'Data Steward' || role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'workflow:edit'] :
+                ['dataset:view'];
         const user = await prisma_1.default.user.create({
             data: {
                 name,
@@ -104,6 +104,8 @@ const login = async (req, res) => {
         const token = generateToken(user);
         // Update last active
         await prisma_1.default.user.update({ where: { id: user.id }, data: { lastActive: new Date() } });
+        // Log login action in audit trail
+        await (0, auditLogger_1.logAction)(user.id, user.role, user.organizationId, 'LOGIN', 'User', user.id, { email: user.email });
         // Trigger login security alert notification
         try {
             await (0, notification_service_1.notifyUser)(user.id, 'Security Alert: Successful Login', `A successful login was detected for your account.`, 'security', '/');

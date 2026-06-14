@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { runIngestionPipeline, EnforcementMode } from '../services/ingestion.pipeline';
 import { runPipelineValidation } from '../services/validation.engine';
 import { notifyUser, notifyAdmins } from '../services/notification.service';
+import { logAction } from '../utils/auditLogger';
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -116,6 +117,9 @@ export const createDataset = async (req: AuthenticatedRequest, res: express.Resp
             userId: user.id,
             organizationId: user.organizationId,
         });
+
+        // Audit dataset ingestion
+        await logAction(user.id, user.role, user.organizationId, 'FILE_UPLOAD', 'Dataset', result.dataset.id, { name: name, source: source || 'file' });
 
         try {
             await notifyUser(

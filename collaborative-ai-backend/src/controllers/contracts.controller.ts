@@ -2,6 +2,7 @@ import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';
 import { notifyUser, notifyAll, notifyAdmins } from '../services/notification.service';
+import { logAction } from '../utils/auditLogger';
 
 export const getContracts = async (req: AuthenticatedRequest, res: express.Response) => {
     try {
@@ -38,6 +39,9 @@ export const createContract = async (req: AuthenticatedRequest, res: express.Res
                 schemaDef: typeof schemaDef === 'string' ? schemaDef : JSON.stringify(schemaDef),
             } as any,
         });
+
+        // Audit contract creation
+        await logAction(user.id, user.role, user.organizationId, 'CONTRACT_CREATION', 'DataContract', contract.id, { name: name, version: version || '1.0.0' });
 
         try {
             await notifyUser(

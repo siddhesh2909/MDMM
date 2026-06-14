@@ -65,7 +65,39 @@ router.delete('/workflows/:id', (0, auth_1.requirePermission)('workflow:edit'), 
 // ── Analytics ──
 router.get('/analytics', analytics_controller_1.getAnalytics);
 // ── Admin / Users ──
-router.get('/users', users_controller_1.getUsers);
+router.get('/users', (0, auth_1.requireRole)(['Admin']), users_controller_1.getUsers);
+router.post('/log-security-event', async (req, res) => {
+    const authReq = req;
+    const user = authReq.user;
+    if (!user)
+        return res.status(401).json({ error: 'Unauthorized' });
+    const { path } = req.body;
+    try {
+        const { logAction } = require('../utils/auditLogger');
+        await logAction(user.id, user.role, user.organizationId, 'UNAUTHORIZED_ACCESS', 'Route', path || 'unknown', { attemptPath: path });
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.error('Failed to log security event:', err);
+        res.status(500).json({ error: 'Failed to log security event' });
+    }
+});
+router.post('/log-dashboard-publish', async (req, res) => {
+    const authReq = req;
+    const user = authReq.user;
+    if (!user)
+        return res.status(401).json({ error: 'Unauthorized' });
+    const { dashboardId, dashboardName } = req.body;
+    try {
+        const { logAction } = require('../utils/auditLogger');
+        await logAction(user.id, user.role, user.organizationId, 'DASHBOARD_PUBLICATION', 'Dashboard', dashboardId || 'unknown', { dashboardName });
+        res.status(200).json({ success: true });
+    }
+    catch (err) {
+        console.error('Failed to log dashboard publication:', err);
+        res.status(500).json({ error: 'Failed to log dashboard publication' });
+    }
+});
 router.get('/users/profile', users_controller_1.getProfile);
 router.patch('/users/profile', users_controller_1.updateProfile);
 router.post('/users/profile/revoke-others', users_controller_1.revokeOtherSessions);
@@ -84,6 +116,9 @@ router.get('/logs/errors', pipeline_logs_controller_1.getErrorLogs);
 router.get('/logs/summary', pipeline_logs_controller_1.getLogSummary);
 // ── Notifications ──
 router.get('/notifications', notifications_controller_1.getNotifications);
+router.get('/notifications/:id', notifications_controller_1.getNotificationDetail);
 router.patch('/notifications/:id/read', notifications_controller_1.markRead);
+router.patch('/notifications/:id/archive', notifications_controller_1.toggleArchiveNotification);
+router.delete('/notifications/:id', notifications_controller_1.deleteNotification);
 router.post('/notifications/mark-all-read', notifications_controller_1.markAllRead);
 exports.default = router;

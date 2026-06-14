@@ -8,6 +8,7 @@ const prisma_1 = __importDefault(require("../lib/prisma"));
 const ingestion_pipeline_1 = require("../services/ingestion.pipeline");
 const validation_engine_1 = require("../services/validation.engine");
 const notification_service_1 = require("../services/notification.service");
+const auditLogger_1 = require("../utils/auditLogger");
 // ── Helpers ──────────────────────────────────────────────────
 function inferSchemaFromData(data) {
     if (!data.length)
@@ -116,6 +117,8 @@ const createDataset = async (req, res) => {
             userId: user.id,
             organizationId: user.organizationId,
         });
+        // Audit dataset ingestion
+        await (0, auditLogger_1.logAction)(user.id, user.role, user.organizationId, 'FILE_UPLOAD', 'Dataset', result.dataset.id, { name: name, source: source || 'file' });
         try {
             await (0, notification_service_1.notifyUser)(user.id, 'Dataset Ingested Successfully', `Dataset "${name}" was successfully ingested.`, 'project', '/ingestion');
             await (0, notification_service_1.notifyAdmins)(user.organizationId, 'New Dataset Ingested', `Dataset "${name}" has been uploaded by ${user.id}.`, 'project', '/ingestion');

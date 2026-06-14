@@ -54,5 +54,89 @@
       "temperature": 0.7,
       "customRules": "Format tabular results cleanly as Markdown tables."
     }
+  },
+  "119e1496-1a7c-49e8-ab80-10ef5992f3af": {
+    "profilePhoto": "",
+    "jobTitle": "Enterprise Administrator",
+    "contactNumber": "+1 (555) 019-2834",
+    "timezone": "UTC (GMT+00:00)",
+    "twoFactorEnabled": false,
+    "activeSessions": [
+      {
+        "id": "session-42nhet5",
+        "device": "Chrome on macOS (Current)",
+        "location": "San Francisco, US",
+        "ip": "192.168.1.100",
+        "lastActive": "2026-06-14T05:40:48.743Z",
+        "currentSession": true
+      }
+    ],
+    "lastLoginInfo": "Chrome on macOS, San Francisco, US (IP: 192.168.1.100)",
+    "notifications": {
+      "system": true,
+      "email": false,
+      "aiAlerts": true
+    },
+    "aiPreferences": {
+      "model": "llama-3-8b",
+      "temperature": 0.7,
+      "customRules": "Format tabular results cleanly as Markdown tables."
+    }
+  },
+  "9c53776a-ac1b-462c-83ad-514b6f21f0ee": {
+    "profilePhoto": "",
+    "jobTitle": "Data Analyst",
+    "contactNumber": "+1 (555) 019-2834",
+    "timezone": "UTC (GMT+00:00)",
+    "twoFactorEnabled": false,
+    "activeSessions": [
+      {
+        "id": "session-v1nury5",
+        "device": "Chrome on macOS (Current)",
+        "location": "San Francisco, US",
+        "ip": "192.168.1.100",
+        "lastActive": "2026-06-14T06:00:32.138Z",
+        "currentSession": true
+      }
+    ],
+    "lastLoginInfo": "Chrome on macOS, San Francisco, US (IP: 192.168.1.100)",
+    "notifications": {
+      "system": true,
+      "email": false,
+      "aiAlerts": true
+    },
+    "aiPreferences": {
+      "model": "llama-3-8b",
+      "temperature": 0.7,
+      "customRules": "Format tabular results cleanly as Markdown tables."
+    }
+  },
+  "99551bcc-4ac3-4bf4-bf7f-1a405f985484": {
+    "profilePhoto": "",
+    "jobTitle": "Guest Data Viewer",
+    "contactNumber": "+1 (555) 019-2834",
+    "timezone": "UTC (GMT+00:00)",
+    "twoFactorEnabled": false,
+    "activeSessions": [
+      {
+        "id": "session-z5pwxli",
+        "device": "Chrome on macOS (Current)",
+        "location": "San Francisco, US",
+        "ip": "192.168.1.100",
+        "lastActive": "2026-06-14T06:15:59.885Z",
+        "currentSession": true
+      }
+    ],
+    "lastLoginInfo": "Chrome on macOS, San Francisco, US (IP: 192.168.1.100)",
+    "notifications": {
+      "system": true,
+      "email": false,
+      "aiAlerts": true
+    },
+    "aiPreferences": {
+      "model": "llama-3-8b",
+      "temperature": 0.7,
+      "customRules": "Format tabular results cleanly as Markdown tables."
+    }
   }
 }

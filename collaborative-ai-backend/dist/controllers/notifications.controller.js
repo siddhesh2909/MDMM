@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.streamNotifications = exports.markAllRead = exports.markRead = exports.getNotifications = void 0;
+exports.streamNotifications = exports.markAllRead = exports.markRead = exports.toggleArchiveNotification = exports.deleteNotification = exports.getNotificationDetail = exports.getNotifications = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const notification_service_1 = require("../services/notification.service");
@@ -15,16 +15,63 @@ const getNotifications = async (req, res) => {
         const orgId = req.user?.organizationId;
         if (!userId || !orgId)
             return res.status(401).json({ error: 'Unauthorized' });
-        const notifications = await prisma_1.default.notification.findMany({
-            where: {
-                userId,
-                organizationId: orgId
-            },
+        const status = req.query.status; // all, unread, read, archived
+        const category = req.query.category; // e.g. security, workflow, etc.
+        const search = req.query.search;
+        const sort = req.query.sort; // newest, oldest, priority
+        const whereClause = {
+            userId,
+            organizationId: orgId
+        };
+        // Filter by Status: All (excludes archived), Unread (excludes archived), Read (excludes archived), Archived
+        if (status === 'archived') {
+            whereClause.archived = true;
+        }
+        else {
+            whereClause.archived = false;
+            if (status === 'unread') {
+                whereClause.read = false;
+            }
+            else if (status === 'read') {
+                whereClause.read = true;
+            }
+        }
+        // Filter by Category
+        if (category && category !== 'all') {
+            whereClause.type = category.toLowerCase();
+        }
+        // Search text
+        if (search && search.trim() !== '') {
+            whereClause.OR = [
+                { title: { contains: search } },
+                { description: { contains: search } }
+            ];
+        }
+        // Fetch
+        let notifications = await prisma_1.default.notification.findMany({
+            where: whereClause,
             orderBy: {
-                createdAt: 'desc'
-            },
-            take: 50
+                createdAt: sort === 'oldest' ? 'asc' : 'desc'
+            }
         });
+        // Sort by priority if requested
+        if (sort === 'priority') {
+            const priorityWeight = {
+                'Critical': 4,
+                'High': 3,
+                'Medium': 2,
+                'Low': 1
+            };
+            notifications.sort((a, b) => {
+                const weightA = priorityWeight[a.priority] || 0;
+                const weightB = priorityWeight[b.priority] || 0;
+                if (weightA !== weightB) {
+                    return weightB - weightA; // Higher weight first
+                }
+                // Secondary sort: newest first
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+        }
         res.status(200).json(notifications);
     }
     catch (error) {
@@ -33,6 +80,91 @@ const getNotifications = async (req, res) => {
     }
 };
 exports.getNotifications = getNotifications;
+// GET /api/data/notifications/:id
+const getNotificationDetail = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        const orgId = req.user?.organizationId;
+        if (!userId || !orgId)
+            return res.status(401).json({ error: 'Unauthorized' });
+        const id = String(req.params.id);
+        const notification = await prisma_1.default.notification.findFirst({
+            where: {
+                id,
+                userId,
+                organizationId: orgId
+            }
+        });
+        if (!notification) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
+        res.status(200).json(notification);
+    }
+    catch (error) {
+        console.error('Failed to fetch notification detail:', error);
+        res.status(500).json({ error: 'Failed to fetch notification detail' });
+    }
+};
+exports.getNotificationDetail = getNotificationDetail;
+// DELETE /api/data/notifications/:id
+const deleteNotification = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        const orgId = req.user?.organizationId;
+        if (!userId || !orgId)
+            return res.status(401).json({ error: 'Unauthorized' });
+        const id = String(req.params.id);
+        const existing = await prisma_1.default.notification.findFirst({
+            where: {
+                id,
+                userId,
+                organizationId: orgId
+            }
+        });
+        if (!existing) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
+        await prisma_1.default.notification.delete({
+            where: { id }
+        });
+        res.status(200).json({ success: true });
+    }
+    catch (error) {
+        console.error('Failed to delete notification:', error);
+        res.status(500).json({ error: 'Failed to delete notification' });
+    }
+};
+exports.deleteNotification = deleteNotification;
+// PATCH /api/data/notifications/:id/archive
+const toggleArchiveNotification = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        const orgId = req.user?.organizationId;
+        if (!userId || !orgId)
+            return res.status(401).json({ error: 'Unauthorized' });
+        const id = String(req.params.id);
+        const existing = await prisma_1.default.notification.findFirst({
+            where: {
+                id,
+                userId,
+                organizationId: orgId
+            }
+        });
+        if (!existing) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
+        const updated = await prisma_1.default.notification.update({
+            where: { id },
+            data: { archived: !existing.archived }
+        });
+        res.status(200).json(updated);
+    }
+    catch (error) {
+        console.error('Failed to update notification archive status:', error);
+        res.status(500).json({ error: 'Failed to update notification archive status' });
+    }
+};
+exports.toggleArchiveNotification = toggleArchiveNotification;
 // PATCH /api/data/notifications/:id/read
 const markRead = async (req, res) => {
     try {

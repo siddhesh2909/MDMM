@@ -209,6 +209,8 @@ model Notification {
   description    String
   type           String
   read           Boolean  @default(false)
+  archived       Boolean  @default(false)
+  priority       String   @default("Medium") // Critical, High, Medium, Low
   actionUrl      String?
   icon           String?
   organizationId String

@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import * as express from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import prisma from '../lib/prisma';

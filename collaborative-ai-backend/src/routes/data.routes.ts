@@ -5,7 +5,7 @@ import { getAnalytics, getDatasetAnalytics } from '../controllers/analytics.cont
 import { getDatasets, createDataset, updateDataset, getDatasetDetail, deleteDataset } from '../controllers/datasets.controller';
 import { getUsers, getAuditLog, inviteUser, updateUserRole, deactivateUser, updateProfile, getProfile, revokeOtherSessions, downloadPersonalData, deleteAccount, updateOrganizationDetails } from '../controllers/users.controller';
 import { testConnection, pullData } from '../controllers/connectors.controller';
-import { authenticateToken, requirePermission, requireRole } from '../middleware/auth';
+import { authenticateToken, requirePermission, requireRole, AuthenticatedRequest } from '../middleware/auth';
 
 // New controllers
 import { validateDataset, getValidationReport } from '../controllers/validation.controller';
@@ -14,7 +14,7 @@ import { getDatasetLineage, getFullLineage } from '../controllers/lineage.contro
 import { createVersion, getVersions, compareVersions, rollbackVersion } from '../controllers/versioning.controller';
 import { getSchemaSuggestions, applySuggestion } from '../controllers/evolution.controller';
 import { getErrorLogs, getLogSummary } from '../controllers/pipeline-logs.controller';
-import { getNotifications, markRead, markAllRead, streamNotifications } from '../controllers/notifications.controller';
+import { getNotifications, markRead, markAllRead, streamNotifications, getNotificationDetail, deleteNotification, toggleArchiveNotification } from '../controllers/notifications.controller';
 
 const router = Router();
 
@@ -79,7 +79,53 @@ router.delete('/workflows/:id', requirePermission('workflow:edit'), deleteWorkfl
 router.get('/analytics', getAnalytics);
 
 // ── Admin / Users ──
-router.get('/users', getUsers);
+router.get('/users', requireRole(['Admin']), getUsers);
+router.post('/log-security-event', async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const user = authReq.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const { path } = req.body;
+    try {
+        const { logAction } = require('../utils/auditLogger');
+        await logAction(
+            user.id,
+            user.role,
+            user.organizationId,
+            'UNAUTHORIZED_ACCESS',
+            'Route',
+            path || 'unknown',
+            { attemptPath: path }
+        );
+        res.status(200).json({ success: true });
+    } catch (err) {
+        console.error('Failed to log security event:', err);
+        res.status(500).json({ error: 'Failed to log security event' });
+    }
+});
+
+router.post('/log-dashboard-publish', async (req: Request, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    const user = authReq.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const { dashboardId, dashboardName } = req.body;
+    try {
+        const { logAction } = require('../utils/auditLogger');
+        await logAction(
+            user.id,
+            user.role,
+            user.organizationId,
+            'DASHBOARD_PUBLICATION',
+            'Dashboard',
+            dashboardId || 'unknown',
+            { dashboardName }
+        );
+        res.status(200).json({ success: true });
+    } catch (err) {
+        console.error('Failed to log dashboard publication:', err);
+        res.status(500).json({ error: 'Failed to log dashboard publication' });
+    }
+});
+
 router.get('/users/profile', getProfile);
 router.patch('/users/profile', updateProfile);
 router.post('/users/profile/revoke-others', revokeOtherSessions);
@@ -101,7 +147,10 @@ router.get('/logs/summary', getLogSummary);
 
 // ── Notifications ──
 router.get('/notifications', getNotifications);
+router.get('/notifications/:id', getNotificationDetail);
 router.patch('/notifications/:id/read', markRead);
+router.patch('/notifications/:id/archive', toggleArchiveNotification);
+router.delete('/notifications/:id', deleteNotification);
 router.post('/notifications/mark-all-read', markAllRead);
 
 export default router;
