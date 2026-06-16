@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction, Router } from 'express';
 import { getContracts, createContract, updateContract, deleteContract, duplicateContract, toggleContractStatus, getLatestContract, getContractsDashboardStats, getContractDetail } from '../controllers/contracts.controller';
-import { getWorkflows, createWorkflow, updateWorkflow, deleteWorkflow } from '../controllers/workflows.controller';
 import { getAnalytics, getDatasetAnalytics } from '../controllers/analytics.controller';
 import { getDatasets, createDataset, updateDataset, getDatasetDetail, deleteDataset } from '../controllers/datasets.controller';
 import { getUsers, getAuditLog, inviteUser, updateUserRole, deactivateUser, updateProfile, getProfile, revokeOtherSessions, downloadPersonalData, deleteAccount, updateOrganizationDetails } from '../controllers/users.controller';
@@ -71,11 +70,6 @@ router.get('/datasets/:id/validation-report', getValidationReport);
 router.get('/datasets/:id/quality', getDatasetQuality);
 router.get('/quality/overview', getQualityOverview);
 
-// ── Workflows ──
-router.get('/workflows', getWorkflows);
-router.post('/workflows', requirePermission('workflow:edit'), createWorkflow);
-router.patch('/workflows/:id', requirePermission('workflow:edit'), updateWorkflow);
-router.delete('/workflows/:id', requirePermission('workflow:edit'), deleteWorkflow);
 
 // ── Analytics ──
 router.get('/analytics', getAnalytics);

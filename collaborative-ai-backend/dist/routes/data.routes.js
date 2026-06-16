@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const contracts_controller_1 = require("../controllers/contracts.controller");
-const workflows_controller_1 = require("../controllers/workflows.controller");
 const analytics_controller_1 = require("../controllers/analytics.controller");
 const datasets_controller_1 = require("../controllers/datasets.controller");
 const users_controller_1 = require("../controllers/users.controller");
@@ -48,16 +47,17 @@ router.post('/datasets', (0, auth_1.requirePermission)('dataset:manage'), datase
 router.patch('/datasets/:id', (0, auth_1.requirePermission)('dataset:manage'), datasets_controller_1.updateDataset);
 router.delete('/datasets/:id', (0, auth_1.requirePermission)('dataset:manage'), datasets_controller_1.deleteDataset);
 router.get('/datasets/:id/analytics', analytics_controller_1.getDatasetAnalytics);
+// ── Dataset Sharing ──
+const sharing_controller_1 = require("../controllers/sharing.controller");
+router.post('/datasets/:id/share', sharing_controller_1.shareDataset);
+router.post('/datasets/:id/share/update', sharing_controller_1.updateDatasetShare);
+router.post('/datasets/:id/share/revoke', sharing_controller_1.revokeDatasetShare);
+router.get('/datasets/:id/share/users', sharing_controller_1.getDatasetSharedUsers);
 // ── Dataset Validation Report (Part 1) ──
 router.get('/datasets/:id/validation-report', validation_controller_1.getValidationReport);
 // ── Dataset Quality Metrics (Part 3) ──
 router.get('/datasets/:id/quality', quality_controller_1.getDatasetQuality);
 router.get('/quality/overview', quality_controller_1.getQualityOverview);
-// ── Workflows ──
-router.get('/workflows', workflows_controller_1.getWorkflows);
-router.post('/workflows', (0, auth_1.requirePermission)('workflow:edit'), workflows_controller_1.createWorkflow);
-router.patch('/workflows/:id', (0, auth_1.requirePermission)('workflow:edit'), workflows_controller_1.updateWorkflow);
-router.delete('/workflows/:id', (0, auth_1.requirePermission)('workflow:edit'), workflows_controller_1.deleteWorkflow);
 // ── Analytics ──
 router.get('/analytics', analytics_controller_1.getAnalytics);
 // ── Admin / Users ──

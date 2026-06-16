@@ -43,6 +43,22 @@ function inferSchemaFromData(data: Record<string, unknown>[]) {
     });
 }
 
+function parseHeaders(headersString?: string): Record<string, string> {
+    if (!headersString || !headersString.trim()) {
+        return {};
+    }
+    try {
+        const parsed = JSON.parse(headersString);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return parsed as Record<string, string>;
+        }
+        return {};
+    } catch (err) {
+        console.warn('Failed to parse API headers:', err);
+        return {};
+    }
+}
+
 // ── Test Connection ─────────────────────────────────────────
 
 export const testConnection = async (req: AuthenticatedRequest, res: express.Response) => {
@@ -110,7 +126,7 @@ export const testConnection = async (req: AuthenticatedRequest, res: express.Res
                         signal: controller.signal,
                         headers: {
                             'Accept': 'application/json',
-                            ...(config.headers ? JSON.parse(config.headers) : {}),
+                            ...parseHeaders(config.headers),
                         },
                         ...(method === 'POST' && config.body ? { body: config.body } : {}),
                     });
@@ -208,7 +224,7 @@ export const pullData = async (req: AuthenticatedRequest, res: express.Response)
                         signal: controller.signal,
                         headers: {
                             'Accept': 'application/json',
-                            ...(config.headers ? JSON.parse(config.headers) : {}),
+                            ...parseHeaders(config.headers),
                         },
                         ...(method === 'POST' && config.body ? { body: config.body } : {}),
                     });
@@ -298,17 +314,17 @@ function generatePostgresData(table: string): Record<string, unknown>[] {
         users: () => Array.from({ length: 15 }, (_, i) => ({
             id: i + 1,
             name: ['Alice Johnson', 'Bob Smith', 'Charlie Davis', 'Diana Evans', 'Edward Wilson',
-                   'Fiona Brown', 'George Miller', 'Hannah White', 'Ivan Taylor', 'Julia Adams',
-                   'Kevin Martinez', 'Laura Thomas', 'Michael Jackson', 'Nancy Anderson', 'Oscar Garcia'][i],
+                'Fiona Brown', 'George Miller', 'Hannah White', 'Ivan Taylor', 'Julia Adams',
+                'Kevin Martinez', 'Laura Thomas', 'Michael Jackson', 'Nancy Anderson', 'Oscar Garcia'][i],
             email: ['alice', 'bob', 'charlie', 'diana', 'edward',
-                    'fiona', 'george', 'hannah', 'ivan', 'julia',
-                    'kevin', 'laura', 'michael', 'nancy', 'oscar'][i] + '@company.com',
+                'fiona', 'george', 'hannah', 'ivan', 'julia',
+                'kevin', 'laura', 'michael', 'nancy', 'oscar'][i] + '@company.com',
             role: ['admin', 'user', 'user', 'manager', 'user',
-                   'user', 'manager', 'user', 'admin', 'user',
-                   'user', 'manager', 'user', 'user', 'manager'][i],
+                'user', 'manager', 'user', 'admin', 'user',
+                'user', 'manager', 'user', 'user', 'manager'][i],
             department: ['Engineering', 'Sales', 'Marketing', 'Engineering', 'Support',
-                        'HR', 'Engineering', 'Sales', 'Engineering', 'Marketing',
-                        'Sales', 'Engineering', 'Support', 'Marketing', 'Sales'][i],
+                'HR', 'Engineering', 'Sales', 'Engineering', 'Marketing',
+                'Sales', 'Engineering', 'Support', 'Marketing', 'Sales'][i],
             is_active: i < 13,
             created_at: new Date(now.getTime() - (i * 30 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
         })),
@@ -316,28 +332,28 @@ function generatePostgresData(table: string): Record<string, unknown>[] {
             order_id: 1000 + i,
             customer_id: Math.floor(Math.random() * 15) + 1,
             product: ['Laptop Pro', 'Wireless Mouse', 'USB-C Hub', 'Monitor 27"', 'Mechanical Keyboard',
-                      'Webcam HD', 'Standing Desk', 'Headphones', 'Tablet 10"', 'Smart Watch',
-                      'External SSD', 'Docking Station', 'Ergonomic Chair', 'LED Strip', 'Power Bank',
-                      'Laptop Bag', 'Screen Protector', 'Phone Case', 'Cable Organizer', 'Desk Lamp'][i],
+                'Webcam HD', 'Standing Desk', 'Headphones', 'Tablet 10"', 'Smart Watch',
+                'External SSD', 'Docking Station', 'Ergonomic Chair', 'LED Strip', 'Power Bank',
+                'Laptop Bag', 'Screen Protector', 'Phone Case', 'Cable Organizer', 'Desk Lamp'][i],
             quantity: Math.floor(Math.random() * 5) + 1,
             unit_price: [1299.99, 29.99, 49.99, 399.99, 149.99,
-                        79.99, 599.99, 199.99, 449.99, 249.99,
-                        119.99, 229.99, 449.99, 24.99, 39.99,
-                        59.99, 14.99, 19.99, 12.99, 44.99][i],
+                79.99, 599.99, 199.99, 449.99, 249.99,
+                119.99, 229.99, 449.99, 24.99, 39.99,
+                59.99, 14.99, 19.99, 12.99, 44.99][i],
             status: ['completed', 'processing', 'shipped', 'completed', 'cancelled',
-                    'completed', 'processing', 'completed', 'shipped', 'completed',
-                    'processing', 'completed', 'shipped', 'completed', 'completed',
-                    'processing', 'completed', 'shipped', 'completed', 'processing'][i],
+                'completed', 'processing', 'completed', 'shipped', 'completed',
+                'processing', 'completed', 'shipped', 'completed', 'completed',
+                'processing', 'completed', 'shipped', 'completed', 'processing'][i],
             order_date: new Date(now.getTime() - (i * 2 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
         })),
         products: () => Array.from({ length: 12 }, (_, i) => ({
             product_id: i + 1,
             name: ['Laptop Pro 15', 'Wireless Mouse X1', 'USB-C Hub 7-in-1', 'Monitor UHD 27"',
-                   'Mech Keyboard RGB', 'HD Webcam 4K', 'Standing Desk Auto', 'ANC Headphones',
-                   'Tablet Pro 10"', 'Smart Watch Ultra', 'SSD External 1TB', 'Docking Station Pro'][i],
+                'Mech Keyboard RGB', 'HD Webcam 4K', 'Standing Desk Auto', 'ANC Headphones',
+                'Tablet Pro 10"', 'Smart Watch Ultra', 'SSD External 1TB', 'Docking Station Pro'][i],
             category: ['Electronics', 'Accessories', 'Accessories', 'Electronics',
-                      'Accessories', 'Accessories', 'Furniture', 'Audio',
-                      'Electronics', 'Wearables', 'Storage', 'Accessories'][i],
+                'Accessories', 'Accessories', 'Furniture', 'Audio',
+                'Electronics', 'Wearables', 'Storage', 'Accessories'][i],
             price: [1299.99, 29.99, 49.99, 399.99, 149.99, 79.99, 599.99, 199.99, 449.99, 249.99, 119.99, 229.99][i],
             stock: [45, 200, 150, 30, 80, 120, 15, 65, 40, 90, 110, 55][i],
             rating: [4.7, 4.3, 4.5, 4.8, 4.6, 4.1, 4.9, 4.4, 4.2, 4.0, 4.6, 4.3][i],
@@ -364,20 +380,20 @@ function generateMongoData(collection: string): Record<string, unknown>[] {
         users: () => Array.from({ length: 12 }, (_, i) => ({
             _id: `64f${String(i).padStart(4, '0')}a${Math.random().toString(36).slice(2, 10)}`,
             username: ['alice_j', 'bob_s', 'charlie_d', 'diana_e', 'edward_w',
-                      'fiona_b', 'george_m', 'hannah_w', 'ivan_t', 'julia_a',
-                      'kevin_m', 'laura_t'][i],
+                'fiona_b', 'george_m', 'hannah_w', 'ivan_t', 'julia_a',
+                'kevin_m', 'laura_t'][i],
             email: ['alice', 'bob', 'charlie', 'diana', 'edward',
-                    'fiona', 'george', 'hannah', 'ivan', 'julia',
-                    'kevin', 'laura'][i] + '@company.io',
+                'fiona', 'george', 'hannah', 'ivan', 'julia',
+                'kevin', 'laura'][i] + '@company.io',
             profile: {
                 age: 25 + Math.floor(Math.random() * 20),
                 city: ['New York', 'London', 'Tokyo', 'Paris', 'Berlin',
-                      'Sydney', 'Toronto', 'Mumbai', 'Singapore', 'Dubai',
-                      'Seoul', 'Amsterdam'][i],
+                    'Sydney', 'Toronto', 'Mumbai', 'Singapore', 'Dubai',
+                    'Seoul', 'Amsterdam'][i],
             },
             tags: [['admin'], ['user', 'premium'], ['user'], ['manager', 'user'], ['user'],
-                  ['user'], ['manager'], ['user', 'premium'], ['admin', 'user'], ['user'],
-                  ['user'], ['manager', 'premium']][i],
+            ['user'], ['manager'], ['user', 'premium'], ['admin', 'user'], ['user'],
+            ['user'], ['manager', 'premium']][i],
             createdAt: new Date(now.getTime() - (i * 15 * 24 * 60 * 60 * 1000)).toISOString(),
         })),
         orders: () => Array.from({ length: 18 }, (_, i) => ({
@@ -393,14 +409,14 @@ function generateMongoData(collection: string): Record<string, unknown>[] {
         products: () => Array.from({ length: 10 }, (_, i) => ({
             _id: `66b${String(i).padStart(4, '0')}c${Math.random().toString(36).slice(2, 10)}`,
             name: ['Smart Sensor', 'IoT Gateway', 'Data Logger', 'Edge Processor',
-                   'Cloud Adapter', 'Signal Booster', 'Mesh Node', 'Protocol Bridge',
-                   'Stream Analyzer', 'Packet Inspector'][i],
+                'Cloud Adapter', 'Signal Booster', 'Mesh Node', 'Protocol Bridge',
+                'Stream Analyzer', 'Packet Inspector'][i],
             price: [99.99, 249.99, 79.99, 399.99, 149.99, 59.99, 129.99, 199.99, 349.99, 89.99][i],
             inStock: i % 3 !== 0,
             tags: [['iot', 'hardware'], ['iot', 'networking'], ['data', 'hardware'],
-                  ['compute', 'edge'], ['cloud', 'networking'], ['networking', 'hardware'],
-                  ['iot', 'mesh'], ['networking', 'protocol'], ['data', 'analytics'],
-                  ['networking', 'security']][i],
+            ['compute', 'edge'], ['cloud', 'networking'], ['networking', 'hardware'],
+            ['iot', 'mesh'], ['networking', 'protocol'], ['data', 'analytics'],
+            ['networking', 'security']][i],
         })),
     };
 
@@ -422,28 +438,28 @@ function generateMySQLData(table: string): Record<string, unknown>[] {
         customers: () => Array.from({ length: 15 }, (_, i) => ({
             customer_id: i + 1,
             first_name: ['James', 'Mary', 'Robert', 'Patricia', 'John',
-                         'Jennifer', 'Michael', 'Linda', 'David', 'Elizabeth',
-                         'William', 'Barbara', 'Richard', 'Susan', 'Joseph'][i],
+                'Jennifer', 'Michael', 'Linda', 'David', 'Elizabeth',
+                'William', 'Barbara', 'Richard', 'Susan', 'Joseph'][i],
             last_name: ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones',
-                        'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
-                        'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson'][i],
+                'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
+                'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson'][i],
             email: ['james.s', 'mary.j', 'robert.w', 'patricia.b', 'john.j',
-                    'jennifer.g', 'michael.m', 'linda.d', 'david.r', 'elizabeth.m',
-                    'william.h', 'barbara.l', 'richard.g', 'susan.w', 'joseph.a'][i] + '@example.com',
+                'jennifer.g', 'michael.m', 'linda.d', 'david.r', 'elizabeth.m',
+                'william.h', 'barbara.l', 'richard.g', 'susan.w', 'joseph.a'][i] + '@example.com',
             phone: `+1-555-${String(100 + i).padStart(3, '0')}-${String(1000 + i * 7).slice(0, 4)}`,
             city: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix',
-                   'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose',
-                   'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'Charlotte'][i],
+                'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose',
+                'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'Charlotte'][i],
             registered_at: new Date(now.getTime() - (i * 20 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
         })),
         orders: () => Array.from({ length: 18 }, (_, i) => ({
             order_id: 5000 + i,
             customer_id: Math.floor(Math.random() * 15) + 1,
             product_name: ['Widget Alpha', 'Gadget Pro', 'Service Pack', 'Premium Plan',
-                           'Starter Kit', 'Enterprise License', 'Support Bundle', 'Analytics Module',
-                           'Cloud Storage', 'API Access', 'Mobile App', 'Desktop Client',
-                           'Integration Hub', 'Data Sync', 'Report Builder', 'Dashboard Pro',
-                           'Alert System', 'Backup Service'][i],
+                'Starter Kit', 'Enterprise License', 'Support Bundle', 'Analytics Module',
+                'Cloud Storage', 'API Access', 'Mobile App', 'Desktop Client',
+                'Integration Hub', 'Data Sync', 'Report Builder', 'Dashboard Pro',
+                'Alert System', 'Backup Service'][i],
             quantity: Math.floor(Math.random() * 10) + 1,
             total_amount: +(Math.random() * 500 + 10).toFixed(2),
             status: ['completed', 'pending', 'shipped', 'processing', 'cancelled'][i % 5],
@@ -452,13 +468,13 @@ function generateMySQLData(table: string): Record<string, unknown>[] {
         products: () => Array.from({ length: 12 }, (_, i) => ({
             product_id: i + 1,
             name: ['CRM Suite', 'Email Marketing', 'Inventory Manager', 'POS Terminal',
-                   'HR Platform', 'Project Tracker', 'Accounting Pro', 'Support Desk',
-                   'E-Commerce Engine', 'Analytics Dashboard', 'Form Builder', 'Chat Widget'][i],
+                'HR Platform', 'Project Tracker', 'Accounting Pro', 'Support Desk',
+                'E-Commerce Engine', 'Analytics Dashboard', 'Form Builder', 'Chat Widget'][i],
             category: ['Software', 'Marketing', 'Operations', 'Sales',
-                       'HR', 'Management', 'Finance', 'Support',
-                       'E-Commerce', 'Analytics', 'Tools', 'Communication'][i],
+                'HR', 'Management', 'Finance', 'Support',
+                'E-Commerce', 'Analytics', 'Tools', 'Communication'][i],
             price: [299.99, 49.99, 149.99, 399.99, 199.99, 99.99,
-                    349.99, 79.99, 499.99, 249.99, 29.99, 59.99][i],
+                349.99, 79.99, 499.99, 249.99, 29.99, 59.99][i],
             stock_quantity: [100, 500, 250, 75, 300, 450, 120, 600, 50, 200, 800, 350][i],
             is_active: i < 10,
         })),

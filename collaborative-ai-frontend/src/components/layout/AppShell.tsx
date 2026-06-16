@@ -21,7 +21,6 @@ function checkAuthorization(role: string, path: string): boolean {
         '/data-contracts',
         '/contracts',
         '/preprocessing',
-        '/workflows',
         '/analytics',
         '/ai-assistant',
         '/profile',

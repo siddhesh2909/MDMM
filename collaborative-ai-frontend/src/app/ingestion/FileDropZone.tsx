@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { UploadCloud } from 'lucide-react';
+import { CloudUpload } from 'lucide-react';
 
 interface FileDropZoneProps {
     onFileSelect: (file: File) => void;
@@ -37,30 +37,30 @@ export function FileDropZone({ onFileSelect }: FileDropZoneProps) {
 
     return (
         <div
-            className={`file-drop-zone ${isDragActive ? 'active' : ''}`}
+            className={`dz-root${isDragActive ? ' dz-active' : ''}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            onClick={() => document.getElementById('file-upload')?.click()}
+            onClick={() => document.getElementById('file-upload-input')?.click()}
         >
             <input
-                id="file-upload"
+                id="file-upload-input"
                 type="file"
-                className="hidden"
                 style={{ display: 'none' }}
                 accept=".csv,.xlsx,.xls,.json"
                 onChange={handleFileInput}
             />
-
-            <div className="file-icon">
-                <UploadCloud size={32} />
+            <div className="dz-icon-wrap">
+                <CloudUpload size={26} />
             </div>
-            <div className="file-title">
-                Drag & Drop your file here
-            </div>
-            <div className="file-subtitle">
-                Supports CSV, JSON, and Excel documents. Or click to browse.
+            <p className="dz-title">Drag &amp; drop files here or click to browse</p>
+            <p className="dz-subtitle">Supports CSV, Excel, JSON and more</p>
+            <div className="dz-badges" onClick={(e) => e.stopPropagation()}>
+                <span className="dz-badge dz-badge--csv">● CSV</span>
+                <span className="dz-badge dz-badge--excel">● Excel</span>
+                <span className="dz-badge dz-badge--json">● JSON</span>
+                <span className="dz-badge dz-badge--more">+ More</span>
             </div>
         </div>
     );

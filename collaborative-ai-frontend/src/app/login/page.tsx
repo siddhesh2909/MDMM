@@ -141,17 +141,18 @@ export default function LoginPage() {
                     )}
                 </div>
 
+
                 {mode === 'login' && (
                     <div className="login-demo-info">
                         <p style={{ marginBottom: '0.75rem' }}>Quick Login (Dev Mode):</p>
                         <div className="login-quick-btns">
-                            <button type="button" onClick={() => login('alice@ecommerce.ai', 'password123')} title="Analyst">
+                            <button type="button" onClick={() => login('analyst@collabai.com', 'password123')} title="Analyst">
                                 Analyst
                             </button>
-                            <button type="button" onClick={() => login('charlie@ecommerce.ai', 'password123')} title="Business User">
+                            <button type="button" onClick={() => login('priya@collabai.com', 'password123')} title="Business User">
                                 Business User
                             </button>
-                            <button type="button" onClick={() => login('admin@ecommerce.ai', 'password123')} title="Admin">
+                            <button type="button" onClick={() => login('admin@collabai.com', 'password123')} title="Admin">
                                 Admin
                             </button>
                         </div>

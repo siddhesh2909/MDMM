@@ -34,7 +34,6 @@ const navConfig: NavItem[] = [
     { name: 'Data Sources', path: '/ingestion', icon: Globe },
     { name: 'Data Contracts', path: '/data-contracts', icon: Database },
     { name: 'Preprocessing', path: '/preprocessing', icon: Wand2 },
-    { name: 'Workflows', path: '/workflows', icon: GitMerge },
     { name: 'Analytics', path: '/analytics', icon: BarChart3 },
     { name: 'Reports', path: '/reports', icon: FileText },
     { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
@@ -44,7 +43,8 @@ const navConfig: NavItem[] = [
         path: '/collaboration/direct-messages',
         icon: MessageSquare,
         subItems: [
-            { name: 'Direct Messages', path: '/collaboration/direct-messages' }
+            { name: 'Channels', path: '/collaboration/direct-messages?tab=channels' },
+            { name: 'Direct Messages', path: '/collaboration/direct-messages?tab=direct' }
         ]
     },
     { name: 'Admin', path: '/admin', icon: Settings },

@@ -118,6 +118,9 @@ async function runIngestionPipeline(params) {
             boundContractId: contract.id,
             ownerId: userId,
             organizationId,
+            createdBy: userId,
+            visibility: 'private',
+            sharedWith: '[]',
         },
     });
     // ── Step 6: Save Validation Report ────────────────────────

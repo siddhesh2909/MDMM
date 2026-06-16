@@ -7,11 +7,14 @@ const prisma = new PrismaClient();
 
 async function main() {
     console.log("Cleaning existing data...");
-    await prisma.workflowTask.deleteMany();
     await prisma.dataContract.deleteMany();
     await prisma.appAnalytics.deleteMany();
     await prisma.dataset.deleteMany();
     await prisma.auditLog.deleteMany();
+    await prisma.notification.deleteMany();
+    await prisma.message.deleteMany();
+    await prisma.attachment.deleteMany();
+    await prisma.conversation.deleteMany();
     await prisma.user.deleteMany();
     await prisma.organization.deleteMany();
     console.log("✅ Cleaned");
@@ -22,7 +25,7 @@ async function main() {
     const mainOrg = await prisma.organization.create({
         data: {
             name: 'Collaborative AI Corp',
-            domain: 'ecommerce.ai'
+            domain: 'collabai.com'
         }
     });
     const orgId = mainOrg.id;
@@ -30,18 +33,28 @@ async function main() {
 
     // 1. Create Users
     const hashedPassword = await bcrypt.hash('password123', 10);
-    const [alice, bob, charlie, admin] = await Promise.all([
-        prisma.user.create({ data: { name: 'Data Analyst', email: 'alice@ecommerce.ai', password: hashedPassword, role: 'Data Engineer', department: 'Engineering', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'contract:edit', 'workflow:view', 'workflow:edit']) } }),
-        prisma.user.create({ data: { name: 'Data Analyst', email: 'bob@ecommerce.ai', password: hashedPassword, role: 'Data Analyst', department: 'Data Science', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'query:run', 'report:create']) } }),
-        prisma.user.create({ data: { name: 'Business User', email: 'charlie@ecommerce.ai', password: hashedPassword, role: 'Business User', department: 'Marketing', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'dashboard:view', 'contract:approve', 'kpi:monitor']) } }),
-        prisma.user.create({ data: { name: 'Admin', email: 'admin@ecommerce.ai', password: hashedPassword, role: 'Admin', department: 'IT', organizationId: orgId, permissions: JSON.stringify(['*']) } })
+    
+    // Seed 12 users as shown in mockup
+    const [alice, bob, charlie, admin, verma, analyst, user7, user8, user9, user10, user11, user12] = await Promise.all([
+        prisma.user.create({ data: { name: 'Priya Sharma', email: 'priya@collabai.com', password: hashedPassword, role: 'Business User', department: 'Data Science', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'contract:approve']) } }),
+        prisma.user.create({ data: { name: 'Rahul Patel', email: 'rahul@collabai.com', password: hashedPassword, role: 'Admin', department: 'Engineering', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'contract:edit']) } }),
+        prisma.user.create({ data: { name: 'Siddhesh Pawar', email: 'siddhesh@collabai.com', password: hashedPassword, role: 'Business User', department: 'Marketing', organizationId: orgId, permissions: JSON.stringify(['dataset:view', 'dashboard:view']) } }),
+        prisma.user.create({ data: { name: 'Admin User', email: 'admin@collabai.com', password: hashedPassword, role: 'Admin', department: 'IT', organizationId: orgId, permissions: JSON.stringify(['*']) } }),
+        prisma.user.create({ data: { name: 'Rahul Verma', email: 'rahul.verma@collabai.com', password: hashedPassword, role: 'Business User', department: 'Engineering', organizationId: orgId, permissions: JSON.stringify(['dataset:view']) } }),
+        prisma.user.create({ data: { name: 'Data Analyst', email: 'analyst@collabai.com', password: hashedPassword, role: 'Data Analyst', department: 'Data Science', organizationId: orgId, permissions: JSON.stringify(['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view']) } }),
+        prisma.user.create({ data: { name: 'Alex Rivera', email: 'alex@collabai.com', password: hashedPassword, role: 'Business User', department: 'Sales', organizationId: orgId, permissions: JSON.stringify(['dataset:view']) } }),
+        prisma.user.create({ data: { name: 'Sarah Connor', email: 'sarah@collabai.com', password: hashedPassword, role: 'Business User', department: 'Security', organizationId: orgId, permissions: JSON.stringify([]) } }),
+        prisma.user.create({ data: { name: 'John Doe', email: 'john@collabai.com', password: hashedPassword, role: 'Business User', department: 'Sales', organizationId: orgId, permissions: JSON.stringify([]) } }),
+        prisma.user.create({ data: { name: 'Emily Watson', email: 'emily@collabai.com', password: hashedPassword, role: 'Business User', department: 'HR', organizationId: orgId, permissions: JSON.stringify([]) } }),
+        prisma.user.create({ data: { name: 'Michael Scott', email: 'michael@collabai.com', password: hashedPassword, role: 'Business User', department: 'Management', organizationId: orgId, permissions: JSON.stringify([]) } }),
+        prisma.user.create({ data: { name: 'Jessica Alba', email: 'jessica@collabai.com', password: hashedPassword, role: 'Business User', department: 'Marketing', organizationId: orgId, permissions: JSON.stringify([]) } })
     ]);
     console.log("✅ Seeded Users");
 
     // 1.5 Create Datasets
     await prisma.dataset.createMany({
         data: [
-            { name: 'ecommerce_q3_raw.json', rawData: JSON.stringify([{ id: 101, date: '2026-03-01', revenue: 15400.50, region: 'North America' }, { id: 102, date: '2026-03-02', revenue: 'Omitted', region: 'Europe' }]), ownerId: alice.id, organizationId: orgId },
+            { name: 'ecommerce_q3_raw.json', rawData: JSON.stringify([{ id: 101, date: '2026-03-01', revenue: 15400.50, region: 'North America' }, { id: 102, date: '2026-03-02', revenue: 'Omitted', region: 'Europe' }]), ownerId: analyst.id, organizationId: orgId },
             { name: 'marketing_leads.csv', rawData: JSON.stringify([{ id: 1, email: 'lead@test.com' }]), ownerId: bob.id, organizationId: orgId }
         ]
     });
@@ -50,55 +63,14 @@ async function main() {
     // 2. Create Contracts
     await prisma.dataContract.createMany({
         data: [
-            { name: 'Core Orders Dataset', domain: 'E-Commerce', ownerName: alice.name, ownerId: alice.id, organizationId: orgId, version: '2.1.0', status: 'Active', schemaDef: JSON.stringify([{ id: "1", name: "order_id", type: "UUID", description: "Primary Key", required: true, pii: false }, { id: "2", name: "total_amount", type: "Float", description: "Total value", required: true, pii: false }]) },
-            { name: 'User Profile Exhaust', domain: 'Marketing', ownerName: bob.name, ownerId: bob.id, organizationId: orgId, version: '1.0.0', status: 'Draft', schemaDef: JSON.stringify([{ id: "1", name: "user_id", type: "String", description: "Foreign Key", required: true, pii: false }, { id: "2", name: "email", type: "String", description: "User Email address", required: true, pii: true }]) }
+            { name: 'Core Orders Dataset', domain: 'E-Commerce', ownerName: bob.name, ownerId: bob.id, organizationId: orgId, version: '2.1.0', status: 'Active', schemaDef: JSON.stringify([{ id: "1", name: "order_id", type: "UUID", description: "Primary Key", required: true, pii: false }, { id: "2", name: "total_amount", type: "Float", description: "Total value", required: true, pii: false }]) },
+            { name: 'User Profile Exhaust', domain: 'Marketing', ownerName: analyst.name, ownerId: analyst.id, organizationId: orgId, version: '1.0.0', status: 'Draft', schemaDef: JSON.stringify([{ id: "1", name: "user_id", type: "String", description: "Foreign Key", required: true, pii: false }, { id: "2", name: "email", type: "String", description: "User Email address", required: true, pii: true }]) }
         ]
     });
     console.log("✅ Seeded Data Contracts");
 
-    // 3. Create Workflows
     const now = new Date();
     const daysAgo = (d: number) => new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
-    const daysFromNow = (d: number) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000);
-
-    await prisma.workflowTask.createMany({
-        data: [
-            {
-                title: 'Review Q3 Revenue Schema Changes',
-                description: 'The upstream revenue table added 3 new columns. Validate schema compatibility with our data contracts.',
-                assignee: 'Data Analyst',
-                status: 'Pending',
-                priority: 'High',
-                category: 'Schema Validation',
-                progress: 0,
-                dueDate: daysFromNow(2),
-                organizationId: orgId
-            },
-            {
-                title: 'Clean Marketing Leads Dataset',
-                description: 'Run data quality checks on the marketing_leads.csv file. Handle missing emails and duplicates.',
-                assignee: 'Data Analyst',
-                status: 'In Progress',
-                priority: 'Medium',
-                category: 'Data Cleaning',
-                progress: 60,
-                dueDate: daysFromNow(5),
-                organizationId: orgId
-            },
-            {
-                title: 'Ingest Stripe Payment Dump',
-                description: 'Import Q3 Stripe payment records into the data warehouse. ~50K rows expected.',
-                assignee: 'Data Analyst',
-                status: 'Approved',
-                priority: 'High',
-                category: 'Data Ingestion',
-                progress: 100,
-                dueDate: daysAgo(1),
-                organizationId: orgId
-            }
-        ]
-    });
-    console.log("✅ Seeded Workflows");
 
     // 4. Create Analytics
     const analyticsData = [
@@ -113,20 +85,19 @@ async function main() {
     await prisma.auditLog.createMany({
         data: [
             { userId: admin.id, role: 'Admin', action: 'Login', entityType: 'User', entityId: admin.id, organizationId: orgId },
-            { userId: alice.id, role: 'Data Engineer', action: 'Dataset Upload', entityType: 'Dataset', entityId: 'dataset-uuid-placeholder', organizationId: orgId }
+            { userId: bob.id, role: 'Admin', action: 'Dataset Upload', entityType: 'Dataset', entityId: 'dataset-uuid-placeholder', organizationId: orgId }
         ]
     });
     console.log("✅ Seeded Audit Logs");
 
     // 5.5 Seed Notifications
-    await prisma.notification.deleteMany();
     await prisma.notification.createMany({
         data: [
             {
                 userId: admin.id,
                 organizationId: orgId,
                 title: "🛡️ Unauthorized Route Access Blocked",
-                description: "User bob@ecommerce.ai attempted to access administrative panel /admin. Request was blocked and logged.",
+                description: "User rahul@collabai.com attempted to access administrative panel /admin. Request was blocked and logged.",
                 type: "security",
                 priority: "Critical",
                 read: false,
@@ -189,17 +160,6 @@ async function main() {
                 actionUrl: "/preprocessing"
             },
             {
-                userId: bob.id,
-                organizationId: orgId,
-                title: "🚀 Ingest Stripe Dump Task Approved",
-                description: "Workflow task 'Ingest Stripe Payment Dump' was approved by Admin and marked Completed.",
-                type: "workflow",
-                priority: "Low",
-                read: true,
-                archived: true,
-                actionUrl: "/workflows"
-            },
-            {
                 userId: charlie.id,
                 organizationId: orgId,
                 title: "📈 Financial KPI Dashboard Published",
@@ -258,6 +218,255 @@ async function main() {
     });
     console.log("✅ Seeded Notifications");
 
+    // 6. Seed Collaboration Conversations & Channels
+    console.log("Seeding Channels & Messages...");
+
+    // Create public channels
+    const businessChan = await prisma.conversation.create({
+        data: {
+            type: 'group',
+            name: 'Business',
+            description: 'Discuss business updates, strategy, and goals',
+            isPrivate: false,
+            organizationId: orgId,
+            participants: {
+                connect: [
+                    { id: admin.id },
+                    { id: bob.id }, // Rahul Patel
+                    { id: alice.id }, // Priya Sharma
+                    { id: charlie.id }, // Siddhesh Pawar
+                    { id: verma.id }, // Rahul Verma
+                    { id: analyst.id }, // Data Analyst
+                    { id: user7.id },
+                    { id: user8.id },
+                    { id: user9.id },
+                    { id: user10.id },
+                    { id: user11.id },
+                    { id: user12.id }
+                ]
+            }
+        }
+    });
+
+    const analyticsChan = await prisma.conversation.create({
+        data: {
+            type: 'group',
+            name: 'Analytics',
+            description: 'New dashboard insights available',
+            isPrivate: false,
+            organizationId: orgId,
+            participants: { connect: [{ id: admin.id }, { id: bob.id }, { id: analyst.id }] }
+        }
+    });
+
+    const announcChan = await prisma.conversation.create({
+        data: {
+            type: 'group',
+            name: 'Announcements',
+            description: 'Platform maintenance on Sunday',
+            isPrivate: false,
+            organizationId: orgId,
+            participants: { connect: [{ id: admin.id }, { id: bob.id }, { id: alice.id }, { id: charlie.id }] }
+        }
+    });
+
+    const generalChan = await prisma.conversation.create({
+        data: {
+            type: 'group',
+            name: 'General',
+            description: 'Welcome to the team, Alex!',
+            isPrivate: false,
+            organizationId: orgId,
+            participants: { connect: [{ id: admin.id }, { id: bob.id }, { id: alice.id }, { id: charlie.id }, { id: user7.id }] }
+        }
+    });
+
+    const deChan = await prisma.conversation.create({
+        data: {
+            type: 'group',
+            name: 'Data-Engineering',
+            description: 'Pipeline failed in ingestion service',
+            isPrivate: false,
+            organizationId: orgId,
+            participants: { connect: [{ id: admin.id }, { id: bob.id }, { id: analyst.id }] }
+        }
+    });
+
+    // Create private channel
+    const abcChan = await prisma.conversation.create({
+        data: {
+            type: 'group',
+            name: 'abc',
+            description: 'No messages yet',
+            isPrivate: true,
+            organizationId: orgId,
+            participants: {
+                connect: [
+                    { id: admin.id },
+                    { id: bob.id }
+                ]
+            }
+        }
+    });
+
+    // Pinned target message (Rahul Patel, May 10, 10:30 AM)
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: bob.id, // Rahul Patel
+            content: 'Please review the Q2 targets before Friday.',
+            isPinned: true,
+            createdAt: new Date('2026-05-10T10:30:00Z'),
+            status: 'read'
+        }
+    });
+
+    // Seed Messages in Business channel to match the transcript
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: bob.id, // Rahul Patel
+            content: 'Hi team, here is the latest sales performance dashboard for Q2.',
+            createdAt: new Date(Date.now() - 3600 * 1000 * 3), // 3 hours ago
+            status: 'read',
+            reactions: JSON.stringify([
+                {
+                    emoji: '👍',
+                    userIds: [admin.id, alice.id, charlie.id, verma.id],
+                    usernames: ['Admin User', 'Priya Sharma', 'Siddhesh Pawar', 'Rahul Verma']
+                },
+                {
+                    emoji: '🔥',
+                    userIds: [analyst.id, user7.id],
+                    usernames: ['Data Analyst', 'Alex Rivera']
+                }
+            ]),
+            attachments: {
+                create: [
+                    {
+                        fileName: 'Sales_Performance_Q2.xlsx',
+                        fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        fileSize: 2.4 * 1024 * 1024,
+                        fileUrl: '/uploads/Sales_Performance_Q2.xlsx'
+                    }
+                ]
+            }
+        }
+    });
+
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: alice.id, // Priya Sharma
+            content: 'Thanks Rahul! The numbers look great this quarter.',
+            createdAt: new Date(Date.now() - 3600 * 1000 * 2.8), // 2.8 hours ago
+            status: 'read',
+            reactions: JSON.stringify([
+                {
+                    emoji: '🎉',
+                    userIds: [admin.id, bob.id],
+                    usernames: ['Admin User', 'Rahul Patel']
+                }
+            ])
+        }
+    });
+
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: analyst.id, // Data Analyst
+            content: "I've added some additional insights in the dashboard.",
+            createdAt: new Date(Date.now() - 3600 * 1000 * 2.5), // 2.5 hours ago
+            status: 'read'
+        }
+    });
+
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: verma.id, // Rahul Verma
+            content: 'Can we review the north region performance separately?',
+            createdAt: new Date(Date.now() - 3600 * 1000 * 2.2), // 2.2 hours ago
+            status: 'read'
+        }
+    });
+
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: analyst.id, // Data Analyst
+            content: "Yes, I'll prepare a breakdown.",
+            createdAt: new Date(Date.now() - 3600 * 1000 * 2.0), // 2 hours ago
+            status: 'read'
+        }
+    });
+
+    // Additional messages to house the other shared files in the conversation details
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: alice.id, // Priya Sharma
+            content: 'Here is our core strategy document.',
+            createdAt: new Date(Date.now() - 3600 * 1000 * 24), // 1 day ago
+            status: 'read',
+            attachments: {
+                create: [
+                    {
+                        fileName: 'Business_Strategy_2025.pdf',
+                        fileType: 'application/pdf',
+                        fileSize: 1.8 * 1024 * 1024,
+                        fileUrl: '/uploads/Business_Strategy_2025.pdf'
+                    }
+                ]
+            }
+        }
+    });
+
+    await prisma.message.create({
+        data: {
+            conversationId: businessChan.id,
+            senderId: analyst.id, // Data Analyst
+            content: 'Market study results and deck.',
+            createdAt: new Date(Date.now() - 3600 * 1000 * 48), // 2 days ago
+            status: 'read',
+            attachments: {
+                create: [
+                    {
+                        fileName: 'Market_Analysis.pptx',
+                        fileType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                        fileSize: 3.1 * 1024 * 1024,
+                        fileUrl: '/uploads/Market_Analysis.pptx'
+                    }
+                ]
+            }
+        }
+    });
+
+    // Seed direct conversation
+    const dmConv = await prisma.conversation.create({
+        data: {
+            type: 'direct',
+            organizationId: orgId,
+            participants: {
+                connect: [
+                    { id: admin.id },
+                    { id: bob.id }
+                ]
+            }
+        }
+    });
+
+    await prisma.message.create({
+        data: {
+            conversationId: dmConv.id,
+            senderId: bob.id,
+            content: 'Hello Admin! Let me know when you can review the data contracts.',
+            status: 'sent',
+            createdAt: new Date(Date.now() - 3600 * 1000)
+        }
+    });
+
+    console.log("✅ Seeded Channels & Messages");
     console.log("Seed complete.");
 }
 

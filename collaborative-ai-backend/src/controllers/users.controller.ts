@@ -110,8 +110,8 @@ export const updateUserRole = async (req: AuthenticatedRequest, res: express.Res
         if (!id || !role) return res.status(400).json({ error: 'Missing id or role' });
 
         const defaultPermissions = role === 'Admin' ? ['*'] :
-            role === 'Data Engineer' || role === 'Data Steward' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'workflow:edit'] :
-                role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:view', 'workflow:view'] :
+            role === 'Data Engineer' || role === 'Data Steward' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view'] :
+                role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:view'] :
                     ['dataset:view'];
 
         const updatedUser = await prisma.user.update({

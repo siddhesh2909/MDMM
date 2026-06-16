@@ -9,6 +9,7 @@ const ingestion_pipeline_1 = require("../services/ingestion.pipeline");
 const validation_engine_1 = require("../services/validation.engine");
 const notification_service_1 = require("../services/notification.service");
 const auditLogger_1 = require("../utils/auditLogger");
+const permission_1 = require("../utils/permission");
 // ── Helpers ──────────────────────────────────────────────────
 function inferSchemaFromData(data) {
     if (!data.length)
@@ -52,15 +53,26 @@ const getDatasets = async (req, res) => {
                 }
             }
         });
+        const filteredDatasets = datasets.filter(d => (0, permission_1.canViewDataset)(d, req.user));
         // Fetch the last validation report score dynamically for each dataset
-        const datasetsWithQuality = await Promise.all(datasets.map(async (d) => {
+        const datasetsWithQuality = await Promise.all(filteredDatasets.map(async (d) => {
             const lastReport = await prisma_1.default.validationReport.findFirst({
                 where: { datasetId: d.id, organizationId: orgId },
                 orderBy: { createdAt: 'desc' },
             });
+            let contractStatus = '';
+            if (d.boundContractId) {
+                const contract = await prisma_1.default.dataContract.findUnique({
+                    where: { id: d.boundContractId }
+                });
+                if (contract) {
+                    contractStatus = contract.status;
+                }
+            }
             return {
                 ...d,
                 quality: lastReport ? lastReport.overallScore : 96,
+                contractStatus,
             };
         }));
         res.status(200).json(datasetsWithQuality);
@@ -141,9 +153,9 @@ const updateDataset = async (req, res) => {
         if (!user)
             return res.status(401).json({ error: 'Unauthorized' });
         const datasetId = String(req.params.id);
-        const { rawData } = req.body;
-        if (!rawData) {
-            return res.status(400).json({ error: 'rawData is required' });
+        const { rawData, name } = req.body;
+        if (!rawData && !name) {
+            return res.status(400).json({ error: 'rawData or name is required' });
         }
         const existing = await prisma_1.default.dataset.findFirst({
             where: { id: datasetId, organizationId: user.organizationId }
@@ -151,17 +163,28 @@ const updateDataset = async (req, res) => {
         if (!existing) {
             return res.status(404).json({ error: 'Dataset not found or unauthorized' });
         }
-        const dataString = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
+        if (!(0, permission_1.canEditDataset)(existing, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to edit this dataset' });
+        }
+        const updateData = {};
+        if (rawData !== undefined) {
+            updateData.rawData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
+        }
+        if (name !== undefined) {
+            updateData.name = String(name).trim();
+        }
         const updated = await prisma_1.default.dataset.update({
             where: { id: datasetId },
-            data: { rawData: dataString }
+            data: updateData
         });
-        // Run validation pipeline on the updated dataset to recompute overallScore, completeness, validity, uniqueness, and validation reports!
-        try {
-            await (0, validation_engine_1.runPipelineValidation)(datasetId, user.organizationId);
-        }
-        catch (valErr) {
-            console.error('Re-validation error after dataset update:', valErr);
+        // Run validation pipeline on the updated dataset only if rawData was modified
+        if (rawData !== undefined) {
+            try {
+                await (0, validation_engine_1.runPipelineValidation)(datasetId, user.organizationId);
+            }
+            catch (valErr) {
+                console.error('Re-validation error after dataset update:', valErr);
+            }
         }
         try {
             await (0, notification_service_1.notifyUser)(user.id, 'Dataset Updated', `Dataset "${updated.name}" has been updated.`, 'project', '/ingestion');
@@ -189,6 +212,9 @@ const getDatasetDetail = async (req, res) => {
         });
         if (!dataset) {
             return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        }
+        if (!(0, permission_1.canViewDataset)(dataset, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have access to view this dataset' });
         }
         const dbUser = await prisma_1.default.user.findUnique({
             where: { id: user.id }
@@ -278,6 +304,15 @@ const getDatasetDetail = async (req, res) => {
                     ? reportIssues.slice(0, 3).map((iss) => `Row ${iss.row}: Field '${iss.field}' failed '${iss.rule}' (expected: ${iss.expected}, actual: ${iss.actual})`)
                     : ["No critical anomalies found. Schema meets all standard requirements."])
         };
+        let contractStatus = '';
+        if (dataset.boundContractId) {
+            const contract = await prisma_1.default.dataContract.findUnique({
+                where: { id: dataset.boundContractId }
+            });
+            if (contract) {
+                contractStatus = contract.status;
+            }
+        }
         res.status(200).json({
             success: true,
             data: {
@@ -291,7 +326,9 @@ const getDatasetDetail = async (req, res) => {
                     quality: overallScore,
                     status: dataset.status.toLowerCase(),
                     owner: ownerName,
-                    created_at: dataset.createdAt
+                    created_at: dataset.createdAt,
+                    boundContractId: dataset.boundContractId,
+                    contractStatus
                 },
                 schema: schemaFields.map(f => {
                     const nullCount = parsedData.filter(r => r[f.name] === null || r[f.name] === undefined || String(r[f.name]).trim() === '').length;
@@ -329,7 +366,40 @@ const deleteDataset = async (req, res) => {
         if (!existing) {
             return res.status(404).json({ error: 'Dataset not found or unauthorized' });
         }
-        // Delete related validation reports
+        if (!(0, permission_1.canDeleteDataset)(existing, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this dataset' });
+        }
+        // If the dataset has an associated data contract, delete it and all related contract versions, logs, and reports.
+        if (existing.boundContractId) {
+            const contractId = existing.boundContractId;
+            // Nullify boundContractId for any other datasets referencing this contract
+            await prisma_1.default.dataset.updateMany({
+                where: { boundContractId: contractId, NOT: { id: datasetId } },
+                data: { boundContractId: null }
+            });
+            // Delete all version history of this contract
+            await prisma_1.default.contractVersion.deleteMany({
+                where: { contractId }
+            });
+            // Delete any validation reports associated with the contract
+            await prisma_1.default.validationReport.deleteMany({
+                where: { contractId }
+            });
+            // Delete any pipeline logs associated with the contract
+            await prisma_1.default.pipelineLog.deleteMany({
+                where: { contractId }
+            });
+            // Delete the contract record itself
+            try {
+                await prisma_1.default.dataContract.delete({
+                    where: { id: contractId }
+                });
+            }
+            catch (err) {
+                console.error(`Failed to delete associated contract ${contractId}:`, err);
+            }
+        }
+        // Delete related validation reports for the current dataset
         await prisma_1.default.validationReport.deleteMany({
             where: { datasetId }
         });

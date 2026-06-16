@@ -210,6 +210,7 @@ model Conversation {
   type           String    @default("direct") // "direct" | "group"
   name           String?
   description    String?
+  isPrivate      Boolean   @default(false)
   organizationId String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -227,6 +228,7 @@ model Message {
   createdAt      DateTime     @default(now())
   status         String       @default("sent") // "sent" | "delivered" | "read"
   isPinned       Boolean      @default(false)
+  reactions      String       @default("[]")
   attachments    Attachment[]
 }
 

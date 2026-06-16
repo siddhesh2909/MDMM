@@ -161,7 +161,8 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
         if (collaborators.some(c => c.id === u.id)) return false;
         
         const q = searchQuery.toLowerCase().trim();
-        if (!q) return false;
+        if (!q) return true;
+        if (q.includes('(') && q.includes(')')) return false;
         return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
     });
 
@@ -184,7 +185,7 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                                 padding: '1rem',
                                 border: `1px solid ${visibility === 'private' ? 'var(--primary-color)' : 'var(--border-color)'}`,
                                 borderRadius: '8px',
-                                backgroundColor: visibility === 'private' ? 'rgba(79, 70, 229, 0.04)' : 'var(--card-bg)',
+                                backgroundColor: visibility === 'private' ? 'rgba(79, 70, 229, 0.04)' : 'var(--bg-color)',
                                 cursor: actionLoading ? 'not-allowed' : 'pointer',
                                 display: 'flex',
                                 gap: '0.75rem',
@@ -206,7 +207,7 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                                 padding: '1rem',
                                 border: `1px solid ${visibility === 'organization' ? 'var(--primary-color)' : 'var(--border-color)'}`,
                                 borderRadius: '8px',
-                                backgroundColor: visibility === 'organization' ? 'rgba(79, 70, 229, 0.04)' : 'var(--card-bg)',
+                                backgroundColor: visibility === 'organization' ? 'rgba(79, 70, 229, 0.04)' : 'var(--bg-color)',
                                 cursor: actionLoading ? 'not-allowed' : 'pointer',
                                 display: 'flex',
                                 gap: '0.75rem',
@@ -229,7 +230,7 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                     <div style={{ display: 'flex', gap: '0.5rem', position: 'relative' }}>
                         {/* Autocomplete Input */}
                         <div style={{ flex: 1, position: 'relative' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0 0.75rem', backgroundColor: 'var(--card-bg)', height: '40px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0 0.75rem', backgroundColor: 'var(--bg-color)', height: '40px' }}>
                                 <Search size={16} color="var(--text-secondary)" style={{ marginRight: '0.5rem' }} />
                                 <input
                                     type="text"
@@ -241,18 +242,19 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                                         setShowSuggestions(true);
                                     }}
                                     onFocus={() => setShowSuggestions(true)}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                     style={{ border: 'none', outline: 'none', background: 'transparent', width: '100%', fontSize: '0.85rem', color: 'var(--text-primary)' }}
                                 />
                             </div>
 
                             {/* Suggestions Dropdown */}
-                            {showSuggestions && searchQuery.trim() && (
+                            {showSuggestions && filteredUsers.length > 0 && (
                                 <div style={{
                                     position: 'absolute',
                                     top: '44px',
                                     left: 0,
                                     right: 0,
-                                    backgroundColor: 'var(--card-bg)',
+                                    backgroundColor: 'var(--bg-color)',
                                     border: '1px solid var(--border-color)',
                                     borderRadius: '6px',
                                     boxShadow: 'var(--shadow-md)',
@@ -260,26 +262,22 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                                     maxHeight: '160px',
                                     overflowY: 'auto'
                                 }}>
-                                    {filteredUsers.length > 0 ? (
-                                        filteredUsers.map(u => (
-                                            <div 
-                                                key={u.id}
-                                                onClick={() => {
-                                                    setSelectedUser(u);
-                                                    setSearchQuery(`${u.name} (${u.email})`);
-                                                    setShowSuggestions(false);
-                                                }}
-                                                style={{ padding: '0.6rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}
-                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                            >
-                                                <span style={{ fontWeight: 500 }}>{u.name}</span>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</span>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div style={{ padding: '0.75rem 1rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>No users found matching query</div>
-                                    )}
+                                    {filteredUsers.map(u => (
+                                        <div 
+                                            key={u.id}
+                                            onClick={() => {
+                                                setSelectedUser(u);
+                                                setSearchQuery(`${u.name} (${u.email})`);
+                                                setShowSuggestions(false);
+                                            }}
+                                            style={{ padding: '0.6rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            <span style={{ fontWeight: 500 }}>{u.name}</span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
@@ -292,7 +290,7 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                                 padding: '0 0.5rem',
                                 border: '1px solid var(--border-color)',
                                 borderRadius: '6px',
-                                backgroundColor: 'var(--card-bg)',
+                                backgroundColor: 'var(--bg-color)',
                                 color: 'var(--text-primary)',
                                 fontSize: '0.85rem',
                                 outline: 'none',
@@ -330,7 +328,7 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
                             {/* Owner */}
                             {owner && (
-                                <div style={{ display: 'flex', justifySelf: 'stretch', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--card-bg)' }}>
+                                <div style={{ display: 'flex', justifySelf: 'stretch', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-color)' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{owner.name}</span>
                                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{owner.email}</span>
@@ -342,7 +340,7 @@ export function ShareModal({ isOpen, onClose, datasetId, datasetName, onSaveCall
                             {/* Collaborators */}
                             {collaborators.length > 0 ? (
                                 collaborators.map((c) => (
-                                    <div key={c.id} style={{ display: 'flex', justifySelf: 'stretch', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--card-bg)' }}>
+                                    <div key={c.id} style={{ display: 'flex', justifySelf: 'stretch', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem', border: '1px solid var(--border-color)', borderRadius: '6px', backgroundColor: 'var(--bg-color)' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                                             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)' }}>{c.name}</span>
                                             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{c.email}</span>

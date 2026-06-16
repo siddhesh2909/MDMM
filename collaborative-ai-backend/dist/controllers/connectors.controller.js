@@ -44,6 +44,22 @@ function inferSchemaFromData(data) {
         return { name: key, type, required: true, description: `Inferred from field '${key}'` };
     });
 }
+function parseHeaders(headersString) {
+    if (!headersString || !headersString.trim()) {
+        return {};
+    }
+    try {
+        const parsed = JSON.parse(headersString);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return parsed;
+        }
+        return {};
+    }
+    catch (err) {
+        console.warn('Failed to parse API headers:', err);
+        return {};
+    }
+}
 // ── Test Connection ─────────────────────────────────────────
 const testConnection = async (req, res) => {
     try {
@@ -103,7 +119,7 @@ const testConnection = async (req, res) => {
                         signal: controller.signal,
                         headers: {
                             'Accept': 'application/json',
-                            ...(config.headers ? JSON.parse(config.headers) : {}),
+                            ...parseHeaders(config.headers),
                         },
                         ...(method === 'POST' && config.body ? { body: config.body } : {}),
                     });
@@ -189,7 +205,7 @@ const pullData = async (req, res) => {
                         signal: controller.signal,
                         headers: {
                             'Accept': 'application/json',
-                            ...(config.headers ? JSON.parse(config.headers) : {}),
+                            ...parseHeaders(config.headers),
                         },
                         ...(method === 'POST' && config.body ? { body: config.body } : {}),
                     });

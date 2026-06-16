@@ -176,17 +176,6 @@ export default function LandingPage() {
                         </p>
                     </div>
 
-                    <div className="landing-feature-card animate-on-scroll stagger-4">
-                        <div className="landing-feature-icon landing-feature-icon--emerald">
-                            <GitMerge size={22} />
-                        </div>
-                        <h3>Workflow Management</h3>
-                        <p>
-                            Create, assign, and track tasks across your team. Kanban-style board
-                            with priorities, categories, and real-time progress tracking.
-                        </p>
-                    </div>
-
                     <div className="landing-feature-card animate-on-scroll stagger-5">
                         <div className="landing-feature-icon landing-feature-icon--amber">
                             <Users size={22} />
@@ -325,11 +314,10 @@ export default function LandingPage() {
                             <BarChart3 size={28} />
                         </div>
                         <h3>Analyst</h3>
-                        <p>Full pipeline control and analysis — ingestion, contracts, preprocessing, and workflows.</p>
+                        <p>Full pipeline control and analysis — ingestion, contracts, and preprocessing.</p>
                         <div className="landing-role-perms">
                             <span className="landing-role-perm">dataset:manage</span>
                             <span className="landing-role-perm">contract:edit</span>
-                            <span className="landing-role-perm">workflow:edit</span>
                         </div>
                     </div>
 
@@ -338,10 +326,9 @@ export default function LandingPage() {
                             <Users size={28} />
                         </div>
                         <h3>Business User</h3>
-                        <p>Restricted viewing access — view datasets, monitor analytics, and track workflow progress.</p>
+                        <p>Restricted viewing access — view datasets and monitor analytics.</p>
                         <div className="landing-role-perms">
                             <span className="landing-role-perm">dataset:view</span>
-                            <span className="landing-role-perm">workflow:view</span>
                         </div>
                     </div>
 

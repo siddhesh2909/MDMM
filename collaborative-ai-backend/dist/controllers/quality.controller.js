@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getQualityOverview = exports.getDatasetQuality = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
+const permission_1 = require("../utils/permission");
 /**
  * Quality Controller
  * GET /api/data/datasets/:id/quality — per-dataset quality metrics
@@ -16,6 +17,16 @@ const getDatasetQuality = async (req, res) => {
         if (!user)
             return res.status(401).json({ error: 'Unauthorized' });
         const datasetId = String(req.params.id);
+        // Get dataset info first to check permission
+        const dataset = await prisma_1.default.dataset.findFirst({
+            where: { id: datasetId, organizationId: user.organizationId },
+        });
+        if (!dataset) {
+            return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        }
+        if (!(0, permission_1.canViewDataset)(dataset, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have access to view this dataset' });
+        }
         // Get latest quality snapshot
         const snapshot = await prisma_1.default.qualitySnapshot.findFirst({
             where: { datasetId },
@@ -32,13 +43,9 @@ const getDatasetQuality = async (req, res) => {
             where: { datasetId, organizationId: user.organizationId },
             orderBy: { createdAt: 'desc' },
         });
-        // Get dataset info
-        const dataset = await prisma_1.default.dataset.findFirst({
-            where: { id: datasetId, organizationId: user.organizationId },
-        });
         res.status(200).json({
             datasetId,
-            datasetName: dataset?.name || 'Unknown',
+            datasetName: dataset.name,
             status: dataset?.status || 'INGESTED',
             current: snapshot ? {
                 completeness: snapshot.completeness,
@@ -78,8 +85,9 @@ const getQualityOverview = async (req, res) => {
             where: { organizationId: orgId },
             orderBy: { createdAt: 'desc' },
         });
+        const filteredDatasets = datasets.filter(ds => (0, permission_1.canViewDataset)(ds, user));
         // For each dataset, get latest quality snapshot
-        const datasetHealth = await Promise.all(datasets.map(async (ds) => {
+        const datasetHealth = await Promise.all(filteredDatasets.map(async (ds) => {
             const snapshot = await prisma_1.default.qualitySnapshot.findFirst({
                 where: { datasetId: ds.id },
                 orderBy: { recordedAt: 'desc' },

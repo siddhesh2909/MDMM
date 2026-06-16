@@ -57,9 +57,19 @@ export const getDatasets = async (req: AuthenticatedRequest, res: express.Respon
                 where: { datasetId: d.id, organizationId: orgId },
                 orderBy: { createdAt: 'desc' },
             });
+            let contractStatus = '';
+            if (d.boundContractId) {
+                const contract = await prisma.dataContract.findUnique({
+                    where: { id: d.boundContractId }
+                });
+                if (contract) {
+                    contractStatus = contract.status;
+                }
+            }
             return {
                 ...d,
                 quality: lastReport ? lastReport.overallScore : 96,
+                contractStatus,
             };
         }));
 
@@ -158,10 +168,10 @@ export const updateDataset = async (req: AuthenticatedRequest, res: express.Resp
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
         const datasetId = String(req.params.id);
-        const { rawData } = req.body;
+        const { rawData, name } = req.body;
 
-        if (!rawData) {
-            return res.status(400).json({ error: 'rawData is required' });
+        if (!rawData && !name) {
+            return res.status(400).json({ error: 'rawData or name is required' });
         }
 
         const existing = await prisma.dataset.findFirst({
@@ -176,18 +186,26 @@ export const updateDataset = async (req: AuthenticatedRequest, res: express.Resp
             return res.status(403).json({ error: 'Forbidden: You do not have permission to edit this dataset' });
         }
 
-        const dataString = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
+        const updateData: any = {};
+        if (rawData !== undefined) {
+            updateData.rawData = typeof rawData === 'string' ? rawData : JSON.stringify(rawData);
+        }
+        if (name !== undefined) {
+            updateData.name = String(name).trim();
+        }
 
         const updated = await prisma.dataset.update({
             where: { id: datasetId },
-            data: { rawData: dataString }
+            data: updateData
         });
 
-        // Run validation pipeline on the updated dataset to recompute overallScore, completeness, validity, uniqueness, and validation reports!
-        try {
-            await runPipelineValidation(datasetId, user.organizationId);
-        } catch (valErr) {
-            console.error('Re-validation error after dataset update:', valErr);
+        // Run validation pipeline on the updated dataset only if rawData was modified
+        if (rawData !== undefined) {
+            try {
+                await runPipelineValidation(datasetId, user.organizationId);
+            } catch (valErr) {
+                console.error('Re-validation error after dataset update:', valErr);
+            }
         }
 
         try {
@@ -319,6 +337,16 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
                     : ["No critical anomalies found. Schema meets all standard requirements."])
         };
 
+        let contractStatus = '';
+        if (dataset.boundContractId) {
+            const contract = await prisma.dataContract.findUnique({
+                where: { id: dataset.boundContractId }
+            });
+            if (contract) {
+                contractStatus = contract.status;
+            }
+        }
+
         res.status(200).json({
             success: true,
             data: {
@@ -332,7 +360,9 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
                     quality: overallScore,
                     status: dataset.status.toLowerCase(),
                     owner: ownerName,
-                    created_at: dataset.createdAt
+                    created_at: dataset.createdAt,
+                    boundContractId: dataset.boundContractId,
+                    contractStatus
                 },
                 schema: schemaFields.map(f => {
                     const nullCount = parsedData.filter(r => r[f.name] === null || r[f.name] === undefined || String(r[f.name]).trim() === '').length;
@@ -377,7 +407,42 @@ export const deleteDataset = async (req: AuthenticatedRequest, res: express.Resp
             return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this dataset' });
         }
 
-        // Delete related validation reports
+        // If the dataset has an associated data contract, delete it and all related contract versions, logs, and reports.
+        if (existing.boundContractId) {
+            const contractId = existing.boundContractId;
+
+            // Nullify boundContractId for any other datasets referencing this contract
+            await prisma.dataset.updateMany({
+                where: { boundContractId: contractId, NOT: { id: datasetId } },
+                data: { boundContractId: null }
+            });
+
+            // Delete all version history of this contract
+            await prisma.contractVersion.deleteMany({
+                where: { contractId }
+            });
+
+            // Delete any validation reports associated with the contract
+            await prisma.validationReport.deleteMany({
+                where: { contractId }
+            });
+
+            // Delete any pipeline logs associated with the contract
+            await prisma.pipelineLog.deleteMany({
+                where: { contractId }
+            });
+
+            // Delete the contract record itself
+            try {
+                await prisma.dataContract.delete({
+                    where: { id: contractId }
+                });
+            } catch (err) {
+                console.error(`Failed to delete associated contract ${contractId}:`, err);
+            }
+        }
+
+        // Delete related validation reports for the current dataset
         await prisma.validationReport.deleteMany({
             where: { datasetId }
         });

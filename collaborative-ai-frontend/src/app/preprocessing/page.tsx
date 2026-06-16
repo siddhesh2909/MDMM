@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -58,6 +59,7 @@ interface DatasetMeta {
     name: string;
     source?: string;
     status?: string;
+    contractStatus?: string;
 }
 
 interface ChatAction {
@@ -99,8 +101,8 @@ const itemVariants = {
 export default function PreprocessingPage() {
     // Core states
     const [datasets, setDatasets] = useState<DatasetMeta[]>([]);
-    const [dsId, setDsId] = useState<string>('products-50');
-    const [dsName, setDsName] = useState<string>('products-50.csv');
+    const [dsId, setDsId] = useState<string>('');
+    const [dsName, setDsName] = useState<string>('');
     const [data, setData] = useState<DataRow[]>([]);
 
     // History states for Undo/Redo
@@ -586,12 +588,16 @@ export default function PreprocessingPage() {
                 const r = await apiClient.get('/data/datasets');
                 let loadedDatasets: DatasetMeta[] = [];
                 if (r?.length) {
-                    loadedDatasets = r.map((d: any) => ({
+                    const mapped = r.map((d: any) => ({
                         id: d.id,
                         name: d.name,
                         source: d.source || 'file',
-                        status: d.status || 'Active'
+                        status: d.status || 'Active',
+                        contractStatus: d.contractStatus || ''
                     }));
+                    loadedDatasets = mapped.filter((d: any) => 
+                        (d.contractStatus || '').toLowerCase() === 'active'
+                    );
                     setDatasets(loadedDatasets);
                 }
 
@@ -601,92 +607,18 @@ export default function PreprocessingPage() {
                 if (savedDsId && savedDsId !== 'products-50' && loadedDatasets.some(d => d.id === savedDsId)) {
                     // Load the saved DB dataset
                     await switchDataset(savedDsId);
+                } else if (loadedDatasets.length > 0) {
+                    // Load the first available dataset
+                    await switchDataset(loadedDatasets[0].id);
                 } else {
-                    // Load 'products-50'
-                    setDsId('products-50');
-                    setDsName('products-50.csv');
-                    setColumnsSchema(defaultSchema);
-
-                    // Try to load products-50 data from localStorage
-                    const localData = localStorage.getItem('dataset_data_products-50');
-                    if (localData) {
-                        const parsed = JSON.parse(localData);
-                        setData(parsed);
-                        dataRef.current = parsed;
-                        initHistory(parsed);
-                    } else {
-                        const demoRows: DataRow[] = [
-                            { _rid: 'r1', id: 1, user_id: 1, name: 'Rahul Sharma', age: 23, gender: 'M', email: 'rahuls@gmail.com', signup_date: '2024-01-05', country: 'India', total_spent: 1200, device: 'mobile' },
-                            { _rid: 'r2', id: 2, user_id: 2, name: 'ankita patil', age: 27, gender: 'F', email: 'ankita@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 3400, device: 'desktop' },
-                            { _rid: 'r3', id: 3, user_id: 3, name: 'Aman Verma', age: 18, gender: 'M', email: 'aman.verma@gmail.com', signup_date: '2024-03-12', country: 'India', total_spent: 500, device: 'laptop' },
-                            // Flagged Row 4: total_spent = 0
-                            { _rid: 'r4', id: 4, user_id: 4, name: 'Pooja Singh', age: 18, gender: 'M', email: 'pooja@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'total_spent', _reason: 'Missing Value', _fix: 2300 },
-                            { _rid: 'r5', id: 5, user_id: 5, name: 'Rakesh Kumar', age: 45, gender: 'M', email: 'rakesh@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 9800, device: 'mobile' },
-                            // Flagged Row 6: email format error & total_spent = 0
-                            { _rid: 'r6', id: 6, user_id: 6, name: 'Neha Joshi', age: 19, gender: 'F', email: 'nehaj@outlook', signup_date: '2024-04-18', country: 'India', total_spent: 0, device: 'mobile', _flag: true, _field: 'email', _reason: 'Invalid Domain', _fix: 'nehaj@outlook.com' },
-                            { _rid: 'r7', id: 7, user_id: 7, name: 'Aditya Rao', age: 29, gender: 'M', email: 'aditya@outlook.com', signup_date: '2024-03-12', country: 'India', total_spent: 2300, device: 'laptop' },
-                            { _rid: 'r8', id: 8, user_id: 8, name: 'Sneha Patil', age: 34, gender: 'F', email: 'sneha@outlook.com', signup_date: '2024-02-29', country: 'India', total_spent: 4100, device: 'desktop' },
-                            { _rid: 'r9', id: 9, user_id: 9, name: 'Vikas More', age: 60, gender: 'M', email: 'vikasm@outlook.com', signup_date: '2024-01-10', country: 'India', total_spent: 12000, device: 'mobile' },
-                            { _rid: 'r10', id: 10, user_id: 10, name: 'Kiran Kale', age: 60, gender: 'F', email: 'kiran@outlook.com', signup_date: '2024-01-15', country: 'India', total_spent: 800, device: 'tablet' }
-                        ];
-                        setData(demoRows);
-                        dataRef.current = demoRows;
-                        initHistory(demoRows);
-                    }
-
-                    // Try to load products-50 tasks from localStorage
-                    const localTasks = localStorage.getItem('dataset_tasks_products-50');
-                    if (localTasks) {
-                        setTasks(JSON.parse(localTasks));
-                    } else {
-                        const demoTasks: SuggestionTask[] = [
-                            {
-                                id: 'task-missing',
-                                datasetId: 'products-50',
-                                type: 'missing_value_detection',
-                                status: 'pending_review',
-                                affectedRows: 2341,
-                                confidence: 95,
-                                severity: 'Medium',
-                                columnAffected: 'total_spent',
-                                suggestedAction: 'AI suggests imputing missing total_spent using median (2300) based on country and age group.',
-                                createdAt: new Date().toISOString()
-                            },
-                            {
-                                id: 'task-anomaly',
-                                datasetId: 'products-50',
-                                type: 'anomaly_detection',
-                                status: 'pending_review',
-                                affectedRows: 6,
-                                confidence: 94,
-                                severity: 'High',
-                                suggestedAction: 'AI Scan flagged anomaly formats in fields. Correct invalid format structures.',
-                                createdAt: new Date().toISOString()
-                            },
-                            {
-                                id: 'task-dupes',
-                                datasetId: 'products-50',
-                                type: 'duplicate_removal',
-                                status: 'pending_review',
-                                affectedRows: 1,
-                                confidence: 98,
-                                severity: 'Low',
-                                suggestedAction: 'Duplicate groups verified. Deduplicate rows to keep dataset clean.',
-                                createdAt: new Date().toISOString()
-                            }
-                        ];
-                        setTasks(demoTasks);
-                    }
-
-                    // Try to load activities from localStorage
-                    const localActivities = localStorage.getItem('dataset_activities_products-50');
-                    if (localActivities) {
-                        setActivities(JSON.parse(localActivities));
-                    }
-
-                    // Setup Copilot chatbot messages
+                    // No datasets available - clear states
+                    setDsId('');
+                    setDsName('');
+                    setData([]);
+                    setColumnsSchema([]);
+                    setTasks([]);
                     setChatMsgs([
-                        { role: 'ai', text: '👋 Hi! I can help you with data preprocessing.' }
+                        { role: 'ai', text: '👋 Hi! Ingest some data and approve its contract to get started.' }
                     ]);
                 }
             } catch (err) {
@@ -1054,6 +986,46 @@ export default function PreprocessingPage() {
     const duplicateOffset = -(validDash + missingDash);
     const anomalyOffset = -(validDash + missingDash + duplicateDash);
 
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f8fafc', color: '#64748b', fontSize: '0.875rem', gap: '0.75rem' }}>
+                <RefreshCw className="spinner" size={24} style={{ color: 'var(--primary-color)' }} />
+                <span>Loading preprocessing workspace...</span>
+            </div>
+        );
+    }
+
+    if (datasets.length === 0) {
+        return (
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                style={{
+                    fontFamily: 'var(--font-sans)',
+                    backgroundColor: '#f8fafc',
+                    padding: '3rem',
+                    minHeight: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    gap: '1.25rem'
+                }}
+            >
+                <Database size={48} style={{ color: '#94a3b8', opacity: 0.4 }} />
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>No Active Governed Datasets Available</h2>
+                <p style={{ color: '#64748b', fontSize: '0.85rem', maxWidth: '440px', margin: 0, lineHeight: 1.5 }}>
+                    Datasets only appear in this workspace once they are ingested and their bound Data Contract status is approved and set to **Active** in the Data Contract Studio.
+                </p>
+                <Link href="/data-contracts" style={{ textDecoration: 'none' }}>
+                    <Button variant="primary">Go to Data Contract Studio</Button>
+                </Link>
+            </motion.div>
+        );
+    }
+
     return (
         <motion.div
             variants={containerVariants}
@@ -1117,10 +1089,13 @@ export default function PreprocessingPage() {
                             value={dsId}
                             onChange={(e) => switchDataset(e.target.value)}
                         >
-                            <option value="products-50">products-50.csv (v1.2.0)</option>
-                            {datasets.filter(d => d.name !== 'products-50.csv').map((ds) => (
-                                <option key={ds.id} value={ds.id}>{ds.name}</option>
-                            ))}
+                            {datasets.length === 0 ? (
+                                <option value="">No Active Datasets</option>
+                            ) : (
+                                datasets.map((ds) => (
+                                    <option key={ds.id} value={ds.id}>{ds.name}</option>
+                                ))
+                            )}
                         </select>
                     </div>
 

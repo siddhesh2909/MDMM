@@ -7,6 +7,7 @@ exports.getValidationReport = exports.validateDataset = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const validation_engine_1 = require("../services/validation.engine");
 const notification_service_1 = require("../services/notification.service");
+const permission_1 = require("../utils/permission");
 /**
  * Validation Controller
  * - Validate a dataset against a specific contract
@@ -34,6 +35,10 @@ const validateDataset = async (req, res) => {
         });
         if (!dataset)
             return res.status(404).json({ error: 'Dataset not found' });
+        // Check permission
+        if (!(0, permission_1.canEditDataset)(dataset, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to validate this dataset' });
+        }
         // Parse
         let data;
         try {
@@ -134,6 +139,16 @@ const getValidationReport = async (req, res) => {
         if (!user)
             return res.status(401).json({ error: 'Unauthorized' });
         const datasetId = String(req.params.id);
+        // Load dataset first to check permission
+        const dataset = await prisma_1.default.dataset.findFirst({
+            where: { id: datasetId, organizationId: user.organizationId }
+        });
+        if (!dataset) {
+            return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        }
+        if (!(0, permission_1.canViewDataset)(dataset, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to view validation reports for this dataset' });
+        }
         const reports = await prisma_1.default.validationReport.findMany({
             where: { datasetId, organizationId: user.organizationId },
             orderBy: { createdAt: 'desc' },

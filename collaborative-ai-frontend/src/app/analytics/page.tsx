@@ -52,6 +52,8 @@ interface ChatMsg {
 interface DatasetMeta {
     id: string;
     name: string;
+    status?: string;
+    contractStatus?: string;
 }
 
 interface ColStat {
@@ -135,9 +137,18 @@ export default function AnalyticsPage() {
             try {
                 const d = await apiClient.get('/data/datasets');
                 if (d) {
-                    setDatasets(d.map((ds: any) => ({ id: ds.id, name: ds.name })));
-                    if (d.length > 0) {
-                        setSelectedDs(d[0].id);
+                    const mapped = d.map((ds: any) => ({
+                        id: ds.id,
+                        name: ds.name,
+                        status: ds.status || 'Active',
+                        contractStatus: ds.contractStatus || ''
+                    }));
+                    const filtered = mapped.filter((ds: any) => 
+                        (ds.contractStatus || '').toLowerCase() === 'active'
+                    );
+                    setDatasets(filtered);
+                    if (filtered.length > 0) {
+                        setSelectedDs(filtered[0].id);
                     }
                 }
             } catch {

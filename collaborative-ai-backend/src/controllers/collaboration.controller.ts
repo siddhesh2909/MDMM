@@ -689,3 +689,228 @@ export const getPinnedMessages = async (req: AuthenticatedRequest, res: express.
         res.status(500).json({ error: 'Failed to retrieve pinned messages' });
     }
 };
+
+export const toggleReaction = async (req: AuthenticatedRequest, res: express.Response) => {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const messageId = req.params.id as string;
+    const { emoji } = req.body;
+    if (!emoji) return res.status(400).json({ error: 'Emoji is required' });
+
+    try {
+        const message = await prisma.message.findUnique({
+            where: { id: messageId },
+            include: { conversation: true }
+        });
+
+        if (!message || message.conversation.organizationId !== user.organizationId) {
+            return res.status(404).json({ error: 'Message not found' });
+        }
+
+        const dbUser = await prisma.user.findUnique({
+            where: { id: user.id }
+        });
+        const userName = dbUser?.name || 'User';
+
+        let reactionsList: any[] = [];
+        try {
+            reactionsList = JSON.parse(message.reactions || '[]');
+        } catch (e) {
+            reactionsList = [];
+        }
+
+        // Find existing emoji entry
+        const existingEmojiEntry = reactionsList.find((r: any) => r.emoji === emoji);
+
+        if (existingEmojiEntry) {
+            const hasUser = existingEmojiEntry.userIds.includes(user.id);
+            if (hasUser) {
+                // Remove user
+                existingEmojiEntry.userIds = existingEmojiEntry.userIds.filter((id: string) => id !== user.id);
+                existingEmojiEntry.usernames = existingEmojiEntry.usernames.filter((name: string) => name !== userName);
+            } else {
+                // Add user
+                existingEmojiEntry.userIds.push(user.id);
+                existingEmojiEntry.usernames.push(userName);
+            }
+
+            // Clean up if no users left
+            if (existingEmojiEntry.userIds.length === 0) {
+                reactionsList = reactionsList.filter((r: any) => r.emoji !== emoji);
+            }
+        } else {
+            // Add new emoji entry
+            reactionsList.push({
+                emoji,
+                userIds: [user.id],
+                usernames: [userName]
+            });
+        }
+
+        const serialized = JSON.stringify(reactionsList);
+        await prisma.message.update({
+            where: { id: messageId },
+            data: { reactions: serialized }
+        });
+
+        // Broadcast reaction update via WS
+        const payload = {
+            type: 'message_reaction_updated',
+            messageId: message.id,
+            conversationId: message.conversationId,
+            reactions: serialized
+        };
+
+        if (message.conversation.type === 'group') {
+            sendToOrganization(user.organizationId, payload);
+        } else {
+            const participants = await prisma.user.findMany({
+                where: { conversations: { some: { id: message.conversationId } } }
+            });
+            participants.forEach((p) => {
+                sendToUser(p.id, payload);
+            });
+        }
+
+        res.status(200).json({ success: true, reactions: serialized });
+    } catch (err) {
+        console.error('Failed to toggle reaction:', err);
+        res.status(500).json({ error: 'Failed to update reaction' });
+    }
+};
+
+export const addChannelMember = async (req: AuthenticatedRequest, res: express.Response) => {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const channelId = req.params.id as string;
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID is required' });
+
+    try {
+        const channel = await prisma.conversation.findUnique({
+            where: { id: channelId },
+            include: { participants: true }
+        });
+
+        if (!channel || channel.type !== 'group' || channel.organizationId !== user.organizationId) {
+            return res.status(404).json({ error: 'Channel not found' });
+        }
+
+        const updated = await prisma.conversation.update({
+            where: { id: channelId },
+            data: {
+                participants: {
+                    connect: { id: userId }
+                }
+            },
+            include: {
+                participants: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true,
+                        lastActive: true
+                    }
+                }
+            }
+        });
+
+        // Broadcast updated conversation / participants via WS
+        const payload = {
+            type: 'conversation_updated',
+            conversationId: channelId,
+            participants: updated.participants.map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                email: p.email,
+                role: p.role,
+                online: isUserOnline(p.id),
+                lastActive: p.lastActive ? p.lastActive.toISOString() : null
+            }))
+        };
+
+        sendToOrganization(user.organizationId, payload);
+
+        res.status(200).json(updated);
+    } catch (err) {
+        console.error('Failed to add channel member:', err);
+        res.status(500).json({ error: 'Failed to link member' });
+    }
+};
+
+export const updateChannelDetails = async (req: AuthenticatedRequest, res: express.Response) => {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const channelId = req.params.id as string;
+    const { name, description } = req.body;
+
+    try {
+        const channel = await prisma.conversation.findUnique({
+            where: { id: channelId }
+        });
+
+        if (!channel || channel.type !== 'group' || channel.organizationId !== user.organizationId) {
+            return res.status(404).json({ error: 'Channel not found' });
+        }
+
+        const updateData: any = {};
+        if (name !== undefined) {
+            updateData.name = name.replace(/^#\s*/, '').trim();
+        }
+        if (description !== undefined) {
+            updateData.description = description;
+        }
+
+        const updated = await prisma.conversation.update({
+            where: { id: channelId },
+            data: updateData,
+            include: {
+                participants: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true,
+                        lastActive: true
+                    }
+                }
+            }
+        });
+
+        // Broadcast updated channel info via WS
+        const payload = {
+            type: 'conversation_updated',
+            conversationId: channelId,
+            conversation: {
+                id: updated.id,
+                type: updated.type,
+                name: updated.name,
+                description: updated.description,
+                isPrivate: updated.isPrivate,
+                updatedAt: updated.updatedAt.toISOString(),
+                participants: updated.participants.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    email: p.email,
+                    role: p.role,
+                    online: isUserOnline(p.id),
+                    lastActive: p.lastActive ? p.lastActive.toISOString() : null
+                }))
+            }
+        };
+
+        sendToOrganization(user.organizationId, payload);
+
+        res.status(200).json(updated);
+    } catch (err) {
+        console.error('Failed to update channel details:', err);
+        res.status(500).json({ error: 'Failed to update channel details' });
+    }
+};
+
+// Touch comment to trigger nodemon recompile
+

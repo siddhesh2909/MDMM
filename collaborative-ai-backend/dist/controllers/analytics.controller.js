@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDatasetAnalytics = exports.getAnalytics = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
+const permission_1 = require("../utils/permission");
 const getAnalytics = async (req, res) => {
     try {
         const orgId = req.user?.organizationId;
@@ -66,6 +67,9 @@ const getDatasetAnalytics = async (req, res) => {
         });
         if (!dataset)
             return res.status(404).json({ error: 'Dataset not found or unauthorized' });
+        if (!(0, permission_1.canViewDataset)(dataset, user)) {
+            return res.status(403).json({ error: 'Forbidden: You do not have permission to view analytics for this dataset' });
+        }
         const rawData = typeof dataset.rawData === 'string' ? JSON.parse(dataset.rawData) : dataset.rawData;
         if (!Array.isArray(rawData) || rawData.length === 0) {
             return res.status(200).json({ name: dataset.name, rows: 0, columns: [], stats: {}, distributions: {} });

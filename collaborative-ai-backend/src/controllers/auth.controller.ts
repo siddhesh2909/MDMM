@@ -51,9 +51,8 @@ export const register = async (req: express.Request, res: express.Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Assign default permissions based on role
         const defaultPermissions = role === 'Admin' ? ['*'] :
-            role === 'Data Engineer' || role === 'Data Steward' || role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view', 'workflow:view', 'workflow:edit'] :
+            role === 'Data Engineer' || role === 'Data Steward' || role === 'Data Analyst' || role === 'Analyst' ? ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view'] :
                 ['dataset:view'];
 
         const user = await prisma.user.create({
