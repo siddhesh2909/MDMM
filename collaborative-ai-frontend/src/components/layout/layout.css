@@ -660,4 +660,104 @@
 
 .nav-sub-item.active .nav-sub-dot {
     background-color: var(--primary-color);
+}
+
+/* Sidebar Profile Card at bottom */
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--sidebar-bg);
+}
+
+.sidebar-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    margin-bottom: 0.25rem;
+    transition: all var(--transition-fast);
+}
+
+.sidebar-profile-card:hover {
+    background-color: var(--primary-light);
+    border-color: rgba(99, 102, 241, 0.15);
+}
+
+.sidebar-profile-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.sidebar-profile-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.sidebar-profile-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.sidebar-profile-email {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.sidebar-profile-more {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.sidebar-profile-more:hover {
+    color: var(--primary-color);
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.logout-btn {
+    color: var(--danger-color) !important;
+}
+
+.logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.sidebar.collapsed .sidebar-profile-card {
+    justify-content: center;
+    padding: 0.5rem;
+    background-color: transparent;
+    border-color: transparent;
+}
+
+/* Full Bleed Layout for Collaboration page */
+.page-content.full-bleed {
+    padding: 0 !important;
+    row-gap: 0 !important;
+    overflow: hidden !important;
 }

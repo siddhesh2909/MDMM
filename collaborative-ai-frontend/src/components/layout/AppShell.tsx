@@ -125,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Sidebar />
             <div className="main-content">
                 <Header />
-                <main className="page-content animate-fade-in">
+                <main className={`page-content animate-fade-in ${pathname.startsWith('/collaboration') ? 'full-bleed' : ''}`}>
                     {children}
                 </main>
                 {pathname !== '/analytics' && pathname !== '/ai-assistant' && pathname !== '/ai-business-assistant' && <ChatWidget />}

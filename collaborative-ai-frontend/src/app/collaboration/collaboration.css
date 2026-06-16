@@ -2431,3 +2431,70 @@
         opacity: 1;
     }
 }
+
+/* Custom Redesign Adjustments matching screenshot */
+.dm-channel-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: rgba(99, 102, 241, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+}
+
+.dm-conv-card-new.active .dm-channel-icon-wrapper {
+    background: #ffffff;
+    color: var(--primary-color);
+}
+
+.dm-right-member-badge.owner-badge {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.dm-right-member-badge.admin-badge {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+}
+
+.dm-right-member-badge.member-badge {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+/* Date Sep Dropdown Theming */
+.dm-date-separator-new {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.dm-date-separator-new::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--border-color);
+    z-index: 1;
+}
+
+.dm-date-text-new {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-radius: var(--radius-full);
+    position: relative;
+    z-index: 2;
+    box-shadow: var(--shadow-sm);
+}

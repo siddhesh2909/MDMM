@@ -39,7 +39,17 @@ export const getConversations = async (req: AuthenticatedRequest, res: express.R
             where: {
                 organizationId: orgId,
                 OR: [
-                    { type: 'group' },
+                    {
+                        type: 'group',
+                        isPrivate: false
+                    },
+                    {
+                        type: 'group',
+                        isPrivate: true,
+                        participants: {
+                            some: { id: user.id }
+                        }
+                    },
                     {
                         type: 'direct',
                         participants: {
@@ -122,6 +132,22 @@ export const getMessages = async (req: AuthenticatedRequest, res: express.Respon
     const search = req.query.search as string;
 
     try {
+        const conv = await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { participants: true }
+        });
+
+        if (!conv || conv.organizationId !== user.organizationId) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        if (conv.type === 'direct' || conv.isPrivate) {
+            const isParticipant = conv.participants.some(p => p.id === user.id);
+            if (!isParticipant) {
+                return res.status(403).json({ error: 'Forbidden: You do not have access to this conversation' });
+            }
+        }
+
         const whereClause: any = { conversationId };
         if (search && search.trim()) {
             whereClause.content = {
@@ -369,6 +395,22 @@ export const sendMessage = async (req: AuthenticatedRequest, res: express.Respon
     const { content, attachments } = req.body;
 
     try {
+        const conv = await prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { participants: true }
+        });
+
+        if (!conv || conv.organizationId !== user.organizationId) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        if (conv.type === 'direct' || conv.isPrivate) {
+            const isParticipant = conv.participants.some(p => p.id === user.id);
+            if (!isParticipant) {
+                return res.status(403).json({ error: 'Forbidden: You do not have access to this conversation' });
+            }
+        }
+
         const message = (await prisma.message.create({
             data: {
                 conversationId,
@@ -421,7 +463,7 @@ export const sendMessage = async (req: AuthenticatedRequest, res: express.Respon
         };
 
         // Notify via WebSocket
-        if (updatedConv.type === 'group') {
+        if (updatedConv.type === 'group' && !updatedConv.isPrivate) {
             // Broadcast to the whole organization
             sendToOrganization(user.organizationId, {
                 type: 'message',
@@ -440,15 +482,14 @@ export const sendMessage = async (req: AuthenticatedRequest, res: express.Respon
                 }
             });
         } else {
-            // Direct message: notify partner
-            const partner = updatedConv.participants.find((p: any) => p.id !== user.id);
-            if (partner) {
-                sendToUser(partner.id, {
+            // Private group or Direct message: notify only participants
+            updatedConv.participants.forEach((p: any) => {
+                sendToUser(p.id, {
                     type: 'message',
                     message: formattedMessage
                 });
 
-                sendToUser(partner.id, {
+                sendToUser(p.id, {
                     type: 'conversation_updated',
                     conversationId,
                     lastMessage: {
@@ -459,7 +500,7 @@ export const sendMessage = async (req: AuthenticatedRequest, res: express.Respon
                         hasAttachments: message.attachments.length > 0
                     }
                 });
-            }
+            });
         }
 
         // Detect @[name] mentions
@@ -540,7 +581,7 @@ export const createChannel = async (req: AuthenticatedRequest, res: express.Resp
         return res.status(403).json({ error: 'Forbidden: Only Admins can create channels' });
     }
 
-    const { name, description } = req.body;
+    const { name, description, isPrivate } = req.body;
     if (!name) return res.status(400).json({ error: 'Channel name is required' });
 
     try {
@@ -550,24 +591,35 @@ export const createChannel = async (req: AuthenticatedRequest, res: express.Resp
                 type: 'group',
                 name: cleanedName,
                 description: description || '',
-                organizationId: user.organizationId
+                isPrivate: !!isPrivate,
+                organizationId: user.organizationId,
+                participants: {
+                    connect: { id: user.id }
+                }
             }
         });
 
-        // Notify all organization members via WebSocket
-        sendToOrganization(user.organizationId, {
+        // Notify via WebSocket
+        const payload = {
             type: 'conversation_created',
             conversation: {
                 id: channel.id,
                 type: channel.type,
                 name: channel.name,
                 description: channel.description,
+                isPrivate: channel.isPrivate,
                 updatedAt: channel.updatedAt.toISOString(),
                 partner: null,
                 lastMessage: null,
                 unreadCount: 0
             }
-        });
+        };
+
+        if (channel.isPrivate) {
+            sendToUser(user.id, payload);
+        } else {
+            sendToOrganization(user.organizationId, payload);
+        }
 
         res.status(201).json(channel);
     } catch (err) {
@@ -598,11 +650,22 @@ export const deleteChannel = async (req: AuthenticatedRequest, res: express.Resp
             where: { id: channelId }
         });
 
-        // Notify all organization members via WebSocket
-        sendToOrganization(user.organizationId, {
+        // Notify via WebSocket
+        const payload = {
             type: 'conversation_deleted',
             conversationId: channelId
-        });
+        };
+
+        if (conv.isPrivate) {
+            const participants = await prisma.user.findMany({
+                where: { conversations: { some: { id: channelId } } }
+            });
+            participants.forEach((p) => {
+                sendToUser(p.id, payload);
+            });
+        } else {
+            sendToOrganization(user.organizationId, payload);
+        }
 
         res.status(200).json({ success: true, message: 'Channel deleted successfully' });
     } catch (err) {
@@ -640,7 +703,7 @@ export const togglePinMessage = async (req: AuthenticatedRequest, res: express.R
             isPinned: updated.isPinned
         };
 
-        if (message.conversation.type === 'group') {
+        if (message.conversation.type === 'group' && !message.conversation.isPrivate) {
             sendToOrganization(user.organizationId, payload);
         } else {
             const participants = await prisma.user.findMany({
@@ -762,7 +825,7 @@ export const toggleReaction = async (req: AuthenticatedRequest, res: express.Res
             reactions: serialized
         };
 
-        if (message.conversation.type === 'group') {
+        if (message.conversation.type === 'group' && !message.conversation.isPrivate) {
             sendToOrganization(user.organizationId, payload);
         } else {
             const participants = await prisma.user.findMany({
@@ -818,10 +881,17 @@ export const addChannelMember = async (req: AuthenticatedRequest, res: express.R
             }
         });
 
-        // Broadcast updated conversation / participants via WS
         const payload = {
             type: 'conversation_updated',
             conversationId: channelId,
+            conversation: {
+                id: updated.id,
+                type: updated.type,
+                name: updated.name,
+                description: updated.description,
+                isPrivate: updated.isPrivate,
+                updatedAt: updated.updatedAt.toISOString()
+            },
             participants: updated.participants.map((p: any) => ({
                 id: p.id,
                 name: p.name,
@@ -832,7 +902,29 @@ export const addChannelMember = async (req: AuthenticatedRequest, res: express.R
             }))
         };
 
-        sendToOrganization(user.organizationId, payload);
+        if (updated.isPrivate) {
+            // Also notify the newly connected member via conversation_created so it displays in their channels list
+            sendToUser(userId, {
+                type: 'conversation_created',
+                conversation: {
+                    id: updated.id,
+                    type: updated.type,
+                    name: updated.name,
+                    description: updated.description,
+                    isPrivate: updated.isPrivate,
+                    updatedAt: updated.updatedAt.toISOString(),
+                    partner: null,
+                    lastMessage: null,
+                    unreadCount: 0
+                }
+            });
+
+            updated.participants.forEach((p: any) => {
+                sendToUser(p.id, payload);
+            });
+        } else {
+            sendToOrganization(user.organizationId, payload);
+        }
 
         res.status(200).json(updated);
     } catch (err) {
@@ -881,7 +973,6 @@ export const updateChannelDetails = async (req: AuthenticatedRequest, res: expre
             }
         });
 
-        // Broadcast updated channel info via WS
         const payload = {
             type: 'conversation_updated',
             conversationId: channelId,
@@ -891,19 +982,25 @@ export const updateChannelDetails = async (req: AuthenticatedRequest, res: expre
                 name: updated.name,
                 description: updated.description,
                 isPrivate: updated.isPrivate,
-                updatedAt: updated.updatedAt.toISOString(),
-                participants: updated.participants.map((p: any) => ({
-                    id: p.id,
-                    name: p.name,
-                    email: p.email,
-                    role: p.role,
-                    online: isUserOnline(p.id),
-                    lastActive: p.lastActive ? p.lastActive.toISOString() : null
-                }))
-            }
+                updatedAt: updated.updatedAt.toISOString()
+            },
+            participants: updated.participants.map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                email: p.email,
+                role: p.role,
+                online: isUserOnline(p.id),
+                lastActive: p.lastActive ? p.lastActive.toISOString() : null
+            }))
         };
 
-        sendToOrganization(user.organizationId, payload);
+        if (updated.isPrivate) {
+            updated.participants.forEach((p: any) => {
+                sendToUser(p.id, payload);
+            });
+        } else {
+            sendToOrganization(user.organizationId, payload);
+        }
 
         res.status(200).json(updated);
     } catch (err) {

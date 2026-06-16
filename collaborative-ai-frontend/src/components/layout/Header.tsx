@@ -54,12 +54,18 @@ export function Header() {
 
     return (
         <header className="header">
-            <div className="header-search">
-                <Search size={18} color="var(--text-secondary)" />
-                <input
-                    type="text"
-                    placeholder="Search data, contracts, or coworkers..."
-                />
+            <div className="header-search" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '340px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                    <Search size={18} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
+                    <input
+                        type="text"
+                        placeholder="Search data, contracts, or conversations..."
+                        style={{ width: '100%' }}
+                    />
+                </div>
+                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap', pointerEvents: 'none', marginLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <span style={{ fontSize: '0.8rem' }}>⌘</span>K
+                </span>
             </div>
 
             <div className="header-actions">
@@ -73,7 +79,7 @@ export function Header() {
 
                 <button
                     className="icon-btn"
-                    onClick={() => router.push('/collaboration/direct-messages')}
+                    onClick={() => router.push('/collaboration')}
                     aria-label="Collaboration Channels"
                     title="Collaboration Hub"
                 >

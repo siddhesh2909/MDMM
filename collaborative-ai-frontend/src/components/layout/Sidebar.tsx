@@ -19,7 +19,8 @@ import {
     Globe,
     FileText,
     Sparkles,
-    MessageSquare
+    MessageSquare,
+    MoreVertical
 } from 'lucide-react';
 import './layout.css';
 
@@ -38,15 +39,7 @@ const navConfig: NavItem[] = [
     { name: 'Reports', path: '/reports', icon: FileText },
     { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
     { name: 'AI Business Assistant', path: '/ai-business-assistant', icon: Sparkles },
-    {
-        name: 'Collaboration',
-        path: '/collaboration/direct-messages',
-        icon: MessageSquare,
-        subItems: [
-            { name: 'Channels', path: '/collaboration/direct-messages?tab=channels' },
-            { name: 'Direct Messages', path: '/collaboration/direct-messages?tab=direct' }
-        ]
-    },
+    { name: 'Collaboration', path: '/collaboration', icon: MessageSquare },
     { name: 'Admin', path: '/admin', icon: Settings },
 ];
 
@@ -54,7 +47,7 @@ export function Sidebar() {
     const [collapsed, setCollapsed] = useState(false);
     const pathname = usePathname();
     const { role } = useRole();
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
 
     const allowedNavs = navConfig.filter((item) => {
         if (role === 'Admin') {
@@ -86,7 +79,13 @@ export function Sidebar() {
     return (
         <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
-                <span className="sidebar-logo">CollabAI</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', overflow: 'hidden' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="var(--primary-color)" />
+                        <path d="M2 17L12 22L22 17M2 12L12 17L22 12" stroke="var(--primary-color)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span className="sidebar-logo">CollabAI</span>
+                </div>
                 <button onClick={() => setCollapsed(!collapsed)} className="icon-btn" aria-label="Toggle Sidebar">
                     {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
@@ -94,7 +93,7 @@ export function Sidebar() {
 
             <nav className="sidebar-nav">
                 {allowedNavs.map((item) => {
-                    const isActive = pathname.startsWith(item.path) || (item.subItems && item.subItems.some(sub => pathname.startsWith(sub.path)));
+                    const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
                     const Icon = item.icon;
                     return (
                         <div key={item.name} className="nav-group" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -102,29 +101,15 @@ export function Sidebar() {
                                 <Icon className="nav-icon" />
                                 <span className="nav-label">{item.name}</span>
                             </Link>
-
-                            {item.subItems && !collapsed && (
-                                <div className="nav-sub-list">
-                                    {item.subItems.map((sub) => {
-                                        const isSubActive = pathname === sub.path;
-                                        return (
-                                            <Link key={sub.path} href={sub.path} className={`nav-sub-item ${isSubActive ? 'active' : ''}`}>
-                                                <span className="nav-sub-dot" />
-                                                <span>{sub.name}</span>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            )}
                         </div>
                     );
                 })}
             </nav>
 
-            <div className="sidebar-nav" style={{ flex: 'none', borderTop: '1px solid var(--border-color)', paddingBottom: '1.5rem' }}>
+            <div className="sidebar-footer" style={{ flex: 'none', borderTop: '1px solid var(--border-color)', padding: '1rem 0.75rem' }}>
                 <button
-                    className="nav-item"
-                    style={{ width: '100%', justifyContent: collapsed ? 'center' : 'flex-start', color: 'var(--danger-color)' }}
+                    className="nav-item logout-btn"
+                    style={{ width: '100%', justifyContent: collapsed ? 'center' : 'flex-start', marginTop: '0.5rem' }}
                     title={collapsed ? 'Logout' : undefined}
                     onClick={logout}
                 >
