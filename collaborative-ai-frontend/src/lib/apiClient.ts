@@ -13,11 +13,13 @@ function handleUnauthorized() {
 
 async function request(endpoint: string, options: RequestInit = {}) {
     const token = getToken();
+    const roleOverride = typeof window !== 'undefined' ? localStorage.getItem('override_role') : null;
     const response = await fetch(`/api${endpoint}`, {
         ...options,
         headers: {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...(roleOverride ? { 'x-role-override': roleOverride } : {}),
             ...options.headers,
         },
     });

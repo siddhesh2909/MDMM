@@ -18,6 +18,13 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuth();
     const [overrideRole, setOverrideRole] = useState<Role | null>(null);
 
+    React.useEffect(() => {
+        setOverrideRole(null);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('override_role');
+        }
+    }, [user?.id]);
+
     const role = useMemo<Role>(() => {
         if (overrideRole) return overrideRole;
         const dbRole = user?.role;
@@ -36,6 +43,9 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 
     const setRole = (newRole: Role) => {
         setOverrideRole(newRole);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('override_role', newRole);
+        }
     };
 
     return (

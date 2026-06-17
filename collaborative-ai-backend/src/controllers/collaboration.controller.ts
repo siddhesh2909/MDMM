@@ -6,6 +6,53 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import { isUserOnline, sendToUser, sendToOrganization } from '../services/websocket.service';
 import { notifyUser } from '../services/notification.service';
 
+export const formatConversationForUser = async (conv: any, userId: string) => {
+    const partner = conv.type === 'direct' ? (conv.participants.find((p: any) => p.id !== userId) || null) : null;
+    const lastMsg = (conv.messages && conv.messages[0]) || null;
+
+    const unreadCount = await prisma.message.count({
+        where: {
+            conversationId: conv.id,
+            senderId: { not: userId },
+            status: { not: 'read' }
+        }
+    });
+
+    return {
+        id: conv.id,
+        type: conv.type,
+        name: conv.name,
+        description: conv.description,
+        isPrivate: conv.isPrivate,
+        createdAt: conv.createdAt.toISOString(),
+        updatedAt: conv.updatedAt.toISOString(),
+        participants: (conv.participants || []).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            email: p.email,
+            role: p.role,
+            online: isUserOnline(p.id),
+            lastActive: p.lastActive ? p.lastActive.toISOString() : null
+        })),
+        partner: partner ? {
+            id: partner.id,
+            name: partner.name,
+            email: partner.email,
+            role: partner.role,
+            online: isUserOnline(partner.id),
+            lastActive: partner.lastActive ? partner.lastActive.toISOString() : null
+        } : null,
+        lastMessage: lastMsg ? {
+            id: lastMsg.id,
+            content: lastMsg.content,
+            senderId: lastMsg.senderId,
+            createdAt: lastMsg.createdAt.toISOString(),
+            hasAttachments: lastMsg.attachments ? lastMsg.attachments.length > 0 : false
+        } : null,
+        unreadCount
+    };
+};
+
 export const getConversations = async (req: AuthenticatedRequest, res: express.Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
@@ -79,42 +126,55 @@ export const getConversations = async (req: AuthenticatedRequest, res: express.R
             orderBy: { updatedAt: 'desc' }
         });
 
+        // Auto-join public channels
+        for (const conv of conversations) {
+            if (conv.type === 'group' && !conv.isPrivate) {
+                const isParticipant = conv.participants.some(p => p.id === user.id);
+                if (!isParticipant) {
+                    const updatedConv = await prisma.conversation.update({
+                        where: { id: conv.id },
+                        data: {
+                            participants: {
+                                connect: { id: user.id }
+                            }
+                        },
+                        include: {
+                            participants: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    role: true,
+                                    lastActive: true
+                                }
+                            },
+                            messages: {
+                                orderBy: { createdAt: 'desc' },
+                                take: 1,
+                                include: {
+                                    attachments: true
+                                }
+                            }
+                        }
+                    });
+
+                    conv.participants = updatedConv.participants;
+                    conv.messages = updatedConv.messages;
+
+                    const formattedConv = await formatConversationForUser(updatedConv, user.id);
+                    sendToOrganization(user.organizationId, {
+                        type: 'conversation_updated',
+                        conversationId: conv.id,
+                        conversation: formattedConv,
+                        participants: formattedConv.participants
+                    });
+                }
+            }
+        }
+
         // Format to what frontend expects
         const formatted = await Promise.all(conversations.map(async (conv: any) => {
-            const partner = conv.type === 'direct' ? (conv.participants.find((p: any) => p.id !== user.id) || null) : null;
-            const lastMsg = conv.messages[0] || null;
-
-            const unreadCount = await prisma.message.count({
-                where: {
-                    conversationId: conv.id,
-                    senderId: { not: user.id },
-                    status: { not: 'read' }
-                }
-            });
-
-            return {
-                id: conv.id,
-                type: conv.type,
-                name: conv.name,
-                description: conv.description,
-                updatedAt: conv.updatedAt.toISOString(),
-                partner: partner ? {
-                    id: partner.id,
-                    name: partner.name,
-                    email: partner.email,
-                    role: partner.role,
-                    online: isUserOnline(partner.id),
-                    lastActive: partner.lastActive ? partner.lastActive.toISOString() : null
-                } : null,
-                lastMessage: lastMsg ? {
-                    id: lastMsg.id,
-                    content: lastMsg.content,
-                    senderId: lastMsg.senderId,
-                    createdAt: lastMsg.createdAt.toISOString(),
-                    hasAttachments: lastMsg.attachments.length > 0
-                } : null,
-                unreadCount
-            };
+            return formatConversationForUser(conv, user.id);
         }));
 
         res.status(200).json(formatted);
@@ -145,6 +205,45 @@ export const getMessages = async (req: AuthenticatedRequest, res: express.Respon
             const isParticipant = conv.participants.some(p => p.id === user.id);
             if (!isParticipant) {
                 return res.status(403).json({ error: 'Forbidden: You do not have access to this conversation' });
+            }
+        } else if (conv.type === 'group' && !conv.isPrivate) {
+            // Auto-join public channel on viewing messages
+            const isParticipant = conv.participants.some(p => p.id === user.id);
+            if (!isParticipant) {
+                const updatedConv = await prisma.conversation.update({
+                    where: { id: conversationId },
+                    data: {
+                        participants: {
+                            connect: { id: user.id }
+                        }
+                    },
+                    include: {
+                        participants: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                role: true,
+                                lastActive: true
+                            }
+                        },
+                        messages: {
+                            orderBy: { createdAt: 'desc' },
+                            take: 1,
+                            include: {
+                                attachments: true
+                            }
+                        }
+                    }
+                });
+
+                const formattedConv = await formatConversationForUser(updatedConv, user.id);
+                sendToOrganization(user.organizationId, {
+                    type: 'conversation_updated',
+                    conversationId,
+                    conversation: formattedConv,
+                    participants: formattedConv.participants
+                });
             }
         }
 
@@ -330,23 +429,10 @@ export const startConversation = async (req: AuthenticatedRequest, res: express.
             // Notify partner via WebSocket
             const partner = conv.participants.find((p: any) => p.id !== user.id);
             if (partner) {
+                const formattedPartnerConv = await formatConversationForUser(conv, partner.id);
                 sendToUser(partner.id, {
                     type: 'conversation_created',
-                    conversation: {
-                        id: conv.id,
-                        type: conv.type,
-                        updatedAt: conv.updatedAt.toISOString(),
-                        partner: {
-                            id: currentUserDb.id,
-                            name: currentUserDb.name,
-                            email: currentUserDb.email,
-                            role: currentUserDb.role,
-                            online: isUserOnline(currentUserDb.id),
-                            lastActive: currentUserDb.lastActive ? currentUserDb.lastActive.toISOString() : null
-                        },
-                        lastMessage: null,
-                        unreadCount: 0
-                    }
+                    conversation: formattedPartnerConv
                 });
             }
         }
@@ -355,31 +441,7 @@ export const startConversation = async (req: AuthenticatedRequest, res: express.
             return res.status(404).json({ error: 'Failed to establish conversation' });
         }
 
-        const partner = conv.participants.find((p: any) => p.id !== user.id) || null;
-        const lastMsg = conv.messages[0] || null;
-
-        const formatted = {
-            id: conv.id,
-            type: conv.type,
-            updatedAt: conv.updatedAt.toISOString(),
-            partner: partner ? {
-                id: partner.id,
-                name: partner.name,
-                email: partner.email,
-                role: partner.role,
-                online: isUserOnline(partner.id),
-                lastActive: partner.lastActive ? partner.lastActive.toISOString() : null
-            } : null,
-            lastMessage: lastMsg ? {
-                id: lastMsg.id,
-                content: lastMsg.content,
-                senderId: lastMsg.senderId,
-                createdAt: lastMsg.createdAt.toISOString(),
-                hasAttachments: lastMsg.attachments.length > 0
-            } : null,
-            unreadCount: 0
-        };
-
+        const formatted = await formatConversationForUser(conv, user.id);
         res.status(200).json(formatted);
     } catch (err) {
         console.error('Failed to start conversation:', err);
@@ -503,6 +565,20 @@ export const sendMessage = async (req: AuthenticatedRequest, res: express.Respon
             });
         }
 
+        // If direct message, notify the partner
+        if (updatedConv.type === 'direct') {
+            const partner = updatedConv.participants.find((p: any) => p.id !== user.id);
+            if (partner) {
+                await notifyUser(
+                    partner.id,
+                    `💬 New Message from ${message.sender.name}`,
+                    content ? (content.length > 80 ? content.substring(0, 80) + '...' : content) : 'Sent an attachment',
+                    'chat',
+                    `/collaboration?tab=direct&convId=${conversationId}`
+                ).catch(e => console.error('Failed to send DM notification', e));
+            }
+        }
+
         // Detect @[name] mentions
         const mentionRegex = /@(\w+)/g;
         const matches = content ? [...content.matchAll(mentionRegex)] : [];
@@ -596,23 +672,33 @@ export const createChannel = async (req: AuthenticatedRequest, res: express.Resp
                 participants: {
                     connect: { id: user.id }
                 }
+            },
+            include: {
+                participants: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true,
+                        lastActive: true
+                    }
+                },
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    include: {
+                        attachments: true
+                    }
+                }
             }
         });
+
+        const formatted = await formatConversationForUser(channel, user.id);
 
         // Notify via WebSocket
         const payload = {
             type: 'conversation_created',
-            conversation: {
-                id: channel.id,
-                type: channel.type,
-                name: channel.name,
-                description: channel.description,
-                isPrivate: channel.isPrivate,
-                updatedAt: channel.updatedAt.toISOString(),
-                partner: null,
-                lastMessage: null,
-                unreadCount: 0
-            }
+            conversation: formatted
         };
 
         if (channel.isPrivate) {
@@ -621,7 +707,7 @@ export const createChannel = async (req: AuthenticatedRequest, res: express.Resp
             sendToOrganization(user.organizationId, payload);
         }
 
-        res.status(201).json(channel);
+        res.status(201).json(formatted);
     } catch (err) {
         console.error('Failed to create channel:', err);
         res.status(500).json({ error: 'Failed to create channel' });
@@ -877,46 +963,32 @@ export const addChannelMember = async (req: AuthenticatedRequest, res: express.R
                         role: true,
                         lastActive: true
                     }
+                },
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    include: {
+                        attachments: true
+                    }
                 }
             }
         });
 
+        const formattedForCreator = await formatConversationForUser(updated, user.id);
+
         const payload = {
             type: 'conversation_updated',
             conversationId: channelId,
-            conversation: {
-                id: updated.id,
-                type: updated.type,
-                name: updated.name,
-                description: updated.description,
-                isPrivate: updated.isPrivate,
-                updatedAt: updated.updatedAt.toISOString()
-            },
-            participants: updated.participants.map((p: any) => ({
-                id: p.id,
-                name: p.name,
-                email: p.email,
-                role: p.role,
-                online: isUserOnline(p.id),
-                lastActive: p.lastActive ? p.lastActive.toISOString() : null
-            }))
+            conversation: formattedForCreator,
+            participants: formattedForCreator.participants
         };
 
         if (updated.isPrivate) {
             // Also notify the newly connected member via conversation_created so it displays in their channels list
+            const formattedForAdded = await formatConversationForUser(updated, userId);
             sendToUser(userId, {
                 type: 'conversation_created',
-                conversation: {
-                    id: updated.id,
-                    type: updated.type,
-                    name: updated.name,
-                    description: updated.description,
-                    isPrivate: updated.isPrivate,
-                    updatedAt: updated.updatedAt.toISOString(),
-                    partner: null,
-                    lastMessage: null,
-                    unreadCount: 0
-                }
+                conversation: formattedForAdded
             });
 
             updated.participants.forEach((p: any) => {
@@ -926,7 +998,19 @@ export const addChannelMember = async (req: AuthenticatedRequest, res: express.R
             sendToOrganization(user.organizationId, payload);
         }
 
-        res.status(200).json(updated);
+        // Notify the added user
+        const addingUser = await prisma.user.findUnique({ where: { id: user.id } });
+        const addingUserName = addingUser?.name || 'Admin';
+
+        await notifyUser(
+            userId,
+            '📣 Added to Channel',
+            `You have been added to the channel #${updated.name || 'group'} by ${addingUserName}`,
+            'chat',
+            `/collaboration?tab=channels&convId=${channelId}`
+        ).catch(e => console.error('Failed to notify added member', e));
+
+        res.status(200).json(formattedForCreator);
     } catch (err) {
         console.error('Failed to add channel member:', err);
         res.status(500).json({ error: 'Failed to link member' });
@@ -936,6 +1020,9 @@ export const addChannelMember = async (req: AuthenticatedRequest, res: express.R
 export const updateChannelDetails = async (req: AuthenticatedRequest, res: express.Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    if (user.role !== 'Admin') {
+        return res.status(403).json({ error: 'Forbidden: Only Admins can edit channel details' });
+    }
 
     const channelId = req.params.id as string;
     const { name, description } = req.body;
@@ -1011,3 +1098,91 @@ export const updateChannelDetails = async (req: AuthenticatedRequest, res: expre
 
 // Touch comment to trigger nodemon recompile
 
+export const removeChannelMember = async (req: AuthenticatedRequest, res: express.Response) => {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const channelId = req.params.id as string;
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID is required' });
+
+    try {
+        const channel = await prisma.conversation.findUnique({
+            where: { id: channelId },
+            include: { participants: true }
+        });
+
+        if (!channel || channel.type !== 'group' || channel.organizationId !== user.organizationId) {
+            return res.status(404).json({ error: 'Channel not found' });
+        }
+
+        // Only Admin roles can remove members
+        if (user.role !== 'Admin') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins can remove members' });
+        }
+
+        const updated = await prisma.conversation.update({
+            where: { id: channelId },
+            data: {
+                participants: {
+                    disconnect: { id: userId }
+                }
+            },
+            include: {
+                participants: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true,
+                        lastActive: true
+                    }
+                },
+                messages: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    include: {
+                        attachments: true
+                    }
+                }
+            }
+        });
+
+        const formattedForCreator = await formatConversationForUser(updated, user.id);
+
+        const payload = {
+            type: 'conversation_updated',
+            conversationId: channelId,
+            conversation: formattedForCreator,
+            participants: formattedForCreator.participants
+        };
+
+        if (updated.isPrivate) {
+            // Send conversation_deleted to the removed user so it disappears from their channels list
+            sendToUser(userId, {
+                type: 'conversation_deleted',
+                conversationId: channelId
+            });
+
+            updated.participants.forEach((p: any) => {
+                sendToUser(p.id, payload);
+            });
+        } else {
+            sendToOrganization(user.organizationId, payload);
+        }
+
+        // Notify the removed user
+        await notifyUser(
+            userId,
+            '📣 Removed from Channel',
+            `You have been removed from the channel #${updated.name || 'group'} by an Admin`,
+            'chat',
+            '/collaboration'
+        ).catch(e => console.error('Failed to notify removed member', e));
+
+        res.status(200).json(formattedForCreator);
+    } catch (err) {
+        console.error('Failed to remove channel member:', err);
+        res.status(500).json({ error: 'Failed to unlink member' });
+    }
+};

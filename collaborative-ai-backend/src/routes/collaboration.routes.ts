@@ -14,7 +14,8 @@ import {
     getPinnedMessages,
     toggleReaction,
     addChannelMember,
-    updateChannelDetails
+    updateChannelDetails,
+    removeChannelMember
 } from '../controllers/collaboration.controller';
 
 const router = Router();
@@ -37,6 +38,7 @@ router.post('/messages/:id/pin', togglePinMessage);
 router.get('/conversations/:id/pinned', getPinnedMessages);
 router.post('/messages/:id/react', toggleReaction);
 router.post('/channels/:id/members', addChannelMember);
+router.delete('/channels/:id/members', removeChannelMember);
 router.patch('/channels/:id', updateChannelDetails);
 
 export default router;

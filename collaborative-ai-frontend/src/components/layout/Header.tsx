@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Sun, Moon, User, Shield, LogOut, ChevronDown, MessageSquare } from 'lucide-react';
+import { Search, Sun, Moon, User, Shield, LogOut, ChevronDown, MessageSquare, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -20,13 +20,18 @@ export function Header() {
     const { user, logout } = useAuth();
     const { role } = useRole();
     const [isOpen, setIsOpen] = useState(false);
+    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const searchRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+            }
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setIsSearchExpanded(false);
             }
         }
 
@@ -54,19 +59,35 @@ export function Header() {
 
     return (
         <header className="header">
-            <div className="header-search" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '340px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                    <Search size={18} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
-                    <input
-                        type="text"
-                        placeholder="Search data, contracts, or conversations..."
-                        style={{ width: '100%' }}
-                    />
+            {isSearchExpanded ? (
+                <div className="header-search" ref={searchRef} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '340px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                        <Search size={18} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
+                        <input
+                            type="text"
+                            placeholder="Search data, contracts, or conversations..."
+                            style={{ width: '100%' }}
+                            autoFocus
+                        />
+                    </div>
+                    <button 
+                        onClick={() => setIsSearchExpanded(false)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                    >
+                        <X size={16} />
+                    </button>
                 </div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '2px 6px', borderRadius: '4px', whiteSpace: 'nowrap', pointerEvents: 'none', marginLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                    <span style={{ fontSize: '0.8rem' }}>⌘</span>K
-                </span>
-            </div>
+            ) : (
+                <button
+                    className="icon-btn"
+                    onClick={() => setIsSearchExpanded(true)}
+                    aria-label="Open Search"
+                    title="Search"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                    <Search size={20} />
+                </button>
+            )}
 
             <div className="header-actions">
                 <button

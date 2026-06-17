@@ -20,7 +20,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: express.Respon
     if (!token) return res.status(401).json({ error: 'Access token required' });
 
     jwt.verify(token, process.env.JWT_SECRET || 'super_secret_collaborative_ai_key_2026', async (err: jwt.VerifyErrors | null, user: any) => {
-        if (err) return res.status(403).json({ error: 'Invalid or expired token' });
+        if (err) return res.status(401).json({ error: 'Invalid or expired token' });
 
         try {
             // Verify that the user still exists in the database to prevent stale token/wiped DB constraint failures
@@ -42,9 +42,10 @@ export const authenticateToken = (req: AuthenticatedRequest, res: express.Respon
                 }
             }
 
+            const roleOverride = req.headers['x-role-override'] as string;
             req.user = {
                 id: dbUser.id,
-                role: dbUser.role,
+                role: roleOverride || dbUser.role,
                 organizationId: dbUser.organizationId,
                 permissions: parsedPermissions
             };
