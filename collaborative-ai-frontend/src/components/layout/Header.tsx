@@ -49,7 +49,7 @@ export function Header() {
 
     const handleAdminClick = () => {
         setIsOpen(false);
-        router.push('/admin');
+        router.push('/profile?tab=users');
     };
 
     const handleLogoutClick = () => {
@@ -175,7 +175,7 @@ export function Header() {
                                         onClick={handleAdminClick}
                                     >
                                         <Shield size={16} />
-                                        <span>Admin Panel</span>
+                                        <span>Admin Settings</span>
                                     </button>
                                 )}
                                 

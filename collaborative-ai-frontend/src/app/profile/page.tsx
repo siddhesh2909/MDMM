@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +12,7 @@ import { apiClient } from '@/lib/apiClient';
 import {
     User, Lock, Shield, Building, Award, CheckCircle2, Key, Upload,
     Activity, CreditCard, Users, Bell, Sliders, Globe, Trash2, LogOut,
-    Info, Calendar, Settings, Mail, Phone, Clock, AlertTriangle, Download, Check
+    Info, Calendar, Settings, Mail, Phone, Clock, AlertTriangle, Download, Check, MoreVertical
 } from 'lucide-react';
 import './profile.css';
 
@@ -59,13 +60,14 @@ interface ProfilePayload {
     };
 }
 
-export default function ProfilePage() {
+function ProfileSettings() {
     const { user, updateUser } = useAuth();
     const { role } = useRole();
     const { showToast } = useToast();
+    const searchParams = useSearchParams();
 
     // Active tab in settings layout
-    const [activeTab, setActiveTab] = useState<'profile' | 'workspace' | 'security' | 'notifications' | 'ai' | 'team' | 'audit' | 'billing' | 'org'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'workspace' | 'security' | 'notifications' | 'ai' | 'users' | 'rbac' | 'audit' | 'billing' | 'org'>('profile');
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
 
@@ -117,6 +119,32 @@ export default function ProfilePage() {
     const [initialState, setInitialState] = useState<string>('{}');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 3-dots action menu for Admin Manage Users
+    const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const handleOutsideClick = () => {
+            setActiveMenuUserId(null);
+        };
+        window.addEventListener('click', handleOutsideClick);
+        return () => window.removeEventListener('click', handleOutsideClick);
+    }, []);
+
+    // Generic confirm modal state
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        confirmText: 'Confirm',
+        onConfirm: () => {}
+    });
 
     const isViewer = role === 'Business User';
 
@@ -200,7 +228,7 @@ export default function ProfilePage() {
     const loadAdminData = async () => {
         if (role !== 'Admin') return;
         try {
-            if (activeTab === 'team') {
+            if (activeTab === 'users') {
                 const users = await apiClient.get('/data/users');
                 setTeamUsers(users || []);
             } else if (activeTab === 'audit') {
@@ -215,6 +243,13 @@ export default function ProfilePage() {
     useEffect(() => {
         loadProfileData();
     }, []);
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && ['profile', 'workspace', 'security', 'notifications', 'ai', 'users', 'rbac', 'audit', 'billing', 'org'].includes(tab)) {
+            setActiveTab(tab as any);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         loadAdminData();
@@ -398,14 +433,59 @@ export default function ProfilePage() {
 
     // Admin user deactivations
     const handleDeactivateUser = async (userId: string) => {
-        if (!confirm('Are you sure you want to deactivate this team member?')) return;
-        try {
-            await apiClient.patch('/data/users/deactivate', { id: userId });
-            setTeamUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'Inactive' } : u));
-            showToast('Team member deactivated.', 'info');
-        } catch {
-            showToast('Failed to deactivate user.', 'error');
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Deactivate User',
+            message: 'Are you sure you want to deactivate this team member? They will no longer be able to log in.',
+            confirmText: 'Deactivate',
+            onConfirm: async () => {
+                try {
+                    await apiClient.patch('/data/users/deactivate', { id: userId });
+                    setTeamUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'Inactive' } : u));
+                    showToast('Team member deactivated.', 'info');
+                } catch {
+                    showToast('Failed to deactivate user.', 'error');
+                }
+            }
+        });
+    };
+
+    // Admin user activations
+    const handleActivateUser = async (userId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Activate User',
+            message: 'Are you sure you want to activate this team member? They will regain access to the platform.',
+            confirmText: 'Activate',
+            onConfirm: async () => {
+                try {
+                    await apiClient.patch('/data/users/activate', { id: userId });
+                    setTeamUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'Active' } : u));
+                    showToast('Team member activated.', 'success');
+                } catch {
+                    showToast('Failed to activate user.', 'error');
+                }
+            }
+        });
+    };
+
+    // Admin user deletions
+    const handleDeleteUser = async (userId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Permanently Delete User',
+            message: 'Are you sure you want to permanently delete this user account? This action is irreversible and all their datasets/contracts will be re-assigned.',
+            confirmText: 'Delete User',
+            onConfirm: async () => {
+                try {
+                    await apiClient.delete('/data/users/delete', { id: userId });
+                    setTeamUsers(prev => prev.filter(u => u.id !== userId));
+                    showToast('User deleted successfully.', 'success');
+                } catch {
+                    showToast('Failed to delete user.', 'error');
+                }
+            }
+        });
     };
 
     // Invite members handler
@@ -502,9 +582,13 @@ export default function ProfilePage() {
                         {role === 'Admin' && (
                             <>
                                 <div className="settings-nav-section-divider">Administration</div>
-                                <button className={`settings-nav-item ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>
+                                <button className={`settings-nav-item ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
                                     <Users size={15} />
-                                    <span>Team Directory</span>
+                                    <span>Manage Users</span>
+                                </button>
+                                <button className={`settings-nav-item ${activeTab === 'rbac' ? 'active' : ''}`} onClick={() => setActiveTab('rbac')}>
+                                    <Shield size={15} />
+                                    <span>Access Control</span>
                                 </button>
                                 <button className={`settings-nav-item ${activeTab === 'audit' ? 'active' : ''}`} onClick={() => setActiveTab('audit')}>
                                     <Activity size={15} />
@@ -879,13 +963,13 @@ export default function ProfilePage() {
                                 </motion.div>
                             )}
 
-                            {/* Tab 6: Team Directory (Admin Only) */}
-                            {activeTab === 'team' && role === 'Admin' && (
+                            {/* Tab 6: Manage Users (Admin Only) */}
+                            {activeTab === 'users' && role === 'Admin' && (
                                 <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="settings-view-form">
                                     <div className="settings-view-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                                         <div>
-                                            <h2>Team Member Directory</h2>
-                                            <p>Manage user roles, deactivations, and permissions credentials.</p>
+                                            <h2>Manage Users</h2>
+                                            <p>Invite new members, manage roles, and deactivate user accounts.</p>
                                         </div>
                                         <Button onClick={() => setShowInviteModal(true)} style={{ padding: '0.35rem 0.75rem', height: 'auto', fontSize: '0.8rem' }}>
                                             Invite Member
@@ -909,12 +993,12 @@ export default function ProfilePage() {
                                                         <td>
                                                             <div className="table-user-cell">
                                                                 <div className="user-avatar">{getRoleDisplayName(u.role).charAt(0)}</div>
-                                                                <span>{getRoleDisplayName(u.role)}</span>
+                                                                <span>{u.name || getRoleDisplayName(u.role)}</span>
                                                             </div>
                                                         </td>
                                                         <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
                                                         <td>
-                                                            <select className="select-role-inline" value={u.role} onChange={e => handleUpdateUserRole(u.id, e.target.value)} disabled={u.id === user?.id || u.status === 'Inactive'}>
+                                                            <select className="select-role-inline" value={getRoleDisplayName(u.role)} onChange={e => handleUpdateUserRole(u.id, e.target.value)} disabled={u.id === user?.id || u.status === 'Inactive'}>
                                                                 <option value="Admin">Admin</option>
                                                                 <option value="Analyst">Analyst</option>
                                                                 <option value="Business User">Business User</option>
@@ -923,13 +1007,130 @@ export default function ProfilePage() {
                                                         <td>
                                                             <span className={`status-pill ${u.status === 'Active' ? 'active' : 'inactive'}`}>{u.status}</span>
                                                         </td>
-                                                        <td>
-                                                            <Button variant="outline" style={{ color: 'var(--danger-color)', borderColor: 'var(--danger-color)', padding: '0.2rem 0.5rem', height: 'auto', fontSize: '0.75rem' }} onClick={() => handleDeactivateUser(u.id)} disabled={u.status === 'Inactive' || u.id === user?.id}>
-                                                                Deactivate
-                                                            </Button>
+                                                        <td style={{ overflow: 'visible' }}>
+                                                            <div className="user-action-menu-container">
+                                                                 <button
+                                                                    className="icon-btn action-menu-trigger"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setActiveMenuUserId(activeMenuUserId === u.id ? null : u.id);
+                                                                    }}
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        width: '28px',
+                                                                        height: '28px',
+                                                                        borderRadius: '50%',
+                                                                        border: '1px solid var(--border-color)',
+                                                                        background: 'var(--bg-color)',
+                                                                        color: 'var(--text-secondary)',
+                                                                        cursor: 'pointer',
+                                                                        transition: 'all 0.2s'
+                                                                    }}
+                                                                >
+                                                                    <MoreVertical size={16} />
+                                                                </button>
+
+                                                                {activeMenuUserId === u.id && (
+                                                                    <div className="user-action-menu-dropdown glass-panel" style={{
+                                                                        position: 'absolute',
+                                                                        right: 0,
+                                                                        top: '110%',
+                                                                        zIndex: 999,
+                                                                        minWidth: '130px',
+                                                                        background: 'var(--bg-color)',
+                                                                        border: '1px solid var(--border-color)',
+                                                                        borderRadius: 'var(--radius-md)',
+                                                                        boxShadow: 'var(--shadow-md)',
+                                                                        padding: '4px 0',
+                                                                        display: 'flex',
+                                                                        flexDirection: 'column'
+                                                                    }}>
+                                                                        {u.status === 'Inactive' ? (
+                                                                            <button
+                                                                                className="user-action-menu-item"
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setActiveMenuUserId(null);
+                                                                                    handleActivateUser(u.id);
+                                                                                }}
+                                                                            >
+                                                                                Activate
+                                                                            </button>
+                                                                        ) : (
+                                                                            <button
+                                                                                className="user-action-menu-item"
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setActiveMenuUserId(null);
+                                                                                    handleDeactivateUser(u.id);
+                                                                                }}
+                                                                                disabled={u.id === user?.id}
+                                                                            >
+                                                                                Deactivate
+                                                                            </button>
+                                                                        )}
+                                                                        <button
+                                                                            className="user-action-menu-item danger"
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setActiveMenuUserId(null);
+                                                                                handleDeleteUser(u.id);
+                                                                            }}
+                                                                            disabled={u.id === user?.id}
+                                                                        >
+                                                                            Delete User
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* Tab 6b: Access Control (Admin Only) */}
+                            {activeTab === 'rbac' && role === 'Admin' && (
+                                <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="settings-view-form">
+                                    <div className="settings-view-header">
+                                        <h2>Role Permissions Matrix</h2>
+                                        <p>Ensure least-privilege principles are met. Changes strictly enforced at API layer.</p>
+                                    </div>
+
+                                    <div className="admin-table-container">
+                                        <table className="settings-data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Permission</th>
+                                                    <th>Analyst</th>
+                                                    <th>Business User</th>
+                                                    <th>Admin</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style={{ textAlign: 'center' }}>
+                                                <tr>
+                                                    <td style={{ textAlign: 'left', fontWeight: 600 }}>Ingest Raw Data</td>
+                                                    <td>✅</td>
+                                                    <td>❌</td>
+                                                    <td>✅</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style={{ textAlign: 'left', fontWeight: 600 }}>Edit Schema Contracts</td>
+                                                    <td>✅</td>
+                                                    <td>❌</td>
+                                                    <td>✅</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style={{ textAlign: 'left', fontWeight: 600 }}>View Analytics</td>
+                                                    <td>✅</td>
+                                                    <td>✅</td>
+                                                    <td>✅</td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -1152,6 +1353,43 @@ export default function ProfilePage() {
                     </div>
                 </div>
             )}
+
+            {/* 3. General Confirmation Dialog Modal */}
+            {confirmModal.isOpen && (
+                <div className="modal-backdrop-overlay">
+                    <div className="settings-confirm-modal animate-scale-in" style={{ maxWidth: '400px' }}>
+                        <div className="confirm-modal-header">
+                            <h3>{confirmModal.title}</h3>
+                        </div>
+                        <div className="confirm-modal-body">
+                            <p>{confirmModal.message}</p>
+                        </div>
+                        <div className="confirm-modal-footer">
+                            <Button variant="secondary" onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}>Cancel</Button>
+                            <Button
+                                onClick={() => {
+                                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                                    confirmModal.onConfirm();
+                                }}
+                            >
+                                {confirmModal.confirmText}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={
+            <div className="settings-skeleton-container" style={{ padding: '2rem' }}>
+                <div className="spinner" style={{ margin: 'auto' }} />
+            </div>
+        }>
+            <ProfileSettings />
+        </Suspense>
     );
 }

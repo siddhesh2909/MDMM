@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateOrganizationDetails = exports.deleteAccount = exports.downloadPersonalData = exports.revokeOtherSessions = exports.updateProfile = exports.getProfile = exports.deactivateUser = exports.updateUserRole = exports.inviteUser = exports.getAuditLog = exports.getUsers = void 0;
+exports.updateOrganizationDetails = exports.deleteAccount = exports.downloadPersonalData = exports.revokeOtherSessions = exports.updateProfile = exports.getProfile = exports.deleteUser = exports.activateUser = exports.deactivateUser = exports.updateUserRole = exports.inviteUser = exports.getAuditLog = exports.getUsers = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const prisma_1 = __importDefault(require("../lib/prisma"));
 const notification_service_1 = require("../services/notification.service");
@@ -177,6 +177,90 @@ const deactivateUser = async (req, res) => {
     }
 };
 exports.deactivateUser = deactivateUser;
+const activateUser = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const orgId = req.user?.organizationId;
+        const reqUser = req.user;
+        if (!orgId || !reqUser)
+            return res.status(401).json({ error: 'Unauthorized' });
+        if (!id)
+            return res.status(400).json({ error: 'Missing user id' });
+        const updatedUser = await prisma_1.default.user.update({
+            where: { id: id, organizationId: orgId },
+            data: { status: 'Active' }
+        });
+        // Audit Log
+        await prisma_1.default.auditLog.create({
+            data: {
+                userId: reqUser.id,
+                role: reqUser.role,
+                action: 'Activate User',
+                entityType: 'User',
+                entityId: updatedUser.id,
+                organizationId: orgId
+            }
+        });
+        try {
+            await (0, notification_service_1.notifyAdmins)(orgId, 'User Account Activated', `User ${updatedUser.name} (${updatedUser.email}) was activated by ${reqUser.role}.`, 'security', '/admin');
+        }
+        catch (nErr) {
+            console.error('Failed to trigger activate notifications:', nErr);
+        }
+        res.status(200).json({ message: 'User activated successfully', user: updatedUser });
+    }
+    catch (err) {
+        res.status(500).json({ error: 'Failed to activate user' });
+    }
+};
+exports.activateUser = activateUser;
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const orgId = req.user?.organizationId;
+        const reqUser = req.user;
+        if (!orgId || !reqUser)
+            return res.status(401).json({ error: 'Unauthorized' });
+        if (!id)
+            return res.status(400).json({ error: 'Missing user id' });
+        if (id === reqUser.id)
+            return res.status(400).json({ error: 'Cannot delete your own account from user management' });
+        // Re-assign datasets and contracts to the admin to prevent FK constraints issues
+        await prisma_1.default.dataset.updateMany({
+            where: { ownerId: id },
+            data: { ownerId: reqUser.id }
+        });
+        await prisma_1.default.dataContract.updateMany({
+            where: { ownerId: id },
+            data: { ownerId: reqUser.id }
+        });
+        const deletedUser = await prisma_1.default.user.delete({
+            where: { id: id, organizationId: orgId }
+        });
+        // Audit Log
+        await prisma_1.default.auditLog.create({
+            data: {
+                userId: reqUser.id,
+                role: reqUser.role,
+                action: 'Delete User Account',
+                entityType: 'User',
+                entityId: id,
+                organizationId: orgId
+            }
+        });
+        try {
+            await (0, notification_service_1.notifyAdmins)(orgId, 'User Account Deleted', `User ${deletedUser.name} (${deletedUser.email}) was deleted by ${reqUser.role}.`, 'security', '/admin');
+        }
+        catch (nErr) {
+            console.error('Failed to trigger delete notifications:', nErr);
+        }
+        res.status(200).json({ message: 'User deleted successfully' });
+    }
+    catch (err) {
+        res.status(500).json({ error: 'Failed to delete user' });
+    }
+};
+exports.deleteUser = deleteUser;
 // --- Profile Metadata helpers (JSON based file-store) ---
 const METADATA_FILE_PATH = path_1.default.join(__dirname, '..', 'data', 'user_profiles_metadata.json');
 const readUserMetadata = () => {

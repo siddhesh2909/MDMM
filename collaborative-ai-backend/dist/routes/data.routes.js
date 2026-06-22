@@ -104,6 +104,8 @@ router.get('/audit-log', (0, auth_1.requireRole)(['Admin']), users_controller_1.
 router.post('/users/invite', (0, auth_1.requireRole)(['Admin']), users_controller_1.inviteUser);
 router.patch('/users/update-role', (0, auth_1.requireRole)(['Admin']), users_controller_1.updateUserRole);
 router.patch('/users/deactivate', (0, auth_1.requireRole)(['Admin']), users_controller_1.deactivateUser);
+router.patch('/users/activate', (0, auth_1.requireRole)(['Admin']), users_controller_1.activateUser);
+router.delete('/users/delete', (0, auth_1.requireRole)(['Admin']), users_controller_1.deleteUser);
 // ── Connectors ──
 router.post('/connectors/test', (0, auth_1.requirePermission)('dataset:manage'), connectors_controller_1.testConnection);
 router.post('/connectors/pull', (0, auth_1.requirePermission)('dataset:manage'), connectors_controller_1.pullData);

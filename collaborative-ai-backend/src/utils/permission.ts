@@ -24,26 +24,25 @@ function parseSharedWith(sharedWithStr: string): SharedUser[] {
 }
 
 export const canViewDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
-    // Admins bypass
-    if (user.role === 'Admin') return true;
-
     // Owner/Creator bypass
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
+
+    // Check shared lists
+    const shared = parseSharedWith(dataset.sharedWith);
+    if (shared.some(s => s.userId === user.id)) return true;
 
     // Check visibility
     if (dataset.visibility === 'organization' && dataset.organizationId === user.organizationId) {
         return true;
     }
 
-    // Check shared lists
-    const shared = parseSharedWith(dataset.sharedWith);
-    return shared.some(s => s.userId === user.id);
+    // Admins bypass ONLY IF the dataset is not private
+    if (user.role === 'Admin' && dataset.visibility !== 'private') return true;
+
+    return false;
 };
 
 export const canEditDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
-    // Admins bypass
-    if (user.role === 'Admin') return true;
-
     // Owner/Creator bypass
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
 
@@ -54,26 +53,28 @@ export const canEditDataset = (dataset: DatasetFields, user: AuthenticatedUser):
         return ['editor', 'manager', 'owner'].includes(userShare.permission);
     }
 
+    // Admins bypass ONLY IF the dataset is not private
+    if (user.role === 'Admin' && dataset.visibility !== 'private') return true;
+
     return false;
 };
 
 export const canDeleteDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
-    // Admins bypass
-    if (user.role === 'Admin') return true;
-
     // Owner/Creator only
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
 
     // Check shared list for 'owner' permission override
     const shared = parseSharedWith(dataset.sharedWith);
     const userShare = shared.find(s => s.userId === user.id);
-    return userShare?.permission === 'owner';
+    if (userShare?.permission === 'owner') return true;
+
+    // Admins bypass ONLY IF the dataset is not private
+    if (user.role === 'Admin' && dataset.visibility !== 'private') return true;
+
+    return false;
 };
 
 export const canShareDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
-    // Admins bypass
-    if (user.role === 'Admin') return true;
-
     // Owner/Creator bypass
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
 
@@ -83,6 +84,9 @@ export const canShareDataset = (dataset: DatasetFields, user: AuthenticatedUser)
     if (userShare) {
         return ['manager', 'owner'].includes(userShare.permission);
     }
+
+    // Admins bypass ONLY IF the dataset is not private
+    if (user.role === 'Admin' && dataset.visibility !== 'private') return true;
 
     return false;
 };

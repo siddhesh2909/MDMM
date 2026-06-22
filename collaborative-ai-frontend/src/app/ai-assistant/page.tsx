@@ -146,7 +146,8 @@ export default function AIAssistantPage() {
 
             const res = await apiClient.post('/ai/chat', {
                 message: textToUse,
-                datasetContext
+                datasetContext,
+                copilotType: 'analyst'
             });
 
             if (res?.reply) {

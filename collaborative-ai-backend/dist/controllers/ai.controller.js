@@ -29,12 +29,21 @@ Always respond in an executive, non-technical, and action-oriented way:
 `;
 const handleChat = async (req, res) => {
     try {
-        const { message, history, datasetContext } = req.body;
+        const { message, history, datasetContext, copilotType } = req.body;
         if (!message) {
             return res.status(400).json({ error: 'Message content is required.' });
         }
-        const userRole = req.user?.role || 'Viewer';
-        let customPrompt = userRole === 'Viewer' ? BUSINESS_COPILOT_SYSTEM_PROMPT : ANALYST_COPILOT_SYSTEM_PROMPT;
+        let customPrompt = ANALYST_COPILOT_SYSTEM_PROMPT;
+        if (copilotType === 'business' || datasetContext?.type === 'business_kpis') {
+            customPrompt = BUSINESS_COPILOT_SYSTEM_PROMPT;
+        }
+        else if (copilotType === 'analyst') {
+            customPrompt = ANALYST_COPILOT_SYSTEM_PROMPT;
+        }
+        else {
+            const userRole = req.user?.role || 'Viewer';
+            customPrompt = userRole === 'Viewer' ? BUSINESS_COPILOT_SYSTEM_PROMPT : ANALYST_COPILOT_SYSTEM_PROMPT;
+        }
         if (datasetContext) {
             customPrompt += `\n\nActive Dataset Context Information:\n${JSON.stringify(datasetContext)}`;
         }

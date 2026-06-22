@@ -2,7 +2,7 @@ import { Request, Response, NextFunction, Router } from 'express';
 import { getContracts, createContract, updateContract, deleteContract, duplicateContract, toggleContractStatus, getLatestContract, getContractsDashboardStats, getContractDetail } from '../controllers/contracts.controller';
 import { getAnalytics, getDatasetAnalytics } from '../controllers/analytics.controller';
 import { getDatasets, createDataset, updateDataset, getDatasetDetail, deleteDataset } from '../controllers/datasets.controller';
-import { getUsers, getAuditLog, inviteUser, updateUserRole, deactivateUser, updateProfile, getProfile, revokeOtherSessions, downloadPersonalData, deleteAccount, updateOrganizationDetails } from '../controllers/users.controller';
+import { getUsers, getAuditLog, inviteUser, updateUserRole, deactivateUser, activateUser, deleteUser, updateProfile, getProfile, revokeOtherSessions, downloadPersonalData, deleteAccount, updateOrganizationDetails } from '../controllers/users.controller';
 import { testConnection, pullData } from '../controllers/connectors.controller';
 import { authenticateToken, requirePermission, requireRole, AuthenticatedRequest } from '../middleware/auth';
 
@@ -132,6 +132,8 @@ router.get('/audit-log', requireRole(['Admin']), getAuditLog);
 router.post('/users/invite', requireRole(['Admin']), inviteUser);
 router.patch('/users/update-role', requireRole(['Admin']), updateUserRole);
 router.patch('/users/deactivate', requireRole(['Admin']), deactivateUser);
+router.patch('/users/activate', requireRole(['Admin']), activateUser);
+router.delete('/users/delete', requireRole(['Admin']), deleteUser);
 
 // ── Connectors ──
 router.post('/connectors/test', requirePermission('dataset:manage'), testConnection);

@@ -40,7 +40,6 @@ const navConfig: NavItem[] = [
     { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
     { name: 'AI Business Assistant', path: '/ai-business-assistant', icon: Sparkles },
     { name: 'Collaboration', path: '/collaboration', icon: MessageSquare },
-    { name: 'Admin', path: '/admin', icon: Settings },
 ];
 
 export function Sidebar() {

@@ -85,7 +85,8 @@ export default function AIBusinessAssistantPage() {
 
             const res = await apiClient.post('/ai/chat', {
                 message: textToUse,
-                datasetContext
+                datasetContext,
+                copilotType: 'business'
             });
 
             if (res?.reply) {

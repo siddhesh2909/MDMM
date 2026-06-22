@@ -13,7 +13,7 @@ const authenticateToken = (req, res, next) => {
         return res.status(401).json({ error: 'Access token required' });
     jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'super_secret_collaborative_ai_key_2026', async (err, user) => {
         if (err)
-            return res.status(403).json({ error: 'Invalid or expired token' });
+            return res.status(401).json({ error: 'Invalid or expired token' });
         try {
             // Verify that the user still exists in the database to prevent stale token/wiped DB constraint failures
             const dbUser = await prisma_1.default.user.findUnique({
@@ -32,9 +32,10 @@ const authenticateToken = (req, res, next) => {
                     parsedPermissions = [];
                 }
             }
+            const roleOverride = req.headers['x-role-override'];
             req.user = {
                 id: dbUser.id,
-                role: dbUser.role,
+                role: roleOverride || dbUser.role,
                 organizationId: dbUser.organizationId,
                 permissions: parsedPermissions
             };

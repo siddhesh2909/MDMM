@@ -166,5 +166,33 @@
       "temperature": 0.7,
       "customRules": "Format tabular results cleanly as Markdown tables."
     }
+  },
+  "9e630f9d-5e96-408a-84e7-58104358f1f6": {
+    "profilePhoto": "",
+    "jobTitle": "Enterprise Administrator",
+    "contactNumber": "+1 (555) 019-2834",
+    "timezone": "UTC (GMT+00:00)",
+    "twoFactorEnabled": false,
+    "activeSessions": [
+      {
+        "id": "session-mvb25ze",
+        "device": "Chrome on macOS (Current)",
+        "location": "San Francisco, US",
+        "ip": "192.168.1.100",
+        "lastActive": "2026-06-21T11:17:31.407Z",
+        "currentSession": true
+      }
+    ],
+    "lastLoginInfo": "Chrome on macOS, San Francisco, US (IP: 192.168.1.100)",
+    "notifications": {
+      "system": true,
+      "email": false,
+      "aiAlerts": true
+    },
+    "aiPreferences": {
+      "model": "llama-3-8b",
+      "temperature": 0.7,
+      "customRules": "Format tabular results cleanly as Markdown tables."
+    }
   }
 }
