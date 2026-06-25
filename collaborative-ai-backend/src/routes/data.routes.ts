@@ -176,4 +176,41 @@ router.patch('/schedules/:id', updateSchedule);
 router.delete('/schedules/:id', deleteSchedule);
 router.post('/schedules/:id/run', runScheduleNow);
 
+// ── Enterprise BI Analytics Engine Routes ──
+import {
+    classifyDataset,
+    getDatasetKPIs,
+    getWidgetRecommendations,
+    getCorrelationMatrix,
+    getForecast,
+    getDashboardHealth,
+    getBusinessGlossary,
+    getDashboardLayoutVersions,
+    saveDashboardLayoutVersion,
+    rollbackDashboardLayoutVersion,
+    getAlertRules,
+    createAlertRule,
+    deleteAlertRule,
+    getCollaborationComments,
+    createCollaborationComment,
+    resolveCollaborationComment
+} from '../controllers/enterprise-bi.controller';
+
+router.get('/datasets/:id/bi/classification', classifyDataset);
+router.get('/datasets/:id/bi/kpis', getDatasetKPIs);
+router.get('/datasets/:id/bi/recommendations', getWidgetRecommendations);
+router.get('/datasets/:id/bi/correlations', getCorrelationMatrix);
+router.get('/datasets/:id/bi/forecasting', getForecast);
+router.get('/datasets/:id/bi/health', getDashboardHealth);
+router.get('/datasets/:id/bi/glossary', getBusinessGlossary);
+router.get('/datasets/:id/bi/versions', getDashboardLayoutVersions);
+router.post('/datasets/:id/bi/versions', saveDashboardLayoutVersion);
+router.post('/datasets/:id/bi/versions/:versionId/rollback', rollbackDashboardLayoutVersion);
+router.get('/datasets/:id/bi/alerts', getAlertRules);
+router.post('/datasets/:id/bi/alerts', createAlertRule);
+router.delete('/datasets/:id/bi/alerts/:alertId', deleteAlertRule);
+router.get('/datasets/:id/bi/comments', getCollaborationComments);
+router.post('/datasets/:id/bi/comments', createCollaborationComment);
+router.patch('/datasets/:id/bi/comments/:commentId/resolve', resolveCollaborationComment);
+
 export default router;

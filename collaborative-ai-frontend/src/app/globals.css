@@ -196,3 +196,140 @@ button {
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+
+/* ── Dark Mode Force Overrides ── */
+[data-theme='dark'] {
+  /* Override inline background styles of white / light gray */
+  .workspace-sidebar,
+  .workspace-main-panel,
+  .workspace-prompt-container,
+  .suggestion-prompt-card,
+  .saved-dashboard-card,
+  .stat-card,
+  .dataset-card,
+  .studio-dash-header,
+  .studio-table-container,
+  .studio-card,
+  .studio-chart-card,
+  .studio-kpi-card,
+  .kpi-card,
+  .studio-widget-card,
+  .studio-bullet-item,
+  .studio-chat-input-wrapper,
+  .studio-sidebar-right,
+  .studio-discussion-box,
+  .studio-diagnostics-box,
+  .studio-version-card,
+  .studio-alert-card,
+  .studio-comment-bubble,
+  .studio-tab-content,
+  .studio-segmented-tabs,
+  .studio-segmented-btn,
+  .preprocessing-page,
+  .ingestion-page,
+  .workflows-page,
+  .reports-page,
+  .collab-page,
+  .notifications-page,
+  .profile-page,
+  .organization-page,
+  .card,
+  .glass-panel,
+  .studio-modal,
+  .modal-content,
+  .an-page,
+  .dc-page,
+  .dc-sidebar-left,
+  .dc-sidebar-right,
+  .dc-catalog-card,
+  .dc-main-workstation,
+  .dc-schema-table-wrapper,
+  .dc-workstation-header,
+  .dc-schema-builder-header,
+  .dm-container,
+  .dm-layout,
+  .dm-left-panel-new,
+  .dm-left-header-new,
+  .dm-chat-area,
+  .dm-message-input-area,
+  .wf-page,
+  .sources-hub-container,
+  *[style*="background-color: white"],
+  *[style*="background-color:white"],
+  *[style*="background-color: rgb(255, 255, 255)"],
+  *[style*="background-color:rgb(255,255,255)"],
+  *[style*="background-color: #ffffff"],
+  *[style*="background-color:#ffffff"],
+  *[style*="background: white"],
+  *[style*="background:white"],
+  *[style*="background: #ffffff"],
+  *[style*="background:#ffffff"],
+  *[style*="background: rgb(255, 255, 255)"],
+  *[style*="background:rgb(255,255,255)"] {
+    background-color: var(--bg-secondary) !important;
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  /* Secondary background colors for elements like search bar or filters */
+  *[style*="background-color: #f8fafc"],
+  *[style*="background-color:#f8fafc"],
+  *[style*="background: #f8fafc"],
+  *[style*="background:#f8fafc"],
+  *[style*="background-color: #f3f4f6"],
+  *[style*="background-color:#f3f4f6"],
+  *[style*="background: #f3f4f6"],
+  *[style*="background:#f3f4f6"],
+  *[style*="background-color: #f1f5f9"],
+  *[style*="background-color:#f1f5f9"],
+  *[style*="background: #f1f5f9"],
+  *[style*="background:#f1f5f9"],
+  .studio-table thead,
+  .studio-table tr[style*="background: #f8fafc"],
+  .studio-table tr[style*="background:#f8fafc"],
+  thead,
+  thead tr {
+    background-color: var(--bg-secondary) !important;
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+  }
+
+  /* Telemetry, widgets, scroll areas */
+  input,
+  select,
+  textarea {
+    background-color: var(--bg-secondary) !important;
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  /* Modals overlay content box */
+  div[style*="position: fixed"] > div,
+  div[style*="position:fixed"] > div {
+    background-color: var(--bg-color) !important;
+    background: var(--bg-color) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  /* Global text color overrides for slate / slate sub */
+  span[style*="color: var(--studio-text)"],
+  span[style*="color: var(--studio-text-sub)"],
+  span[style*="color: '#0f172a'"],
+  span[style*="color: '#64748b'"],
+  h1, h2, h3, h4, h5, h6, p, td, th, label {
+    color: var(--text-primary) !important;
+  }
+
+  /* Keep subtext colors muted */
+  .studio-text-sub,
+  span[style*="color: var(--studio-text-sub)"],
+  span[style*="color: '#64748b'"],
+  p[style*="color: var(--studio-text-sub)"],
+  div[style*="color: var(--studio-text-sub)"],
+  p[style*="color: '#64748b'"] {
+    color: var(--text-secondary) !important;
+  }
+}

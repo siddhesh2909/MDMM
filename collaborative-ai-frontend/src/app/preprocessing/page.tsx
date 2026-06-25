@@ -988,7 +988,7 @@ export default function PreprocessingPage() {
 
     if (loading) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f8fafc', color: '#64748b', fontSize: '0.875rem', gap: '0.75rem' }}>
+            <div className="preprocessing-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontSize: '0.875rem', gap: '0.75rem' }}>
                 <RefreshCw className="spinner" size={24} style={{ color: 'var(--primary-color)' }} />
                 <span>Loading preprocessing workspace...</span>
             </div>
@@ -1001,9 +1001,10 @@ export default function PreprocessingPage() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
+                className="preprocessing-page"
                 style={{
                     fontFamily: 'var(--font-sans)',
-                    backgroundColor: '#f8fafc',
+                    backgroundColor: 'var(--bg-secondary)',
                     padding: '3rem',
                     minHeight: '100vh',
                     display: 'flex',
@@ -1014,9 +1015,9 @@ export default function PreprocessingPage() {
                     gap: '1.25rem'
                 }}
             >
-                <Database size={48} style={{ color: '#94a3b8', opacity: 0.4 }} />
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>No Active Governed Datasets Available</h2>
-                <p style={{ color: '#64748b', fontSize: '0.85rem', maxWidth: '440px', margin: 0, lineHeight: 1.5 }}>
+                <Database size={48} style={{ color: 'var(--text-secondary)', opacity: 0.4 }} />
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>No Active Governed Datasets Available</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '440px', margin: 0, lineHeight: 1.5 }}>
                     Datasets only appear in this workspace once they are ingested and their bound Data Contract status is approved and set to **Active** in the Data Contract Studio.
                 </p>
                 <Link href="/data-contracts" style={{ textDecoration: 'none' }}>
@@ -1031,9 +1032,10 @@ export default function PreprocessingPage() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
+            className="preprocessing-page"
             style={{
                 fontFamily: 'var(--font-sans)',
-                backgroundColor: '#f8fafc',
+                backgroundColor: 'var(--bg-secondary)',
                 padding: '1.5rem',
                 minHeight: '100vh',
                 display: 'flex',
@@ -1046,10 +1048,10 @@ export default function PreprocessingPage() {
             {/* Title Block */}
             <motion.div variants={itemVariants} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, letterSpacing: '-0.03em', fontFamily: 'var(--font-heading)', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0, letterSpacing: '-0.03em', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <Sparkles size={22} color="var(--primary-color)" /> AI Data Preprocessing Hub
                     </h1>
-                    <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0.15rem 0 0 0', fontWeight: 500 }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.15rem 0 0 0', fontWeight: 500 }}>
                         Review, validate and approve AI suggestions with human-in-the-loop governance.
                     </p>
                 </div>
@@ -1059,7 +1061,7 @@ export default function PreprocessingPage() {
             <motion.div
                 variants={itemVariants}
                 style={{
-                    backgroundColor: 'white',
+                    backgroundColor: 'var(--bg-color)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '12px',
                     padding: '0.75rem 1rem',
@@ -1074,7 +1076,7 @@ export default function PreprocessingPage() {
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
 
                     {/* Dataset Dropdown */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#f8fafc', padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'var(--bg-secondary)', padding: '0.4rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                         <Database size={13} color="var(--text-secondary)" />
                         <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>Dataset:</span>
                         <select
@@ -1101,16 +1103,16 @@ export default function PreprocessingPage() {
 
                     {/* Version Tag */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600 }}>
-                        <span style={{ color: '#64748b' }}>Version:</span>
-                        <span style={{ backgroundColor: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 700 }}>v1.2.0</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Version:</span>
+                        <span style={{ backgroundColor: 'var(--bg-secondary)', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: 700 }}>v1.2.0</span>
                         <span style={{ backgroundColor: 'rgba(16,185,129,0.12)', color: '#10b981', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 700 }}>Latest</span>
                     </div>
 
                     {/* Last Scan Tag */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                         <Calendar size={13} />
                         <span>Last Scan:</span>
-                        <span style={{ fontWeight: 700, color: '#0f172a' }}>May 12, 2026 10:24 AM</span>
+                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>May 12, 2026 10:24 AM</span>
                     </div>
                 </div>
 
@@ -1169,12 +1171,12 @@ export default function PreprocessingPage() {
                 }}
             >
                 {/* 1. Data Quality */}
-                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'white' }}>
+                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'var(--bg-color)' }}>
                     <CardContent style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Data Quality Score</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: '#0f172a' }}>{qualityMetrics.score}%</h3>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Data Quality Score</span>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: 'var(--text-primary)' }}>{qualityMetrics.score}%</h3>
                             </div>
                             {/* Glowing mini sparkline graph */}
                             <div style={{ marginTop: '0.2rem' }}>
@@ -1192,18 +1194,18 @@ export default function PreprocessingPage() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.4rem', fontSize: '0.65rem', color: '#10b981', fontWeight: 700 }}>
                             <span>▲ 5.3%</span>
-                            <span style={{ color: '#64748b', fontWeight: 500 }}>vs last scan</span>
+                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>vs last scan</span>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* 2. Pending Suggestions */}
-                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'white' }}>
+                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'var(--bg-color)' }}>
                     <CardContent style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Pending Suggestions</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: '#0f172a' }}>{pendingCount}</h3>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Pending Suggestions</span>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: 'var(--text-primary)' }}>{pendingCount}</h3>
                             </div>
                             <div style={{ color: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', padding: '0.3rem', borderRadius: '8px' }}>
                                 <Clock size={16} />
@@ -1211,18 +1213,18 @@ export default function PreprocessingPage() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.4rem', fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700 }}>
                             <span>▼ 2</span>
-                            <span style={{ color: '#64748b', fontWeight: 500 }}>vs last scan</span>
+                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>vs last scan</span>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* 3. Approved */}
-                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'white' }}>
+                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'var(--bg-color)' }}>
                     <CardContent style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Approved</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: '#0f172a' }}>{12 + approvedCount}</h3>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Approved</span>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: 'var(--text-primary)' }}>{12 + approvedCount}</h3>
                             </div>
                             <div style={{ color: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '0.3rem', borderRadius: '8px' }}>
                                 <Check size={16} />
@@ -1230,36 +1232,36 @@ export default function PreprocessingPage() {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.4rem', fontSize: '0.65rem', color: '#10b981', fontWeight: 700 }}>
                             <span>▲ 4</span>
-                            <span style={{ color: '#64748b', fontWeight: 500 }}>vs last scan</span>
+                            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>vs last scan</span>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* 4. Dismissed */}
-                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'white' }}>
+                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'var(--bg-color)' }}>
                     <CardContent style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Dismissed</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: '#0f172a' }}>{dismissedCount}</h3>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Dismissed</span>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: 'var(--text-primary)' }}>{dismissedCount}</h3>
                             </div>
                             <div style={{ color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', padding: '0.3rem', borderRadius: '8px' }}>
                                 <X size={16} />
                             </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.4rem', fontSize: '0.65rem', color: '#64748b', fontWeight: 500 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.4rem', fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                             <span>- No dismissed</span>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* 5. Records Impacted */}
-                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'white' }}>
+                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'var(--bg-color)' }}>
                     <CardContent style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Records Impacted</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: '#0f172a' }}>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Records Impacted</span>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: 'var(--text-primary)' }}>
                                     {dsId === 'products-50' ? '2,341' : (qualityMetrics.missingCount + qualityMetrics.duplicateCount + qualityMetrics.anomalyCount).toLocaleString()}
                                 </h3>
                             </div>
@@ -1267,19 +1269,19 @@ export default function PreprocessingPage() {
                                 <Database size={16} />
                             </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.4rem', fontSize: '0.65rem', color: '#64748b', fontWeight: 500 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.4rem', fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                             <span>{dsId === 'products-50' ? '14%' : Math.round(((qualityMetrics.missingCount + qualityMetrics.duplicateCount + qualityMetrics.anomalyCount) / (data.length || 1)) * 100) + '%'} of total records</span>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* 6. AI Confidence */}
-                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'white' }}>
+                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 4px rgba(0,0,0,0.015)', background: 'var(--bg-color)' }}>
                     <CardContent style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
-                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>AI Confidence</span>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: '#0f172a' }}>96%</h3>
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>AI Confidence</span>
+                                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.15rem 0 0 0', color: 'var(--text-primary)' }}>96%</h3>
                             </div>
                             <div style={{ color: '#a855f7', backgroundColor: 'rgba(168,85,247,0.1)', padding: '0.3rem', borderRadius: '8px' }}>
                                 <Sparkles size={16} />
@@ -1305,7 +1307,7 @@ export default function PreprocessingPage() {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            backgroundColor: 'white',
+                            backgroundColor: 'var(--bg-color)',
                             padding: '0.5rem 1rem',
                             borderRadius: '12px',
                             border: '1px solid var(--border-color)',
@@ -1325,7 +1327,7 @@ export default function PreprocessingPage() {
                                     border: 'none',
                                     cursor: 'pointer',
                                     backgroundColor: activeTab === 'suggestions' ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
-                                    color: activeTab === 'suggestions' ? 'var(--primary-color)' : '#64748b',
+                                    color: activeTab === 'suggestions' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.4rem',
@@ -1345,7 +1347,7 @@ export default function PreprocessingPage() {
                                     border: 'none',
                                     cursor: 'pointer',
                                     backgroundColor: activeTab === 'spreadsheet' ? 'rgba(79, 70, 229, 0.08)' : 'transparent',
-                                    color: activeTab === 'spreadsheet' ? 'var(--primary-color)' : '#64748b',
+                                    color: activeTab === 'spreadsheet' ? 'var(--primary-color)' : 'var(--text-secondary)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '0.4rem',
@@ -1359,14 +1361,14 @@ export default function PreprocessingPage() {
 
                         {/* Top Filters & Sorting Toolbar */}
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <button style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}>
+                            <button style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, backgroundColor: 'var(--bg-color)', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}>
                                 <Filter size={12} /> Filters (0) <ChevronDown size={12} />
                             </button>
-                            <button style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}>
+                            <button style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, backgroundColor: 'var(--bg-color)', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}>
                                 <ArrowUpDown size={12} /> Sort <ChevronDown size={12} />
                             </button>
                             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                <Search size={12} color="#64748b" style={{ position: 'absolute', left: '0.6rem' }} />
+                                <Search size={12} color="var(--text-secondary)" style={{ position: 'absolute', left: '0.6rem' }} />
                                 <input
                                     placeholder="Search suggestions..."
                                     style={{
@@ -1376,7 +1378,8 @@ export default function PreprocessingPage() {
                                         border: '1px solid var(--border-color)',
                                         width: '180px',
                                         outline: 'none',
-                                        backgroundColor: 'white'
+                                        backgroundColor: 'var(--bg-color)',
+                                        color: 'var(--text-primary)'
                                     }}
                                 />
                             </div>
@@ -1389,9 +1392,9 @@ export default function PreprocessingPage() {
 
                             {/* Issue Categories & Severity Sidebar Card */}
                             <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden' }}>
-                                    <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: '#fafbfe' }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Issue Categories</span>
+                                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)', overflow: 'hidden' }}>
+                                    <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>Issue Categories</span>
                                     </CardHeader>
                                     <CardContent style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                                         {issueCategories.map((type) => {
@@ -1413,7 +1416,7 @@ export default function PreprocessingPage() {
                                                         border: 'none',
                                                         transition: 'all 0.15s ease',
                                                         backgroundColor: isSelected ? 'rgba(79,70,229,0.08)' : 'transparent',
-                                                        color: isSelected ? 'var(--primary-color)' : '#475569'
+                                                        color: isSelected ? 'var(--primary-color)' : 'var(--text-secondary)'
                                                     }}
                                                 >
                                                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1437,9 +1440,9 @@ export default function PreprocessingPage() {
                                 </Card>
 
                                 {/* Severity Card */}
-                                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden' }}>
-                                    <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: '#fafbfe' }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Severity</span>
+                                <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)', overflow: 'hidden' }}>
+                                    <CardHeader style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>Severity</span>
                                     </CardHeader>
                                     <CardContent style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                         {/* High */}
@@ -1507,7 +1510,7 @@ export default function PreprocessingPage() {
                                             justifyContent: 'center',
                                             textAlign: 'center',
                                             padding: '4rem 2rem',
-                                            backgroundColor: 'white',
+                                            backgroundColor: 'var(--bg-color)',
                                             borderRadius: '16px',
                                             border: '1px dashed #cbd5e1',
                                             boxShadow: '0 4px 12px rgba(0,0,0,0.01)'
@@ -1529,10 +1532,10 @@ export default function PreprocessingPage() {
                                             <CheckCircle size={32} />
                                         </div>
 
-                                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+                                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
                                             Dataset is 100% Clean!
                                         </h3>
-                                        <p style={{ fontSize: '0.8rem', color: '#64748b', maxWidth: '320px', lineHeight: 1.5, margin: '0 0 1.5rem 0', fontWeight: 500 }}>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', maxWidth: '320px', lineHeight: 1.5, margin: '0 0 1.5rem 0', fontWeight: 500 }}>
                                             Excellent! No pending warnings, missing values, or formatting anomalies are present in this view.
                                         </p>
 
@@ -1606,8 +1609,8 @@ export default function PreprocessingPage() {
                                     const isProcessing = processingTask === task.id;
 
                                     // Colors based on severity
-                                    const severityColor = task.severity === 'High' ? '#ef4444' : task.severity === 'Medium' ? '#f59e0b' : '#3b82f6';
-                                    const severityBg = task.severity === 'High' ? '#fee2e2' : task.severity === 'Medium' ? '#fef3c7' : '#dbeafe';
+                                    const severityColor = task.severity === 'High' ? 'var(--danger-color)' : task.severity === 'Medium' ? 'var(--warning-color)' : 'var(--primary-color)';
+                                    const severityBg = task.severity === 'High' ? 'var(--danger-bg)' : task.severity === 'Medium' ? 'var(--warning-bg)' : 'var(--primary-bg)';
 
                                     return (
                                         <motion.div
@@ -1622,7 +1625,7 @@ export default function PreprocessingPage() {
                                                 borderRadius: '12px',
                                                 border: isExpanded ? `1px solid ${severityColor}50` : '1px solid var(--border-color)',
                                                 boxShadow: isExpanded ? '0 4px 12px rgba(0,0,0,0.03)' : '0 1px 2px rgba(0,0,0,0.015)',
-                                                background: 'white',
+                                                background: 'var(--bg-color)',
                                                 overflow: 'hidden'
                                             }}>
                                                 <CardContent style={{ padding: '1.25rem' }}>
@@ -1643,15 +1646,15 @@ export default function PreprocessingPage() {
                                                             </div>
                                                             <div>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                                                                    <h4 style={{ fontSize: '0.875rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
                                                                         {task.type === 'missing_value_detection' ? 'Missing Value Imputation' : task.type === 'duplicate_removal' ? 'Duplicate Detection' : 'Anomaly Correction'}
                                                                     </h4>
                                                                     <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', backgroundColor: severityBg, color: severityColor }}>
                                                                         {task.severity}
                                                                     </span>
                                                                 </div>
-                                                                <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '0.15rem 0 0 0', fontWeight: 500 }}>
-                                                                    {task.columnAffected && <span>Column: <strong style={{ color: '#0f172a' }}>{task.columnAffected}</strong> • </span>}
+                                                                <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0', fontWeight: 500 }}>
+                                                                    {task.columnAffected && <span>Column: <strong style={{ color: 'var(--text-primary)' }}>{task.columnAffected}</strong> • </span>}
                                                                     <span>{task.affectedRows.toLocaleString()} records impacted • </span>
                                                                     <span>Confidence: <strong style={{ color: '#10b981' }}>{task.confidence}%</strong></span>
                                                                 </p>
@@ -1673,7 +1676,7 @@ export default function PreprocessingPage() {
                                                                             padding: '0.3rem 0.6rem',
                                                                             borderRadius: '6px',
                                                                             border: '1px solid var(--border-color)',
-                                                                            backgroundColor: 'white',
+                                                                            backgroundColor: 'var(--bg-color)',
                                                                             color: '#ef4444',
                                                                             cursor: 'pointer'
                                                                         }}
@@ -1721,7 +1724,7 @@ export default function PreprocessingPage() {
                                                                 style={{ overflow: 'hidden' }}
                                                             >
                                                                 <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '0.75rem', paddingTop: '0.75rem' }}>
-                                                                    <p style={{ fontSize: '0.76rem', color: '#475569', fontWeight: 500, margin: '0 0 0.75rem 0' }}>
+                                                                    <p style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', fontWeight: 500, margin: '0 0 0.75rem 0' }}>
                                                                         {task.suggestedAction}
                                                                     </p>
 
@@ -1731,17 +1734,17 @@ export default function PreprocessingPage() {
                                                                         {/* Before */}
                                                                         <div>
                                                                             <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#ef4444', display: 'block', marginBottom: '0.25rem' }}>Before (Sample)</span>
-                                                                            <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.4rem', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                                            <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.4rem', backgroundColor: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                                                                 {task.type === 'missing_value_detection' && (
                                                                                     <>
-                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Rakesh Kumar</span> <span style={{ border: '1px solid #fee2e2', color: '#ef4444', backgroundColor: '#fff5f5', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>null</span></div>
-                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Neha Joshi</span> <span style={{ border: '1px solid #fee2e2', color: '#ef4444', backgroundColor: '#fff5f5', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>null</span></div>
-                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Vikas More</span> <span style={{ border: '1px solid #fee2e2', color: '#ef4444', backgroundColor: '#fff5f5', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>null</span></div>
+                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Rakesh Kumar</span> <span style={{ border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>null</span></div>
+                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Neha Joshi</span> <span style={{ border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>null</span></div>
+                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Vikas More</span> <span style={{ border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>null</span></div>
                                                                                     </>
                                                                                 )}
                                                                                 {task.type === 'anomaly_detection' && (
                                                                                     <>
-                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Neha Joshi</span> <span style={{ border: '1px solid #fee2e2', color: '#ef4444', backgroundColor: '#fff5f5', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>nehaj@outlook</span></div>
+                                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem' }}><span>Neha Joshi</span> <span style={{ border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', padding: '0 0.25rem', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 700 }}>nehaj@outlook</span></div>
                                                                                     </>
                                                                                 )}
                                                                                 {task.type === 'duplicate_removal' && (
@@ -1754,12 +1757,12 @@ export default function PreprocessingPage() {
                                                                         </div>
 
                                                                         {/* Center Arrow */}
-                                                                        <div style={{ color: '#64748b' }}>➔</div>
+                                                                        <div style={{ color: 'var(--text-secondary)' }}>➔</div>
 
                                                                         {/* After */}
                                                                         <div>
                                                                             <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#10b981', display: 'block', marginBottom: '0.25rem' }}>AI Imputed (Sample)</span>
-                                                                            <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.4rem', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                                            <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.4rem', backgroundColor: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                                                                 {task.type === 'missing_value_detection' && (
                                                                                     <>
                                                                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', fontWeight: 700 }}><span>Rakesh Kumar</span> <span style={{ color: '#10b981' }}>2300</span></div>
@@ -1781,11 +1784,11 @@ export default function PreprocessingPage() {
                                                                         </div>
 
                                                                         {/* Impact Summary Box */}
-                                                                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.4rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', backgroundColor: '#fafbfe' }}>
-                                                                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#0f172a', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.15rem', display: 'block' }}>Impact Summary</span>
-                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', color: '#64748b' }}><span>Impacted</span> <span style={{ fontWeight: 700, color: '#0f172a' }}>{task.affectedRows.toLocaleString()}</span></div>
-                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', color: '#64748b' }}><span>Confidence</span> <span style={{ fontWeight: 700, color: '#10b981' }}>{task.confidence}%</span></div>
-                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', color: '#64748b' }}><span>Severity</span> <span style={{ fontWeight: 700, color: severityColor }}>{task.severity}</span></div>
+                                                                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.4rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', backgroundColor: 'var(--bg-secondary)' }}>
+                                                                            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.15rem', display: 'block' }}>Impact Summary</span>
+                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', color: 'var(--text-secondary)' }}><span>Impacted</span> <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{task.affectedRows.toLocaleString()}</span></div>
+                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', color: 'var(--text-secondary)' }}><span>Confidence</span> <span style={{ fontWeight: 700, color: '#10b981' }}>{task.confidence}%</span></div>
+                                                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', color: 'var(--text-secondary)' }}><span>Severity</span> <span style={{ fontWeight: 700, color: severityColor }}>{task.severity}</span></div>
                                                                             <button style={{ border: 'none', background: 'transparent', color: 'var(--primary-color)', fontSize: '0.65rem', fontWeight: 700, textAlign: 'left', cursor: 'pointer', padding: 0, marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.15rem' }}><Eye size={10} /> View Rule</button>
                                                                         </div>
 
@@ -1806,7 +1809,7 @@ export default function PreprocessingPage() {
                         <motion.div variants={itemVariants} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
                             <Card style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '480px', boxShadow: '0 2px 6px rgba(0,0,0,0.015)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
                                 <CardHeader
-                                    style={{ padding: '0.75rem 1.25rem', backgroundColor: '#fafbfe', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                    style={{ padding: '0.75rem 1.25rem', backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                     actions={
                                         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                                             <button
@@ -1818,7 +1821,7 @@ export default function PreprocessingPage() {
                                                     fontWeight: 700,
                                                     borderRadius: '6px',
                                                     border: '1px solid var(--border-color)',
-                                                    backgroundColor: 'white',
+                                                    backgroundColor: 'var(--bg-color)',
                                                     cursor: historyIndex <= 0 ? 'not-allowed' : 'pointer',
                                                     opacity: historyIndex <= 0 ? 0.5 : 1,
                                                     display: 'flex',
@@ -1837,7 +1840,7 @@ export default function PreprocessingPage() {
                                                     fontWeight: 700,
                                                     borderRadius: '6px',
                                                     border: '1px solid var(--border-color)',
-                                                    backgroundColor: 'white',
+                                                    backgroundColor: 'var(--bg-color)',
                                                     cursor: historyIndex >= history.length - 1 ? 'not-allowed' : 'pointer',
                                                     opacity: historyIndex >= history.length - 1 ? 0.5 : 1,
                                                     display: 'flex',
@@ -1847,8 +1850,8 @@ export default function PreprocessingPage() {
                                             >
                                                 <Redo size={11} /> Redo
                                             </button>
-                                            <button onClick={manualAddRow} style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><PlusCircle size={11} color="var(--primary-color)" /> Insert Row</button>
-                                            <button onClick={manualDelete} disabled={!selectedRows.size} style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'white', cursor: !selectedRows.size ? 'not-allowed' : 'pointer', opacity: !selectedRows.size ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Trash2 size={11} color="#ef4444" /> Delete Row</button>
+                                            <button onClick={manualAddRow} style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><PlusCircle size={11} color="var(--primary-color)" /> Insert Row</button>
+                                            <button onClick={manualDelete} disabled={!selectedRows.size} style={{ padding: '0.35rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-color)', cursor: !selectedRows.size ? 'not-allowed' : 'pointer', opacity: !selectedRows.size ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><Trash2 size={11} color="#ef4444" /> Delete Row</button>
                                             <button
                                                 onClick={() => setIsFindReplaceOpen(true)}
                                                 style={{
@@ -1857,7 +1860,7 @@ export default function PreprocessingPage() {
                                                     fontWeight: 700,
                                                     borderRadius: '6px',
                                                     border: '1px solid var(--border-color)',
-                                                    backgroundColor: 'white',
+                                                    backgroundColor: 'var(--bg-color)',
                                                     cursor: 'pointer',
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -1885,22 +1888,22 @@ export default function PreprocessingPage() {
                                             >
                                                 <Check size={11} /> Validate
                                             </button>
-                                            <button onClick={() => setShowFilters(!showFilters)} style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: showFilters ? 'var(--primary-light)' : 'white', cursor: 'pointer' }}><Filter size={11} /></button>
+                                            <button onClick={() => setShowFilters(!showFilters)} style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: showFilters ? 'var(--primary-light)' : 'var(--bg-color)', cursor: 'pointer' }}><Filter size={11} /></button>
                                         </div>
                                     }
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                         <Database size={15} color="var(--primary-color)" />
-                                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>Spreadsheet Editor</span>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>Spreadsheet Editor</span>
                                         <span style={{ fontSize: '0.68rem', fontWeight: 700, backgroundColor: 'rgba(79,70,229,0.08)', color: 'var(--primary-color)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                                             {data.length} rows x {columns.length} columns
                                         </span>
                                     </div>
                                 </CardHeader>
-                                <CardContent style={{ padding: 0, overflow: 'auto', flex: 1, backgroundColor: 'white' }}>
+                                <CardContent style={{ padding: 0, overflow: 'auto', flex: 1, backgroundColor: 'var(--bg-color)' }}>
                                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem' }}>
                                         <thead>
-                                            <tr style={{ position: 'sticky', top: 0, backgroundColor: '#f8fafc', zIndex: 3, borderBottom: '2px solid var(--border-color)' }}>
+                                            <tr style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', zIndex: 3, borderBottom: '2px solid var(--border-color)' }}>
                                                 <th style={{ padding: '0.625rem', width: '38px', textAlign: 'center' }}>
                                                     <input
                                                         type="checkbox"
@@ -2079,19 +2082,19 @@ export default function PreprocessingPage() {
                             borderRadius: '12px',
                             overflow: 'hidden',
                             border: '1px solid var(--border-color)',
-                            background: 'white',
+                            backgroundColor: 'var(--bg-color)',
                             flex: 1,
                             minHeight: '480px'
                         }}>
                             <CardHeader
-                                style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
+                                style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)' }}
                                 actions={
-                                    <button onClick={() => setChatMsgs([{ role: 'ai', text: '👋 Hi! I can help you with data preprocessing.' }])} style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', cursor: 'pointer', backgroundColor: 'white' }}>
+                                    <button onClick={() => setChatMsgs([{ role: 'ai', text: '👋 Hi! I can help you with data preprocessing.' }])} style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', cursor: 'pointer', backgroundColor: 'var(--bg-color)' }}>
                                         New Chat
                                     </button>
                                 }
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 800, color: '#0f172a' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                                     <Sparkles size={13} color="var(--primary-color)" /> AI Copilot
                                 </div>
                             </CardHeader>
@@ -2109,6 +2112,8 @@ export default function PreprocessingPage() {
                                                 whiteSpace: 'pre-wrap',
                                                 backgroundColor: m.role === 'user' ? 'var(--primary-color)' : '#f1f5f9',
                                                 color: m.role === 'user' ? 'white' : '#1e293b',
+                                                backgroundColor: m.role === 'user' ? 'var(--primary-color)' : 'var(--bg-secondary)',
+                                                color: m.role === 'user' ? 'white' : 'var(--text-primary)',
                                                 boxShadow: '0 1px 2px rgba(0,0,0,0.01)',
                                                 border: m.role === 'user' ? 'none' : '1px solid var(--border-color)'
                                             }}>
@@ -2117,7 +2122,7 @@ export default function PreprocessingPage() {
                                                         ? <strong key={j} style={{ fontWeight: 700 }}>{part.slice(2, -2)}</strong>
                                                         : part.split(/(`[^`]+`)/g).map((sub, k) =>
                                                             sub.startsWith('`') && sub.endsWith('`')
-                                                                ? <code key={k} style={{ backgroundColor: m.role === 'user' ? 'rgba(255,255,255,0.2)' : 'white', padding: '0px 3px', borderRadius: '4px', fontSize: '0.7rem', border: '1px solid var(--border-color)' }}>{sub.slice(1, -1)}</code>
+                                                                ? <code key={k} style={{ backgroundColor: m.role === 'user' ? 'rgba(255,255,255,0.2)' : 'var(--bg-secondary)', padding: '0px 3px', borderRadius: '4px', fontSize: '0.7rem', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{sub.slice(1, -1)}</code>
                                                                 : sub
                                                         )
                                                 )}
@@ -2128,23 +2133,23 @@ export default function PreprocessingPage() {
                                     {/* Quick actions tags triggers inside chatbot greet */}
                                     {chatMsgs.length === 1 && (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '0.25rem', width: '90%' }}>
-                                            <button onClick={() => handleActionClick({ label: 'Show missing values', id: 'nulls' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: '#334155', cursor: 'pointer', textAlign: 'left', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
+                                            <button onClick={() => handleActionClick({ label: 'Show missing values', id: 'nulls' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', backgroundColor: 'var(--bg-color)', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
                                                 <Eye size={12} color="var(--primary-color)" /> Show missing values
                                             </button>
-                                            <button onClick={() => handleActionClick({ label: 'Suggest data quality rules', id: 'insights' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: '#334155', cursor: 'pointer', textAlign: 'left', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
+                                            <button onClick={() => handleActionClick({ label: 'Suggest data quality rules', id: 'insights' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', backgroundColor: 'var(--bg-color)', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
                                                 <Sparkles size={12} color="#f59e0b" /> Suggest data quality rules
                                             </button>
-                                            <button onClick={() => handleActionClick({ label: 'Explain duplicates', id: 'dupes' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: '#334155', cursor: 'pointer', textAlign: 'left', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
+                                            <button onClick={() => handleActionClick({ label: 'Explain duplicates', id: 'dupes' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', backgroundColor: 'var(--bg-color)', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
                                                 <Copy size={12} color="#3b82f6" /> Explain duplicates
                                             </button>
-                                            <button onClick={() => handleActionClick({ label: 'Generate report', id: 'insights' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: '#334155', cursor: 'pointer', textAlign: 'left', backgroundColor: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
+                                            <button onClick={() => handleActionClick({ label: 'Generate report', id: 'insights' })} style={{ padding: '0.4rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer', textAlign: 'left', backgroundColor: 'var(--bg-color)', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'all 0.15s' }}>
                                                 <FileText size={12} color="#10b981" /> Generate report
                                             </button>
                                         </div>
                                     )}
 
                                     {chatBusy && (
-                                        <div style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.75rem', backgroundColor: '#f1f5f9', borderRadius: '10px', fontSize: '0.7rem', color: '#64748b', border: '1px solid var(--border-color)' }}>
+                                        <div style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '10px', fontSize: '0.7rem', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}>
                                             <span className="spinner" style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid var(--primary-color)', borderTopColor: 'transparent', borderRadius: '50%' }} />
                                             Thinking...
                                         </div>
@@ -2155,7 +2160,7 @@ export default function PreprocessingPage() {
                                 {/* ChatGPT Prompter input capsule */}
                                 <form
                                     onSubmit={e => { e.preventDefault(); handleChatSubmit(); }}
-                                    style={{ display: 'flex', gap: '0.4rem', padding: '0.5rem', borderTop: '1px solid var(--border-color)', flexShrink: 0, backgroundColor: '#f8fafc' }}
+                                    style={{ display: 'flex', gap: '0.4rem', padding: '0.5rem', borderTop: '1px solid var(--border-color)', flexShrink: 0, backgroundColor: 'var(--bg-secondary)' }}
                                 >
                                     <input
                                         className="input-field"
@@ -2165,7 +2170,8 @@ export default function PreprocessingPage() {
                                             padding: '0.4rem 0.6rem',
                                             borderRadius: '8px',
                                             border: '1px solid var(--border-color)',
-                                            backgroundColor: 'white'
+                                            backgroundColor: 'var(--bg-color)',
+                                            color: 'var(--text-primary)'
                                         }}
                                         placeholder="Ask anything or request cleaning..."
                                         value={chatInput}
@@ -2197,9 +2203,9 @@ export default function PreprocessingPage() {
 
                     {/* 2. Awesome Circular Donut SVG Quality Chart */}
                     {activeTab !== 'spreadsheet' && (
-                        <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
+                        <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
                             <CardHeader
-                                style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
+                                style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)' }}
                                 actions={
                                     <button
                                         onClick={() => setIsQualityModalOpen(true)}
@@ -2209,13 +2215,13 @@ export default function PreprocessingPage() {
                                     </button>
                                 }
                             >
-                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Data Quality Overview</span>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>Data Quality Overview</span>
                             </CardHeader>
                             <CardContent style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                 {/* Circular Donut chart SVG representation */}
                                 <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <svg width="90" height="90" viewBox="0 0 100 100">
-                                        <circle cx="50" cy="50" r="41" fill="none" stroke="#f1f5f9" strokeWidth="8" />
+                                        <circle cx="50" cy="50" r="41" fill="none" stroke="var(--border-color)" strokeWidth="8" />
                                         {/* Green valid circle segment */}
                                         <circle cx="50" cy="50" r="41" fill="none" stroke="#10b981" strokeWidth="8" strokeDasharray={`${validDash} 257.6`} strokeDashoffset={validOffset} strokeLinecap="round" />
                                         {/* Yellow missing segment */}
@@ -2226,36 +2232,36 @@ export default function PreprocessingPage() {
                                         <circle cx="50" cy="50" r="41" fill="none" stroke="#ef4444" strokeWidth="8" strokeDasharray={`${anomalyDash} 257.6`} strokeDashoffset={anomalyOffset} />
                                     </svg>
                                     <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{qualityMetrics.score}%</span>
-                                        <span style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', marginTop: '0.05rem' }}>Score</span>
+                                        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{qualityMetrics.score}%</span>
+                                        <span style={{ fontSize: '0.55rem', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', marginTop: '0.05rem' }}>Score</span>
                                     </div>
                                 </div>
 
                                 {/* Legend details */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10b981' }} /> Valid
                                         </span>
-                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.validPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.validCount})</span></span>
+                                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{qualityMetrics.validPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.validCount})</span></span>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} /> Missing
                                         </span>
-                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.missingPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.missingCount})</span></span>
+                                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{qualityMetrics.missingPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.missingCount})</span></span>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#4f46e5' }} /> Duplicate
                                         </span>
-                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.duplicatePct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.duplicateCount})</span></span>
+                                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{qualityMetrics.duplicatePct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.duplicateCount})</span></span>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#475569', fontWeight: 500 }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> Anomaly
                                         </span>
-                                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{qualityMetrics.anomalyPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.anomalyCount})</span></span>
+                                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{qualityMetrics.anomalyPct}% <span style={{ color: '#94a3b8', fontWeight: 500 }}>({qualityMetrics.anomalyCount})</span></span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -2264,9 +2270,9 @@ export default function PreprocessingPage() {
 
                     {/* 3. Recent Activity Log timeline */}
                     {activeTab !== 'spreadsheet' && (
-                        <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'white', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
+                        <Card style={{ borderRadius: '12px', border: '1px solid var(--border-color)', background: 'var(--bg-color)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.015)' }}>
                             <CardHeader
-                                style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fafbfe' }}
+                                style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-secondary)' }}
                                 actions={
                                     <button
                                         onClick={() => setIsActivityModalOpen(true)}
@@ -2276,7 +2282,7 @@ export default function PreprocessingPage() {
                                     </button>
                                 }
                             >
-                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>Recent Activity</span>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>Recent Activity</span>
                             </CardHeader>
                             <CardContent style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', maxHeight: '240px', overflowY: 'auto' }}>
                                 {/* Dynamic Timeline Activity List */}
@@ -2573,14 +2579,14 @@ export default function PreprocessingPage() {
                     </div>
                 }
             >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: '#1e293b' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'var(--text-primary)' }}>
                     {/* Find Input */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Find text</label>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Find text</label>
                         <input
                             className="input-field"
                             placeholder="Text to search for..."
-                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'white' }}
+                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-color)', color: 'var(--text-primary)' }}
                             value={findText}
                             onChange={e => setFindText(e.target.value)}
                         />
@@ -2588,11 +2594,11 @@ export default function PreprocessingPage() {
 
                     {/* Replace Input */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Replace with</label>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Replace with</label>
                         <input
                             className="input-field"
                             placeholder="Text to replace with..."
-                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'white' }}
+                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-color)', color: 'var(--text-primary)' }}
                             value={replaceText}
                             onChange={e => setReplaceText(e.target.value)}
                         />
@@ -2600,9 +2606,9 @@ export default function PreprocessingPage() {
 
                     {/* Column Select */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Search Column</label>
+                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Search Column</label>
                         <select
-                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'white', cursor: 'pointer', outline: 'none' }}
+                            style={{ fontSize: '0.76rem', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', backgroundColor: 'var(--bg-color)', color: 'var(--text-primary)', cursor: 'pointer', outline: 'none' }}
                             value={findCol}
                             onChange={e => setFindCol(e.target.value)}
                         >

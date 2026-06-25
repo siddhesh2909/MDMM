@@ -168,10 +168,10 @@ export const updateDataset = async (req: AuthenticatedRequest, res: express.Resp
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
         const datasetId = String(req.params.id);
-        const { rawData, name } = req.body;
+        const { rawData, name, dashboardLayout } = req.body;
 
-        if (!rawData && !name) {
-            return res.status(400).json({ error: 'rawData or name is required' });
+        if (!rawData && !name && dashboardLayout === undefined) {
+            return res.status(400).json({ error: 'rawData, name, or dashboardLayout is required' });
         }
 
         const existing = await prisma.dataset.findFirst({
@@ -192,6 +192,9 @@ export const updateDataset = async (req: AuthenticatedRequest, res: express.Resp
         }
         if (name !== undefined) {
             updateData.name = String(name).trim();
+        }
+        if (dashboardLayout !== undefined) {
+            updateData.dashboardLayout = dashboardLayout;
         }
 
         const updated = await prisma.dataset.update({
@@ -362,7 +365,8 @@ export const getDatasetDetail = async (req: AuthenticatedRequest, res: express.R
                     owner: ownerName,
                     created_at: dataset.createdAt,
                     boundContractId: dataset.boundContractId,
-                    contractStatus
+                    contractStatus,
+                    dashboardLayout: dataset.dashboardLayout || null
                 },
                 schema: schemaFields.map(f => {
                     const nullCount = parsedData.filter(r => r[f.name] === null || r[f.name] === undefined || String(r[f.name]).trim() === '').length;

@@ -45,6 +45,7 @@ model User {
   notifications  Notification[]
   conversations  Conversation[]
   sentMessages   Message[]
+  activeDatasetId String?
 }
 
 model WorkflowTask {
@@ -81,6 +82,7 @@ model Dataset {
   createdBy      String       @default("")
   visibility     String       @default("private")
   sharedWith     String       @default("[]")
+  dashboardLayout String?     
 }
 
 model DataContract {
@@ -292,5 +294,37 @@ model ReportSchedule {
   updatedAt      DateTime @updatedAt
 }
 
+model DashboardVersion {
+  id              String   @id @default(uuid())
+  datasetId       String
+  version         Int
+  dashboardLayout String   // JSON string configuration
+  changeLog       String   @default("")
+  changedBy       String
+  createdAt       DateTime @default(now())
+}
 
+model AlertRule {
+  id             String   @id @default(uuid())
+  datasetId      String
+  metric         String
+  operator       String   // "below" | "above"
+  threshold      Float
+  emailAlert     Boolean  @default(false)
+  webhookUrl     String?
+  status         String   @default("Active") // "Active" | "Inactive"
+  organizationId String
+  createdAt      DateTime @default(now())
+}
 
+model CollaborationComment {
+  id             String   @id @default(uuid())
+  datasetId      String
+  widgetId       String?  // Associated widget ID (optional)
+  userId         String
+  userName       String
+  content        String
+  isResolved     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  organizationId String
+}

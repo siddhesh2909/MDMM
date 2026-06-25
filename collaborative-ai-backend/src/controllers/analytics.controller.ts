@@ -152,6 +152,75 @@ export const getDatasetAnalytics = async (req: AuthenticatedRequest, res: expres
         const totalNulls = Object.values(stats).reduce((s: number, c: any) => s + (c.nullCount || 0), 0);
         const qualityScore = Math.round(((totalCells - totalNulls) / totalCells) * 100);
 
+        // ── Schema Category Detection & Explanation ──
+        const keys = Object.keys(stats).map(k => k.toLowerCase());
+        let salesScore = 0;
+        let financeScore = 0;
+        let hrScore = 0;
+        let healthcareScore = 0;
+        let marketingScore = 0;
+        let inventoryScore = 0;
+
+        keys.forEach(k => {
+            if (k.includes('sales') || k.includes('revenue') || k.includes('total_spent') || k.includes('totalspent') || k.includes('price') || k.includes('amount') || k.includes('orders') || k.includes('transaction') || k.includes('order') || k.includes('sold') || k.includes('customer') || k.includes('product') || k.includes('quantity')) salesScore += 2;
+            if (k.includes('expense') || k.includes('cash') || k.includes('budget') || k.includes('actual') || k.includes('cost') || k.includes('salary') || k.includes('bill') || k.includes('spend') || k.includes('profit')) financeScore += 2;
+            if (k.includes('employee') || k.includes('attrition') || k.includes('department') || k.includes('salary') || k.includes('experience') || k.includes('hire') || k.includes('joining') || k.includes('staff') || k.includes('gender') || k.includes('tenure') || k.includes('age') || k.includes('role')) hrScore += 2;
+            if (k.includes('patient') || k.includes('disease') || k.includes('admission') || k.includes('age') || k.includes('treatment') || k.includes('doctor') || k.includes('hospital') || k.includes('health') || k.includes('diagnosis')) healthcareScore += 2;
+            if (k.includes('campaign') || k.includes('click') || k.includes('impression') || k.includes('conversion') || k.includes('marketing') || k.includes('lead') || k.includes('channel') || k.includes('ctr')) marketingScore += 2;
+            if (k.includes('stock') || k.includes('inventory') || k.includes('warehouse') || k.includes('qty') || k.includes('quantity') || k.includes('supplier') || k.includes('product') || k.includes('reorder')) inventoryScore += 2;
+        });
+
+        const dsName = (dataset.name || '').toLowerCase();
+        if (dsName.includes('sales') || dsName.includes('transaction') || dsName.includes('retail') || dsName.includes('store') || dsName.includes('product')) salesScore += 5;
+        if (dsName.includes('finance') || dsName.includes('budget') || dsName.includes('expense') || dsName.includes('payment')) financeScore += 5;
+        if (dsName.includes('employee') || dsName.includes('hr') || dsName.includes('staff') || dsName.includes('attrition')) hrScore += 5;
+        if (dsName.includes('patient') || dsName.includes('health') || dsName.includes('medical') || dsName.includes('hospital') || dsName.includes('covid')) healthcareScore += 5;
+        if (dsName.includes('marketing') || dsName.includes('campaign') || dsName.includes('ad_') || dsName.includes('ads')) marketingScore += 5;
+        if (dsName.includes('inventory') || dsName.includes('stock') || dsName.includes('warehouse')) inventoryScore += 5;
+
+        const scores = [
+            { cat: 'Sales', score: salesScore },
+            { cat: 'Finance', score: financeScore },
+            { cat: 'HR', score: hrScore },
+            { cat: 'Healthcare', score: healthcareScore },
+            { cat: 'Marketing', score: marketingScore },
+            { cat: 'Inventory', score: inventoryScore }
+        ];
+
+        scores.sort((a, b) => b.score - a.score);
+        const top = scores[0];
+        let category = 'Generic Business Dataset';
+        let confidence = 100;
+        if (top.score > 2) {
+            category = top.cat;
+            confidence = Math.min(98, 50 + top.score * 5);
+        }
+
+        const numCols = Object.keys(stats).filter(c => stats[c]?.type === 'numeric');
+        const catCols = Object.keys(stats).filter(c => stats[c]?.type === 'categorical');
+        let explanation = '';
+        switch (category) {
+            case 'Sales':
+                explanation = `Based on your dataset schema, we detected transaction-oriented fields such as ${numCols.slice(0, 3).join(', ')} and categorical columns like ${catCols.slice(0, 2).join(', ')}. We have automatically generated a **Sales Performance & Revenue Analytics Dashboard** featuring total value trends, regional category shares, and product contribution analysis.`;
+                break;
+            case 'HR':
+                explanation = `We identified human resource dimensions (e.g. employee count, department fields, age, or salary columns). We have loaded an **HR & Employee Distribution Dashboard** mapping staff headcounts, experience levels, and department splits.`;
+                break;
+            case 'Finance':
+                explanation = `We detected financial ledgers or cashflow attributes. An **Executive Finance Dashboard** has been customized to display budget versus actual summaries, category cost distributions, and monthly trends.`;
+                break;
+            case 'Healthcare':
+                explanation = `We detected clinical details (e.g. admissions, patient columns, age, or diagnoses). We have dynamically compiled a **Healthcare Operations Dashboard** displaying patient counts, diagnosis breakdowns, and demographic distributions.`;
+                break;
+            case 'Marketing':
+                explanation = `We detected campaign metrics like spend, clicks, or conversions. We have generated a **Marketing Campaign Performance Dashboard** tracking marketing metrics and channel efficiency.`;
+                break;
+            case 'Inventory':
+                explanation = `We detected warehouse, stock level, or supplier metrics. An **Inventory & Stock Operations Dashboard** has been generated to show product quantities, reorder points, and warehouse distributions.`;
+            default:
+                explanation = `Your dataset appears to contain general business attributes with numerical metrics (${numCols.slice(0, 2).join(', ') || 'none'}) and dimensions (${catCols.slice(0, 2).join(', ') || 'none'}). A **Generic Business Analytics Dashboard** has been generated featuring KPI aggregators, metric distributions, and a record database preview.`;
+        }
+
         res.status(200).json({
             name: dataset.name,
             rows,
@@ -159,6 +228,9 @@ export const getDatasetAnalytics = async (req: AuthenticatedRequest, res: expres
             stats,
             distributions,
             qualityScore,
+            detectedCategory: category,
+            detectedConfidence: confidence,
+            aiExplanation: explanation
         });
     } catch (err) {
         console.error('Dataset analytics error:', err);

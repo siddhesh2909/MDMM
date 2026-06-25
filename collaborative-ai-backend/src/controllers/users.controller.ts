@@ -414,7 +414,8 @@ export const getProfile = async (req: AuthenticatedRequest, res: express.Respons
             activeSessions: metadata.activeSessions || [],
             lastLoginInfo: metadata.lastLoginInfo || 'Unknown Device',
             notifications: metadata.notifications || { system: true, email: false, aiAlerts: true },
-            aiPreferences: metadata.aiPreferences || { model: 'llama-3-8b', temperature: 0.7, customRules: '' }
+            aiPreferences: metadata.aiPreferences || { model: 'llama-3-8b', temperature: 0.7, customRules: '' },
+            activeDatasetId: user.activeDatasetId
         });
     } catch (err) {
         console.error('Failed to get profile:', err);
@@ -438,7 +439,8 @@ export const updateProfile = async (req: AuthenticatedRequest, res: express.Resp
             timezone,
             twoFactorEnabled,
             notifications,
-            aiPreferences
+            aiPreferences,
+            activeDatasetId
         } = req.body;
 
         const user = await prisma.user.findUnique({
@@ -450,6 +452,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: express.Resp
         const dbUpdateData: any = {};
         if (name !== undefined) dbUpdateData.name = name;
         if (department !== undefined) dbUpdateData.department = department;
+        if (activeDatasetId !== undefined) dbUpdateData.activeDatasetId = activeDatasetId;
         if (password) {
             dbUpdateData.password = await bcrypt.hash(password, 10);
         }
