@@ -6,7 +6,6 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useRole } from '@/components/providers/RoleProvider';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { ChatWidget } from '@/components/ui/ChatWidget';
 import { Shield } from 'lucide-react';
 import { apiClient } from '@/lib/apiClient';
 
@@ -22,7 +21,6 @@ function checkAuthorization(role: string, path: string): boolean {
         '/contracts',
         '/preprocessing',
         '/analytics',
-        '/ai-assistant',
         '/profile',
         '/notifications',
         '/collaboration'
@@ -30,7 +28,6 @@ function checkAuthorization(role: string, path: string): boolean {
     const viewerPaths = [
         '/analytics',
         '/reports',
-        '/ai-business-assistant',
         '/profile',
         '/notifications',
         '/collaboration'
@@ -128,7 +125,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <main className={`page-content animate-fade-in ${pathname.startsWith('/collaboration') ? 'full-bleed' : ''}`}>
                     {children}
                 </main>
-                {pathname !== '/analytics' && pathname !== '/ai-assistant' && pathname !== '/ai-business-assistant' && <ChatWidget />}
             </div>
         </div>
     );

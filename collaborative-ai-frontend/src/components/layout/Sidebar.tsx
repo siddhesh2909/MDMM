@@ -37,8 +37,6 @@ const navConfig: NavItem[] = [
     { name: 'Preprocessing', path: '/preprocessing', icon: Wand2 },
     { name: 'Analytics', path: '/analytics', icon: BarChart3 },
     { name: 'Reports', path: '/reports', icon: FileText },
-    { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
-    { name: 'AI Business Assistant', path: '/ai-business-assistant', icon: Sparkles },
     { name: 'Collaboration', path: '/collaboration', icon: MessageSquare },
 ];
 
@@ -50,7 +48,6 @@ export function Sidebar() {
 
     const allowedNavs = navConfig.filter((item) => {
         if (role === 'Admin') {
-            if (item.name === 'AI Business Assistant') return false;
             return true;
         }
         if (role === 'Analyst') {
@@ -60,7 +57,6 @@ export function Sidebar() {
                 'Preprocessing',
                 'Workflows',
                 'Analytics',
-                'AI Assistant',
                 'Collaboration'
             ].includes(item.name);
         }
@@ -68,7 +64,6 @@ export function Sidebar() {
             return [
                 'Analytics',
                 'Reports',
-                'AI Business Assistant',
                 'Collaboration'
             ].includes(item.name);
         }

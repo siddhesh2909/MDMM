@@ -20,6 +20,98 @@ function handleMockCompletion(params: any): any {
 
     const isJson = params.response_format?.type === 'json_object';
 
+    if (userMessage.includes('You are a professional Business') || userMessage.includes('executive report') || userMessage.includes('Data Governance & Analytics Audit') || userMessage.includes('Regenerate a professional')) {
+        const datasetNameMatch = userMessage.match(/dataset (named|named:?)\s*"(.*?)"/) || userMessage.match(/dataset\s*"(.*?)"/);
+        const datasetName = datasetNameMatch ? datasetNameMatch[2] : "Active Dataset";
+        
+        const reportTypeMatch = userMessage.match(/type\s*"(.*?)"/);
+        const reportType = reportTypeMatch ? reportTypeMatch[1] : "Data Quality & Summary";
+        
+        let report = `# Enterprise Data Governance & Business Analytics Report\n\n`;
+        report += `**Report Reference ID:** BI-AUDIT-${Math.floor(100000 + Math.random() * 900000)}\n`;
+        report += `**Audit Type:** ${reportType}\n`;
+        report += `**Subject Dataset:** ${datasetName}\n`;
+        report += `**Classification:** Confidential / Internal Use Only\n`;
+        report += `**Date of Compilation:** ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}\n\n`;
+        
+        report += `## 1. Executive Summary & Strategic Context\n`;
+        report += `This executive data governance audit covers the structured payload associated with the **${datasetName}** asset. In modern enterprise environments, data is the primary driver of strategic decision-making. Therefore, ensuring the accuracy, consistency, completeness, and validity of source records is a high-priority business requirement.\n\n`;
+        report += `The primary objective of this review is to evaluate the structural integrity and compliance rate of ingested transactions. Under the **${reportType}** framework, we assess standard schemas, identify validation anomalies, check business rule contracts, and deliver actionable data-cleansing recommendations. `;
+        
+        if (reportType.includes("Financial") || reportType.includes("Revenue")) {
+            report += `Given the financial nature of this dataset, our verification focuses heavily on double-entry balances, non-negative amounts, standard currency symbols, billing anomalies, and sales representatives performance indexes. Outlier check algorithms were executed against pricing schemas to ensure zero billing leakage.\n\n`;
+        } else if (reportType.includes("User") || reportType.includes("Customer")) {
+            report += `Given that this dataset contains customer identity demographics, this audit focuses heavily on PII masking regulations, contact info validations, registration date chronologies, and customer categorization standards. Compliance with regional privacy rules (such as GDPR Article 32 and CCPA requirements) is verified.\n\n`;
+        } else {
+            report += `This review ensures data pipeline stability. Schema compatibility analysis was run against active data contracts to guarantee that downstream business intelligence platforms receive structured records with zero runtime anomalies.\n\n`;
+        }
+        
+        report += `### High-Level Quality Scorecard\n`;
+        report += `| Governance Metric | Target Compliance | Actual Compliance | Audit Status |\n`;
+        report += `| :--- | :--- | :--- | :--- |\n`;
+        report += `| **Overall Data Quality Index** | >= 95.0% | **96.8%** | ✅ COMPLIANT |\n`;
+        report += `| **Schema Attribute Validity** | >= 98.0% | **98.2%** | ✅ COMPLIANT |\n`;
+        report += `| **Record Field Completeness** | >= 95.0% | **97.4%** | ✅ COMPLIANT |\n`;
+        report += `| **Primary Entity Uniqueness** | >= 99.0% | **100.0%** | ✅ COMPLIANT |\n\n`;
+        
+        report += `## 2. Granular Attribute Schema & Data Type Analysis\n`;
+        report += `A deep profile mapping was run across the dataset's columns to verify that physical and logical types conform to target data store schemas. The type distribution is mapped below:\n\n`;
+        
+        report += `| Attribute Name | Physical Type | Logical Semantics | Null % | Sample Values | Validation State |\n`;
+        report += `| :--- | :--- | :--- | :--- | :--- | :--- |\n`;
+        report += `| **Product_ID** | \`INTEGER\` | Primary Key (Id) | 0.0% | \`1084, 1025, 1017\` | ✅ Validated (Unique) |\n`;
+        report += `| **Sale_Date** | \`DATE\` | Ingestion Date | 0.0% | \`2023-10-20, 2023-12-30\` | ✅ Validated (ISO-8601) |\n`;
+        report += `| **Sales_Rep** | \`VARCHAR\` | Categorical Rep Name | 0.0% | \`David, Alice, Bob\` | ✅ Validated (Active list) |\n`;
+        report += `| **Region** | \`VARCHAR\` | Regional Category | 0.0% | \`North, South, East, West\` | ✅ Validated (Standard list) |\n`;
+        report += `| **Sales_Amount** | \`DECIMAL\` | Financial Amount | 0.0% | \`3577.07, 9215.32\` | ✅ Validated (Positive) |\n`;
+        report += `| **Quantity_Sold** | \`INTEGER\` | Transaction Count | 0.0% | \`32, 28, 16\` | ✅ Validated (Bounded) |\n`;
+        report += `| **Product_Category** | \`VARCHAR\` | Department Group | 0.0% | \`Furniture, Electronics\` | ✅ Validated (Categorical) |\n`;
+        report += `| **Customer_Type** | \`VARCHAR\` | Customer Status | 0.0% | \`New, Returning\` | ✅ Validated (Segmented) |\n`;
+        report += `| **Discount** | \`FLOAT\` | Deduction Rate | 0.0% | \`0.20, 0.13, 0.27\` | ⚠️ Warning (Check decimals) |\n`;
+        report += `| **Payment_Method** | \`VARCHAR\` | Settlement Type | 0.0% | \`Credit Card, Cash\` | ✅ Validated (Standard list) |\n\n`;
+        
+        report += `## 3. Deep Invariant Testing & Business Rule Verification\n`;
+        report += `To ensure business intelligence compatibility, multiple logical constraints were tested. These validation assertions check if values represent realistic business processes:\n\n`;
+        report += `- **Deduction Threshold Constraint**: Verified that the \`Discount\` column value never exceeds 50% for any record, as per the organization's standard marketing campaign boundaries.\n`;
+        report += `- **Unit Cost Correlation**: Checked that the unit price minus unit cost yields a positive gross margin. Out of the active records, 100% passed this profitability assertion check.\n`;
+        report += `- **Billing Balance Equation**: Asserted that \`Sales_Amount\` equals \`Quantity_Sold * Unit_Price * (1 - Discount)\`. Validation checks revealed minor rounding deltas of less than $0.02, which fall within standard margins.\n\n`;
+        
+        report += `### Logical Assertions Summary\n`;
+        report += `| Assertion Rule Code | Tested Constraint | Passed Count | Failed Count | Result |\n`;
+        report += `| :--- | :--- | :--- | :--- | :--- |\n`;
+        report += `| **RULE-VAL-001** | \`Sales_Amount > 0\` | 50 | 0 | ✅ Success |\n`;
+        report += `| **RULE-VAL-002** | \`Discount <= 0.50\` | 50 | 0 | ✅ Success |\n`;
+        report += `| **RULE-VAL-003** | \`Quantity_Sold >= 1\` | 50 | 0 | ✅ Success |\n`;
+        report += `| **RULE-VAL-004** | \`Margin = Price - Cost > 0\` | 48 | 2 | ⚠️ Outliers flagged |\n\n`;
+        
+        report += `## 4. Anomalies, Warning Flags, and Data Cleansing Logs\n`;
+        report += `The data validation engine flagged the following exception records that require cleansing prior to analytical staging:\n\n`;
+        report += `1. **Outlier Warning** (Field: \`Unit_Cost\`): Record ID 14 and 29 contain unit costs that exceed the unit price, creating a negative margin profile. *Action: Recalculate transaction margins or investigate supplier billing tables.*\n`;
+        report += `2. **PII Exposure Warning** (Field: \`Customer_Name\`): Exact names are stored in the clear, violating GDPR compliance policies for distributed reporting. *Action: Implement SHA-256 hashing or tokenization protocols on the customer identity field.*\n`;
+        report += `3. **Data Type Casting Suggestion** (Field: \`Discount\`): The discount variable is currently stored as float decimals. For consistent dashboard representation, suggest casting this as percentage decimals.\n\n`;
+        
+        report += `## 5. Preprocessing & Feature Engineering Guidance\n`;
+        report += `Based on statistical distributions, the following transformations are recommended to optimize this dataset for predictive modeling:\n\n`;
+        report += `- **Categorical Encoding**: Convert columns \`Region\`, \`Product_Category\`, and \`Payment_Method\` into dummy variables using One-Hot Encoding to support linear regression models.\n`;
+        report += `- **Outlier Mitigation**: For price metrics with right-skewed profiles (like \`Sales_Amount\`), apply Logarithmic Scaling (\`log1p\`) to normalize variance and improve clustering stability.\n`;
+        report += `- **Time-Series Extraction**: Parse the \`Sale_Date\` attribute into structured features: \`Sale_Year\`, \`Sale_Month\`, \`Sale_Day\`, and \`Is_Weekend\` to support sales forecasting cycles.\n\n`;
+        
+        report += `## 6. Strategic Governance Recommendations\n`;
+        report += `• **Active Schema Enforcement**: Configure the ingestion pipeline to reject incoming records containing columns not specified in the active schema contract, blocking type drifts.\n`;
+        report += `• **PII Security Protocol**: Mask customer identifiers in staging databases to prevent exposure during reporting updates.\n`;
+        report += `• **Data Lineage Documentation**: Document column transformations in the central data catalog to guarantee auditability.\n\n`;
+        
+        report += `*Report officially compiled by CollabAI Governance Engine. Authorized for distribution to business analysts and governance stewards.*`;
+        
+        return {
+            choices: [{
+                message: {
+                    content: report
+                }
+            }]
+        };
+    }
+
     if (isJson) {
         // 1. Data Quality Analysis
         if (userMessage.includes('anomalies') || userMessage.includes('outliers')) {
@@ -241,7 +333,40 @@ I have parsed the active dataset **${dsName}** and am ready to assist.
 • **Data Quality:** **${dsQuality}%** compliance rating.
  
 Use the capability filters on the left or type any technical query about column distributions, anomalies, or standardizations!`;
-        } else if (lowerMsg.includes('describe') || lowerMsg.includes('summarize') || lowerMsg.includes('profile') || 
+        } else if (lowerMsg.includes('insight') || lowerMsg.includes('finding') || lowerMsg.includes('key insights')) {
+            content = `💡 **AI Analyst Insights Report (${dsName}):**
+ 
+Here are the key technical insights and observations calculated from the active dataset **${dsName}**:
+ 
+• 🎯 **Data Completeness & Integrity:** Ingestion validation shows a **${dsQuality}%** compliance score. The dataset is structurally sound with minor anomalies.
+• 🔍 **Target Schema Attributes:** We mapped **${dsCols.length}** columns, including key fields such as ${dsCols.slice(1, 4).map((c: string) => `\`${c}\``).join(', ')}.
+• ⚠️ **Outliers and Anomalies:** The anomaly detection scan identified outlier records in the numerical features (e.g. pricing, spending, or age metrics) that exceed the standard 3-sigma variance threshold.
+• 🛠️ **Transformations Suggestion:** To prepare this dataset for production business analytics, we recommend converting datetime columns to proper date objects and encoding categorical variables.
+ 
+Would you like me to generate a detailed compliance report or suggest visual charts for these insights?`;
+        } else if (lowerMsg.includes('compliance') || lowerMsg.includes('regulation') || lowerMsg.includes('governance')) {
+            content = `🛡️ **Regulatory Compliance & Data Governance Audit (${dsName}):**
+ 
+Our compliance engine analyzed the schema attributes of **${dsName}** against corporate data standards and privacy regulations:
+ 
+• 🔐 **PII / Privacy Integrity:** Columns containing potential customer data (e.g. email, names) must be masked or tokenized using SHA-256 before distributing reports to viewer-level users.
+• ⚙️ **Data Ingestion Standard:** We verified formatting rules. All temporal values (e.g. signup or transaction dates) conform to standard ISO-8601 specifications.
+• ⚠️ **Validation Exceptions:** Outlier values in transactional columns have been cataloged in the quality ledger to ensure downstream metrics remain untainted.
+• 📜 **Policy Recommendation:** Establish an active data contract on the ingestion gateway to prevent schema drift and block columns with unknown names.
+ 
+Would you like me to export the full compliance ledger as a formatted PDF?`;
+        } else if (lowerMsg.includes('database') || lowerMsg.includes('reports database') || lowerMsg.includes('analyze my reports')) {
+            content = `📊 **Reports Database Performance & Audit:**
+ 
+I have scanned your reports storage schemas and metadata logs:
+ 
+• 📁 **Active Reports:** You have generated several business reports across your datasets.
+• 📈 **Success Rate:** Overall report generation pipeline success rate is standing at **98.6%**.
+• ⚙️ **Schedules Configuration:** Automated cron jobs are configured to distribute Excel/PDF formats to stakeholders at set times.
+• 🛠️ **Access Controls:** Permissions are securely enforced, restricting viewer-level users to read-only access while co-owners can configure share scopes.
+ 
+How can I assist you with scheduled distributions or generating a new dataset report?`;
+        } else if (lowerMsg.includes('represent') || lowerMsg.includes('describe') || lowerMsg.includes('summarize') || lowerMsg.includes('profile') || 
                    lowerMsg.includes('what is data about') || lowerMsg.includes('what does this show') || 
                    lowerMsg.includes('what is this data') || lowerMsg.includes('about') || lowerMsg.includes('data about')) {
             

@@ -243,5 +243,54 @@ model Attachment {
   createdAt      DateTime @default(now())
 }
 
+model Report {
+  id             String          @id @default(uuid())
+  name           String
+  description    String          @default("")
+  datasetId      String
+  datasetName    String
+  format         String          // PDF, Excel, CSV, JSON
+  size           String          @default("0 KB")
+  status         String          @default("Completed") // Completed, Pending, Failed
+  content        String          // Storing the AI generated report text/html/json
+  version        Int             @default(1)
+  ownerId        String
+  organizationId String
+  visibility     String          @default("private")
+  sharedWith     String          @default("[]") // JSON string of emails/users/teams
+  shareLink      String?         // secure share link token
+  sharePerm      String          @default("view") // view, edit, manage
+  parentReportId String?         // For version history links
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  versions       ReportVersion[]
+}
+
+model ReportVersion {
+  id        String   @id @default(uuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  version   Int
+  content   String
+  format    String
+  size      String
+  createdAt DateTime @default(now())
+}
+
+model ReportSchedule {
+  id             String   @id @default(uuid())
+  name           String
+  datasetId      String
+  datasetName    String
+  format         String   @default("PDF")
+  frequency      String   // Daily, Weekly, Monthly
+  recipients     String   // comma-separated emails
+  time           String   // e.g. 08:00 AM
+  status         String   @default("Active") // Active, Inactive
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 
 

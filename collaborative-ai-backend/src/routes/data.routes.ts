@@ -5,6 +5,8 @@ import { getDatasets, createDataset, updateDataset, getDatasetDetail, deleteData
 import { getUsers, getAuditLog, inviteUser, updateUserRole, deactivateUser, activateUser, deleteUser, updateProfile, getProfile, revokeOtherSessions, downloadPersonalData, deleteAccount, updateOrganizationDetails } from '../controllers/users.controller';
 import { testConnection, pullData } from '../controllers/connectors.controller';
 import { authenticateToken, requirePermission, requireRole, AuthenticatedRequest } from '../middleware/auth';
+import { getReports, createReport, regenerateReport, getReportVersions, deleteReport, shareReport, exportReport, updateReportShare, revokeReportShare, getReportSharedUsers, getSharedReportByToken, exportSharedReportByToken } from '../controllers/reports.controller';
+import { getSchedules, createSchedule, updateSchedule, deleteSchedule, runScheduleNow } from '../controllers/schedules.controller';
 
 // New controllers
 import { validateDataset, getValidationReport } from '../controllers/validation.controller';
@@ -18,6 +20,10 @@ const router = Router();
 
 // SSE Stream must be authenticated inline using token query param to allow native browser EventSource connections
 router.get('/notifications/stream', streamNotifications);
+
+// Public shared report endpoints
+router.get('/shared/reports/:token', getSharedReportByToken);
+router.get('/shared/reports/:token/export', exportSharedReportByToken);
 
 // Protect all data routes
 router.use(authenticateToken);
@@ -150,5 +156,24 @@ router.patch('/notifications/:id/read', markRead);
 router.patch('/notifications/:id/archive', toggleArchiveNotification);
 router.delete('/notifications/:id', deleteNotification);
 router.post('/notifications/mark-all-read', markAllRead);
+
+// ── Reports ──
+router.get('/reports', getReports);
+router.post('/reports', createReport);
+router.post('/reports/:id/regenerate', regenerateReport);
+router.get('/reports/:id/versions', getReportVersions);
+router.delete('/reports/:id', deleteReport);
+router.post('/reports/:id/share', shareReport);
+router.post('/reports/:id/share/update', updateReportShare);
+router.post('/reports/:id/share/revoke', revokeReportShare);
+router.get('/reports/:id/share/users', getReportSharedUsers);
+router.get('/reports/:id/export', exportReport);
+
+// ── Schedules ──
+router.get('/schedules', getSchedules);
+router.post('/schedules', createSchedule);
+router.patch('/schedules/:id', updateSchedule);
+router.delete('/schedules/:id', deleteSchedule);
+router.post('/schedules/:id/run', runScheduleNow);
 
 export default router;

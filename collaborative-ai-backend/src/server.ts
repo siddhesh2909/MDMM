@@ -8,6 +8,7 @@ import aiRoutes from './routes/ai.routes';
 import dataRoutes from './routes/data.routes';
 import collaborationRoutes from './routes/collaboration.routes';
 import { initWebSocket } from './services/websocket.service';
+import { startScheduler } from './services/scheduler';
 
 dotenv.config();
 
@@ -61,4 +62,5 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 server.listen(PORT, () => {
     console.log(`Backend Server running locally on http://localhost:${PORT}`);
+    startScheduler();
 });

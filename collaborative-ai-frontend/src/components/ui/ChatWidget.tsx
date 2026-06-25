@@ -26,6 +26,33 @@ export function ChatWidget() {
         }
     }, [messages, isOpen]);
 
+    useEffect(() => {
+        const handleOpen = (e: Event) => {
+            setIsOpen(true);
+            const customEvent = e as CustomEvent;
+            if (customEvent.detail?.message) {
+                const msgText = customEvent.detail.message;
+                const userMessage: Message = { id: Date.now().toString(), sender: 'user', text: msgText };
+                setMessages(prev => [...prev, userMessage]);
+                setIsThinking(true);
+                
+                apiClient.post('/ai/chat', { message: msgText }).then(data => {
+                    if (data?.reply) {
+                        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: data.reply, sender: 'bot' }]);
+                    } else {
+                        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: "I'm sorry, I'm having trouble connecting.", sender: 'bot' }]);
+                    }
+                }).catch(() => {
+                    setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), text: "Connection error.", sender: 'bot' }]);
+                }).finally(() => {
+                    setIsThinking(false);
+                });
+            }
+        };
+        window.addEventListener('open-ai-chat', handleOpen as EventListener);
+        return () => window.removeEventListener('open-ai-chat', handleOpen as EventListener);
+    }, []);
+
     const handleSend = async (providedText?: string) => {
         const textToUse = providedText || inputVal;
         if (!textToUse.trim()) return;
