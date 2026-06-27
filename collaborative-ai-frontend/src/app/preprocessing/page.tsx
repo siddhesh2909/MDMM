@@ -2110,8 +2110,6 @@ export default function PreprocessingPage() {
                                                 fontSize: '0.74rem',
                                                 lineHeight: 1.5,
                                                 whiteSpace: 'pre-wrap',
-                                                backgroundColor: m.role === 'user' ? 'var(--primary-color)' : '#f1f5f9',
-                                                color: m.role === 'user' ? 'white' : '#1e293b',
                                                 backgroundColor: m.role === 'user' ? 'var(--primary-color)' : 'var(--bg-secondary)',
                                                 color: m.role === 'user' ? 'white' : 'var(--text-primary)',
                                                 boxShadow: '0 1px 2px rgba(0,0,0,0.01)',
