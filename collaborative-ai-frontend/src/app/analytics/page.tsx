@@ -371,7 +371,7 @@ export default function AnalyticsPage() {
     const [showShareModal, setShowShareModal] = useState(false);
     const [filterCol, setFilterCol] = useState('');
     const [filterVal, setFilterVal] = useState('');
-    
+
     // Auto-Generated Templates engine states
     const [autoModeEnabled, setAutoModeEnabled] = useState(true);
     const [detectedCategory, setDetectedCategory] = useState('Generic Business Dataset');
@@ -380,7 +380,7 @@ export default function AnalyticsPage() {
     const [recommendations, setRecommendations] = useState<Widget[]>([]);
 
     const [showExportModal, setShowExportModal] = useState(false);
-    
+
     // Enterprise BI extension states
     const [showMarketplace, setShowMarketplace] = useState(false);
     const [showChartBuilder, setShowChartBuilder] = useState(false);
@@ -404,11 +404,11 @@ export default function AnalyticsPage() {
     const [generationStep, setGenerationStep] = useState(0);
     const [promptInput, setPromptInput] = useState('');
     const [localDatasets, setLocalDatasets] = useState<any[]>([]);
-    
+
     // Dataset management modals
     const [previewDatasetData, setPreviewDatasetData] = useState<any[] | null>(null);
     const [previewDatasetMetadata, setPreviewDatasetMetadata] = useState<DatasetAnalytics | null>(null);
-    
+
     // Track renaming / duplicating state
     const [renamingDsId, setRenamingDsId] = useState<string | null>(null);
     const [renamingDsValue, setRenamingDsValue] = useState('');
@@ -433,7 +433,7 @@ export default function AnalyticsPage() {
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
-        
+
         // Load Saved Dashboards
         const localDashes = localStorage.getItem('workspace_dashboards');
         if (localDashes) {
@@ -762,7 +762,7 @@ export default function AnalyticsPage() {
                         }
                     });
                 }
-                
+
                 // Filter out deleted datasets persisted in localStorage
                 const localDeleted = localStorage.getItem('workspace_deleted_datasets');
                 const deletedIds: string[] = localDeleted ? JSON.parse(localDeleted) : [];
@@ -1038,7 +1038,7 @@ export default function AnalyticsPage() {
             const uniq = stats.stats[c]?.uniqueCount || 0;
             return uniq > 1 && uniq <= 10;
         });
-        
+
         lowCardCat.forEach(cat => {
             const numColForPie = numCols.find(c => {
                 const l = c.toLowerCase();
@@ -1054,7 +1054,7 @@ export default function AnalyticsPage() {
                     const val = String(r[cat] ?? 'Unknown');
                     counts[val] = (counts[val] || 0) + 1;
                 });
-                pieData = Object.entries(counts).map(([label, value]) => ({ label, value })).sort((a,b) => b.value - a.value).slice(0, 5);
+                pieData = Object.entries(counts).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 5);
             }
 
             recs.push({
@@ -1378,7 +1378,7 @@ export default function AnalyticsPage() {
     const handleChartClick = (w: Widget, data: any) => {
         if (!w.columns || w.columns.length === 0) return;
         const dimCol = w.columns[0];
-        
+
         let value = '';
         if (data && data.activeLabel) {
             value = String(data.activeLabel);
@@ -4180,12 +4180,12 @@ export default function AnalyticsPage() {
     };
 
     const generateMockDatasetAnalytics = (id: string): DatasetAnalytics => {
-        const columns = id === 'mock-hr' 
-            ? ['id', 'name', 'department', 'role', 'salary', 'tenure_years', 'gender'] 
-            : id === 'mock-churn' 
+        const columns = id === 'mock-hr'
+            ? ['id', 'name', 'department', 'role', 'salary', 'tenure_years', 'gender']
+            : id === 'mock-churn'
                 ? ['id', 'customer_name', 'contract_type', 'tenure_months', 'monthly_charges', 'churn_risk_score', 'country']
                 : ['id', 'month', 'revenue', 'expense', 'budget_allocation', 'category'];
-        
+
         const name = id === 'mock-hr' ? 'employee_retention.xlsx' : id === 'mock-churn' ? 'customer_churn.csv' : 'finance_q2_raw.csv';
         const rows = id === 'mock-hr' ? 1500 : id === 'mock-churn' ? 820 : 2400;
 
@@ -4246,7 +4246,7 @@ export default function AnalyticsPage() {
 
         // Save raw data to localStorage
         localStorage.setItem(`dataset_data_${newId}`, JSON.stringify(rows));
-        
+
         setLocalDatasets(prev => [newDataset, ...prev]);
         setDatasets(prev => [newDataset, ...prev]);
         setSelectedDs(newId);
@@ -4741,20 +4741,20 @@ export default function AnalyticsPage() {
                             <div style={{ marginTop: '0.4rem', borderTop: '1px dashed var(--studio-border)', paddingTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }} onClick={e => e.stopPropagation()}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.55rem', fontWeight: 600, color: 'var(--studio-text-sub)' }}>
                                     <span>Price: {whatIfPrice >= 0 ? '+' : ''}{whatIfPrice}%</span>
-                                    <input 
-                                        type="range" 
-                                        min="-30" max="30" step="5" 
-                                        value={whatIfPrice} 
+                                    <input
+                                        type="range"
+                                        min="-30" max="30" step="5"
+                                        value={whatIfPrice}
                                         onChange={(e) => setWhatIfPrice(Number(e.target.value))}
                                         style={{ width: '70px', height: '4px', cursor: 'pointer' }}
                                     />
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.55rem', fontWeight: 600, color: 'var(--studio-text-sub)' }}>
                                     <span>Marketing: {whatIfMarketing >= 0 ? '+' : ''}{whatIfMarketing}%</span>
-                                    <input 
-                                        type="range" 
-                                        min="-30" max="30" step="5" 
-                                        value={whatIfMarketing} 
+                                    <input
+                                        type="range"
+                                        min="-30" max="30" step="5"
+                                        value={whatIfMarketing}
                                         onChange={(e) => setWhatIfMarketing(Number(e.target.value))}
                                         style={{ width: '70px', height: '4px', cursor: 'pointer' }}
                                     />
@@ -4957,7 +4957,7 @@ export default function AnalyticsPage() {
                             <path d="M20,60 Q60,80 100,50 T150,70 T180,60" fill="none" stroke="#4f46e5" strokeWidth={1} strokeDasharray="2 2" />
                             <rect x="0" y="0" width="200" height="100" fill="none" stroke="#cbd5e1" strokeWidth={0.5} />
                         </svg>
-                        
+
                         <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                             <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', transform: 'scaleY(-1)' }}>
                                 {w.data.slice(0, 30).map((pt: any, i: number) => {
@@ -5207,8 +5207,8 @@ export default function AnalyticsPage() {
 
     const filteredDatasets = useMemo(() => {
         const query = searchQuery.toLowerCase();
-        return localDatasets.filter(d => 
-            d.name.toLowerCase().includes(query) || 
+        return localDatasets.filter(d =>
+            d.name.toLowerCase().includes(query) ||
             (d.category && d.category.toLowerCase().includes(query)) ||
             (d.ownerName && d.ownerName.toLowerCase().includes(query))
         );
@@ -5216,8 +5216,8 @@ export default function AnalyticsPage() {
 
     const filteredDashboards = useMemo(() => {
         const query = searchQuery.toLowerCase();
-        return savedDashboards.filter(d => 
-            d.name.toLowerCase().includes(query) || 
+        return savedDashboards.filter(d =>
+            d.name.toLowerCase().includes(query) ||
             d.type.toLowerCase().includes(query) ||
             d.datasetName.toLowerCase().includes(query)
         );
@@ -5225,7 +5225,7 @@ export default function AnalyticsPage() {
 
     const filteredConversations = useMemo(() => {
         const query = searchQuery.toLowerCase();
-        return recentConversations.filter(c => 
+        return recentConversations.filter(c =>
             c.prompt.toLowerCase().includes(query) ||
             c.datasetName.toLowerCase().includes(query)
         );
@@ -5327,7 +5327,7 @@ export default function AnalyticsPage() {
                                         flexDirection: 'column',
                                         gap: '0.45rem'
                                     }}
-                                    onClick={() => setSelectedDs(d.id)}
+                                        onClick={() => setSelectedDs(d.id)}
                                     >
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.4rem' }}>
                                             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', minWidth: 0, flex: 1 }}>
@@ -5377,7 +5377,7 @@ export default function AnalyticsPage() {
                                         <div style={{ fontSize: '0.625rem', color: 'var(--studio-text-sub)', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
                                             <span>{d.size || '45.3 MB'}</span>
                                             <span>•</span>
-                                            <span>{d.rowsCount ? (d.rowsCount > 1000 ? (d.rowsCount/1000).toFixed(0) + 'K' : d.rowsCount) : '25K'} rows</span>
+                                            <span>{d.rowsCount ? (d.rowsCount > 1000 ? (d.rowsCount / 1000).toFixed(0) + 'K' : d.rowsCount) : '25K'} rows</span>
                                             <span>•</span>
                                             <span>{d.columnsCount || 15} cols</span>
                                         </div>
@@ -5454,7 +5454,7 @@ export default function AnalyticsPage() {
                         </div>
 
                         {/* View all dataset link */}
-                        <div 
+                        <div
                             onClick={() => showToast("Showing all cleaned database clusters", "info")}
                             style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid var(--studio-border)', background: 'var(--studio-bg)', textAlign: 'center', fontSize: '0.675rem', fontWeight: 700, cursor: 'pointer', color: 'var(--studio-text-sub)' }}
                         >
@@ -5464,10 +5464,10 @@ export default function AnalyticsPage() {
 
                     {/* MAIN SPLIT PANELS (CENTER COLUMN + RIGHT COLUMN) */}
                     <div className="workspace-main-panel" style={{ flex: 1, display: 'flex', gap: '1.25rem', overflow: 'hidden' }}>
-                        
+
                         {/* CENTER COLUMN (STATS, PROMPT BOX, EXAMPLES, TABLE) */}
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', minWidth: 0, paddingRight: '0.25rem' }}>
-                            
+
                             {/* A. WORKSPACE HEADER ROW */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.75rem', marginBottom: '0.25rem' }}>
                                 <div>
@@ -5500,7 +5500,7 @@ export default function AnalyticsPage() {
                                         />
                                     </div>
 
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             if (selectedDs) {
                                                 setPromptInput("Build an Executive Dashboard tracking key metrics");
@@ -5609,7 +5609,7 @@ export default function AnalyticsPage() {
                                             paddingRight: '40px'
                                         }}
                                     />
-                                    
+
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--studio-border)', paddingTop: '0.6rem', marginTop: '0.35rem' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                             <button
@@ -5658,7 +5658,7 @@ export default function AnalyticsPage() {
                                 <div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
                                         <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Try these examples</span>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 setPromptInput("Analyze regional performance parameters and item ranges");
                                                 showToast("Example loaded!", "info");
@@ -5751,14 +5751,14 @@ export default function AnalyticsPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recent Conversations</span>
-                                    <span 
+                                    <span
                                         onClick={() => showToast("Showing all past AI chat contexts", "info")}
                                         style={{ fontSize: '0.65rem', color: '#4f46e5', fontWeight: 700, cursor: 'pointer' }}
                                     >
                                         View All
                                     </span>
                                 </div>
-                                
+
                                 <div style={{ backgroundColor: 'var(--studio-card-bg)', border: '1px solid var(--studio-border)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.01)' }}>
                                     <table className="studio-table" style={{ width: '100%', fontSize: '0.72rem', borderCollapse: 'collapse', textAlign: 'left' }}>
                                         <thead>
@@ -5775,7 +5775,7 @@ export default function AnalyticsPage() {
                                                 const dsName = c.datasetName || 'Dataset';
                                                 const shortPrompt = c.prompt.length > 32 ? c.prompt.slice(0, 32) + '...' : c.prompt;
                                                 const title = c.prompt.split(' ').slice(0, 3).join(' ') + ' Analysis';
-                                                
+
                                                 return (
                                                     <tr key={c.id} style={{ borderBottom: '1px solid var(--studio-border)' }} className="table-row-hover">
                                                         <td style={{ padding: '0.6rem 0.85rem', fontWeight: 700 }}>{title}</td>
@@ -5786,13 +5786,13 @@ export default function AnalyticsPage() {
                                                         </td>
                                                         <td style={{ padding: '0.6rem 0.85rem', textAlign: 'center' }}>
                                                             <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleLoadRecentConversation(c)}
                                                                     style={{ border: 'none', background: 'rgba(99,102,241,0.08)', color: '#4f46e5', borderRadius: '4px', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                                                                 >
                                                                     <Play size={8} fill="#4f46e5" />
                                                                 </button>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleDeleteConversation(c.id)}
                                                                     style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                                     title="Delete Conversation"
@@ -5812,7 +5812,7 @@ export default function AnalyticsPage() {
 
                         {/* RIGHT SIDEBAR COLUMN (STATS CARD 4, RECENT DASHBOARDS, INSTRUCTIONS CARD) */}
                         <div style={{ width: '280px', display: 'flex', flexDirection: 'column', gap: '1.25rem', flexShrink: 0 }}>
-                            
+
                             {/* STAT CARD 4 (LAST ACTIVITY) */}
                             <div className="stat-card" style={{ padding: '1rem', backgroundColor: 'var(--studio-card-bg)', border: '1px solid var(--studio-border)', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', cursor: 'pointer' }}>
                                 <div>
@@ -5834,7 +5834,7 @@ export default function AnalyticsPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recent Dashboards</span>
-                                    <span 
+                                    <span
                                         onClick={() => showToast("Showing all saved visual canvas panels", "info")}
                                         style={{ fontSize: '0.65rem', color: '#4f46e5', fontWeight: 700, cursor: 'pointer' }}
                                     >
@@ -5868,7 +5868,7 @@ export default function AnalyticsPage() {
                                                     <rect x="3" y="15" width="10" height="12" fill="var(--studio-bg)" rx="1" />
                                                 </svg>
                                             </div>
-                                            
+
                                             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                                                 <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--studio-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                     {d.name.split(' ').slice(0, 2).join(' ')} Dashboard
@@ -6003,1782 +6003,1782 @@ export default function AnalyticsPage() {
                                     {dsAnalytics?.name ? dsAnalytics.name.replace('.csv', '').replace('.xlsx', '') : 'Sales Performance'} Dashboard
                                 </h2>
 
-                        <span className="studio-dash-badge" style={{
-                            padding: '0.15rem 0.45rem',
-                            background: 'var(--studio-purple-light)',
-                            border: '1px solid var(--studio-purple-glow)',
-                            borderRadius: '99px',
-                            fontSize: '0.65rem',
-                            fontWeight: 600,
-                            color: 'var(--studio-purple)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.2rem'
-                        }}>
-                            <Sparkles size={10} /> AI Generated
-                        </span>
-                    </div>
-                    <span className="studio-dash-subtitle" style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)', marginTop: '0.2rem' }}>
-                        Dynamic Database aggregates calculated in real-time from active records
-                    </span>
-                </div>
-
-                <div className="studio-dash-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-                    {/* Database Dropdown Selector */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'var(--studio-bg)', padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid var(--studio-border)' }}>
-                        <Database size={13} color="var(--studio-text-sub)" />
-                        <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Dataset:</span>
-                        <select
-                            style={{
-                                border: 'none',
-                                background: 'transparent',
-                                fontSize: '0.725rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                outline: 'none',
-                                color: 'var(--studio-text)'
-                            }}
-                            value={selectedDs}
-                            onChange={(e) => setSelectedDs(e.target.value)}
-                        >
-                            {datasets.map((ds) => (
-                                <option key={ds.id} value={ds.id}>{ds.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Segmented Control Builder Tabs (Marketplace, Chart Builder, Filters) */}
-                    <div className="studio-segmented-tabs">
-                        {/* Marketplace Toggle */}
-                        <button
-                            className={`studio-segmented-btn ${showMarketplace ? 'active' : ''}`}
-                            onClick={() => setShowMarketplace(!showMarketplace)}
-                            title="Open Widget Marketplace"
-                        >
-                            <Layers size={12} />
-                            <span>Marketplace</span>
-                        </button>
-
-                        {/* Chart Builder Toggle */}
-                        <button
-                            className={`studio-segmented-btn ${showChartBuilder ? 'active' : ''}`}
-                            onClick={() => setShowChartBuilder(!showChartBuilder)}
-                            title="Open Visual Chart Builder"
-                        >
-                            <Edit2 size={12} />
-                            <span>Chart Builder</span>
-                        </button>
-
-                        {/* Filters Toggle */}
-                        <button
-                            className={`studio-segmented-btn ${showFilterPanel || Object.keys(activeFilters).length > 0 ? 'active' : ''}`}
-                            onClick={() => setShowFilterPanel(!showFilterPanel)}
-                            title="Toggle Filters Panel"
-                        >
-                            <Sliders size={12} />
-                            <span>Filters</span>
-                            {Object.keys(activeFilters).length > 0 && (
-                                <span style={{ backgroundColor: '#4f46e5', color: '#ffffff', borderRadius: '99px', padding: '1px 5px', fontSize: '0.55rem', fontWeight: 800, marginLeft: '0.15rem' }}>
-                                    {Object.keys(activeFilters).length}
-                                </span>
-                            )}
-                        </button>
-                    </div>
-
-                    {/* More Actions Dropdown (Versions, Alerts, Comments, Health Score, Diagnostics, Auto Refresh, Regenerate, Reset) */}
-                    <div style={{ position: 'relative' }} ref={overflowRef}>
-                        <button
-                            className={`studio-topnav-btn ${(showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'active-filter' : ''}`}
-                            onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-                            style={{
-                                padding: '0.35rem 0.5rem',
-                                backgroundColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.08)' : 'var(--studio-card-bg)',
-                                color: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? '#4f46e5' : 'var(--studio-text)',
-                                borderColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.3)' : 'var(--studio-border)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                            title="More Dashboard Tools"
-                        >
-                            <MoreHorizontal size={14} />
-                        </button>
-
-                        {showOverflowMenu && (
-                            <div style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 4px)',
-                                right: 0,
-                                backgroundColor: 'var(--studio-card-bg)',
-                                border: '1px solid var(--studio-border)',
-                                borderRadius: '6px',
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                                padding: '4px',
-                                zIndex: 1000,
-                                minWidth: '180px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '2px'
-                            }}>
-                                {/* Version History */}
-                                <button
-                                    className="overflow-menu-item"
-                                    onClick={() => {
-                                        setShowVersionsPanel(!showVersionsPanel);
-                                        setShowOverflowMenu(false);
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.6rem',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        backgroundColor: showVersionsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                        color: showVersionsPanel ? '#4f46e5' : 'var(--studio-text)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <History size={12} />
-                                    <span>Versions</span>
-                                </button>
-
-                                {/* Alerts */}
-                                <button
-                                    className="overflow-menu-item"
-                                    onClick={() => {
-                                        setShowAlertsPanel(!showAlertsPanel);
-                                        setShowOverflowMenu(false);
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.6rem',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        backgroundColor: showAlertsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                        color: showAlertsPanel ? '#4f46e5' : 'var(--studio-text)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <Bell size={12} />
-                                    <span>Alerts</span>
-                                </button>
-
-                                {/* Comments */}
-                                <button
-                                    className="overflow-menu-item"
-                                    onClick={() => {
-                                        setShowCommentsPanel(!showCommentsPanel);
-                                        setShowOverflowMenu(false);
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.6rem',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        backgroundColor: showCommentsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                        color: showCommentsPanel ? '#4f46e5' : 'var(--studio-text)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <MessageSquare size={12} />
-                                    <span>Comments</span>
-                                </button>
-
-                                {/* Health Score */}
-                                <button
-                                    className="overflow-menu-item"
-                                    onClick={() => {
-                                        setShowHealthModal(!showHealthModal);
-                                        setShowOverflowMenu(false);
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.6rem',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        backgroundColor: showHealthModal ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                        color: showHealthModal ? '#4f46e5' : 'var(--studio-text)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <Cpu size={12} />
-                                    <span>Health Score</span>
-                                </button>
-
-                                {/* Diagnostics */}
-                                <button
-                                    className="overflow-menu-item"
-                                    onClick={() => {
-                                        setShowDiagnostics(!showDiagnostics);
-                                        setShowOverflowMenu(false);
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.6rem',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        backgroundColor: showDiagnostics ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                        color: showDiagnostics ? '#4f46e5' : 'var(--studio-text)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <Settings size={12} />
-                                    <span>Diagnostics</span>
-                                </button>
-
-                                {/* Divider */}
-                                <div style={{ height: '1px', backgroundColor: 'var(--studio-border)', margin: '4px 0' }} />
-
-                                {/* Auto Refresh Toggle */}
-                                <div className="overflow-menu-item" style={{
+                                <span className="studio-dash-badge" style={{
+                                    padding: '0.15rem 0.45rem',
+                                    background: 'var(--studio-purple-light)',
+                                    border: '1px solid var(--studio-purple-glow)',
+                                    borderRadius: '99px',
+                                    fontSize: '0.65rem',
+                                    fontWeight: 600,
+                                    color: 'var(--studio-purple)',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '0.4rem 0.6rem',
-                                    borderRadius: '4px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 500,
-                                    color: 'var(--studio-text)',
-                                    cursor: 'default',
-                                    transition: 'all 0.15s'
+                                    gap: '0.2rem'
                                 }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <RefreshCw size={12} style={{ animation: autoRefresh ? 'spin 6s linear infinite' : 'none' }} />
-                                        <span>Auto Refresh</span>
-                                    </span>
-                                    <label className="studio-switch" style={{ margin: 0, transform: 'scale(0.8)', cursor: 'pointer' }}>
-                                        <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
-                                        <span className="studio-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                {/* Regenerate Template */}
-                                <button
-                                    className="overflow-menu-item"
-                                    onClick={() => {
-                                        setShowOverflowMenu(false);
-                                        if (!dsAnalytics || activeRawData.length === 0) {
-                                            showToast('No active dataset loaded.', 'error');
-                                            return;
-                                        }
-                                        const classification = detectDatasetCategory(dsAnalytics);
-                                        setDetectedCategory(classification.category);
-                                        setDetectedConfidence(classification.confidence);
-                                        const explanation = generateAiExplanation(classification.category, dsAnalytics);
-                                        setAiExplanation(explanation);
-                                        buildExecutiveDashboard(dsAnalytics, activeRawData, classification.category);
-                                        setCardSizes({});
-                                        showToast(`Regenerated ${classification.category} dashboard layout!`, 'success');
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.6rem',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        backgroundColor: 'transparent',
-                                        color: 'var(--studio-text)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <Sparkles size={12} color="var(--studio-purple)" />
-                                    <span>Regenerate Template</span>
-                                </button>
-
-                                {/* Reset Layout */}
-                                <button
-                                    className="overflow-menu-item"
-                                    onClick={() => {
-                                        setShowOverflowMenu(false);
-                                        handleResetLayout();
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.6rem',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        backgroundColor: 'transparent',
-                                        color: 'var(--studio-text)',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <LayoutGrid size={12} />
-                                    <span>Reset Layout</span>
-                                </button>
+                                    <Sparkles size={10} /> AI Generated
+                                </span>
                             </div>
-                        )}
-                    </div>
-
-                    {/* Toggle AI Chat Button (Icon with custom tooltip) */}
-                    <button 
-                        className={`studio-topnav-btn studio-tooltip-trigger ${chatCollapsed ? '' : 'active-filter'}`} 
-                        onClick={() => setChatCollapsed(!chatCollapsed)} 
-                        style={{
-                            padding: '0.35rem 0.5rem',
-                            backgroundColor: chatCollapsed ? '#ffffff' : 'rgba(99, 102, 241, 0.08)',
-                            color: chatCollapsed ? 'var(--studio-text)' : '#4f46e5',
-                            borderColor: chatCollapsed ? 'var(--studio-border)' : 'rgba(99, 102, 241, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}
-                    >
-                        <MessageSquare size={12} />
-                        <span className="studio-tooltip">{chatCollapsed ? "Show AI Chat" : "Hide AI Chat"}</span>
-                    </button>
-
-                    {/* Share Button (Icon with custom tooltip) */}
-                    <button 
-                        className="studio-topnav-btn studio-tooltip-trigger" 
-                        onClick={() => setShowShareModal(true)}
-                        style={{
-                            padding: '0.35rem 0.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}
-                    >
-                        <Share2 size={12} />
-                        <span className="studio-tooltip">Share Dashboard</span>
-                    </button>
-
-                    {/* Export Button (Icon with custom tooltip) */}
-                    <button 
-                        className="studio-topnav-btn studio-tooltip-trigger" 
-                        onClick={() => setShowExportModal(true)}
-                        style={{
-                            padding: '0.35rem 0.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}
-                    >
-                        <Download size={12} />
-                        <span className="studio-tooltip">Export Options</span>
-                    </button>
-
-                    {/* Present Button (Icon with custom tooltip) */}
-                    <button 
-                        className="studio-topnav-btn studio-tooltip-trigger" 
-                        onClick={toggleFullscreen} 
-                        style={{
-                            padding: '0.35rem 0.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            position: 'relative'
-                        }}
-                    >
-                        <Maximize2 size={12} />
-                        <span className="studio-tooltip">Present</span>
-                    </button>
-
-                    {/* Primary Save Action */}
-                    <button className="studio-topnav-btn primary" onClick={() => handleSaveDashboard(false)}>
-                        Save
-                    </button>
-                </div>
-            </div>
-
-            {/* Collapsible Filter Panel */}
-            {showFilterPanel && (
-                <div className="studio-filter-panel" style={{
-                    backgroundColor: '#ffffff',
-                    border: '1px solid var(--studio-border)',
-                    borderRadius: '12px',
-                    padding: '1rem',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    marginTop: '0.5rem',
-                    marginBottom: '0.5rem'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.825rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Sliders size={13} color="#6366f1" /> Interactive Filter Hub
-                        </h4>
-                        {Object.keys(activeFilters).length > 0 && (
-                            <button onClick={handleClearAllFilters} style={{ background: 'transparent', border: 'none', color: '#6366f1', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                                <Trash2 size={11} /> Clear All Filters
-                            </button>
-                        )}
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Select Dimension</label>
-                            <select
-                                value={filterCol}
-                                onChange={e => { setFilterCol(e.target.value); setFilterVal(''); }}
-                                style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: '#f8fafc', fontWeight: 600, cursor: 'pointer', minWidth: '150px' }}
-                            >
-                                <option value="">-- Choose Column --</option>
-                                {dsAnalytics?.columns.map(col => (
-                                    <option key={col} value={col}>{col}</option>
-                                ))}
-                            </select>
+                            <span className="studio-dash-subtitle" style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)', marginTop: '0.2rem' }}>
+                                Dynamic Database aggregates calculated in real-time from active records
+                            </span>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                            <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Select Value</label>
-                            <select
-                                value={filterVal}
-                                onChange={e => setFilterVal(e.target.value)}
-                                disabled={!filterCol}
-                                style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: '#f8fafc', fontWeight: 600, cursor: 'pointer', minWidth: '180px' }}
-                            >
-                                <option value="">-- Choose Value --</option>
-                                {uniqueValues.map(val => (
-                                    <option key={val} value={val}>{val}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <Button
-                            variant="primary"
-                            onClick={handleAddFilter}
-                            disabled={!filterCol || !filterVal}
-                            style={{ padding: '0.35rem 0.85rem', height: '30px', fontSize: '0.72rem', fontWeight: 700 }}
-                        >
-                            Apply Filter
-                        </Button>
-                    </div>
-
-                    {/* Active Filters Pills */}
-                    {Object.keys(activeFilters).length > 0 && (
-                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.25rem', borderTop: '1px dashed #f1f5f9', paddingTop: '0.5rem' }}>
-                            {Object.entries(activeFilters).map(([col, val]) => (
-                                <div key={col} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'rgba(99, 102, 241, 0.06)', border: '1px solid rgba(99, 102, 241, 0.12)', color: '#4f46e5', padding: '0.2rem 0.4rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
-                                    <span>{col}: <strong>{val}</strong></span>
-                                    <button onClick={() => handleRemoveFilter(col)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', marginLeft: '0.15rem' }}>
-                                        <Trash2 size={10} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Share Dialog Modal */}
-            {showShareModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.3)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid var(--studio-border)',
-                        borderRadius: '16px',
-                        padding: '1.5rem',
-                        width: '90%',
-                        maxWidth: '460px',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Share2 size={18} color="#6366f1" /> Share Dashboard
-                            </h3>
-                            <button onClick={() => setShowShareModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.1rem', cursor: 'pointer', padding: 0 }}>
-                                ×
-                            </button>
-                        </div>
-                        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
-                            Generate a sharing link for colleagues. Recipients will see this dashboard and any active filters you have currently applied.
-                        </p>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                            <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Sharing Link</label>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input
-                                    readOnly
-                                    value={
-                                        typeof window !== 'undefined'
-                                            ? `${window.location.origin}${window.location.pathname}?filters=${encodeURIComponent(JSON.stringify(activeFilters))}`
-                                            : ''
-                                    }
+                        <div className="studio-dash-controls" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                            {/* Database Dropdown Selector */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', backgroundColor: 'var(--studio-bg)', padding: '0.35rem 0.65rem', borderRadius: '8px', border: '1px solid var(--studio-border)' }}>
+                                <Database size={13} color="var(--studio-text-sub)" />
+                                <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Dataset:</span>
+                                <select
                                     style={{
-                                        flex: 1,
-                                        padding: '0.5rem 0.75rem',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--studio-border)',
-                                        fontSize: '0.75rem',
-                                        backgroundColor: '#f8fafc',
-                                        color: '#334155',
+                                        border: 'none',
+                                        background: 'transparent',
+                                        fontSize: '0.725rem',
+                                        fontWeight: 700,
+                                        cursor: 'pointer',
                                         outline: 'none',
-                                        fontFamily: 'monospace'
+                                        color: 'var(--studio-text)'
                                     }}
-                                />
-                                <Button
-                                    variant="primary"
-                                    onClick={() => {
-                                        const url = typeof window !== 'undefined'
-                                            ? `${window.location.origin}${window.location.pathname}?filters=${encodeURIComponent(JSON.stringify(activeFilters))}`
-                                            : '';
-                                        navigator.clipboard.writeText(url);
-                                        showToast('Dashboard sharing link copied!', 'success');
-                                    }}
-                                    style={{ padding: '0.5rem 0.85rem', fontSize: '0.75rem', fontWeight: 700 }}
-                                    icon={<Copy size={13} />}
+                                    value={selectedDs}
+                                    onChange={(e) => setSelectedDs(e.target.value)}
                                 >
-                                    Copy
-                                </Button>
+                                    {datasets.map((ds) => (
+                                        <option key={ds.id} value={ds.id}>{ds.name}</option>
+                                    ))}
+                                </select>
                             </div>
-                        </div>
 
-                        {/* Additional sharing methods */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    const url = typeof window !== 'undefined'
-                                        ? `${window.location.origin}${window.location.pathname}?filters=${encodeURIComponent(JSON.stringify(activeFilters))}`
-                                        : '';
-                                    window.open(`mailto:?subject=Executive Report Dashboard&body=Here is the dashboard link: ${encodeURIComponent(url)}`);
-                                }}
-                                style={{ flex: 1, fontSize: '0.72rem', borderRadius: '8px', padding: '0.5rem' }}
-                            >
-                                Email link
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowShareModal(false)}
-                                style={{ flex: 1, fontSize: '0.72rem', borderRadius: '8px', padding: '0.5rem' }}
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                            {/* Segmented Control Builder Tabs (Marketplace, Chart Builder, Filters) */}
+                            <div className="studio-segmented-tabs">
+                                {/* Marketplace Toggle */}
+                                <button
+                                    className={`studio-segmented-btn ${showMarketplace ? 'active' : ''}`}
+                                    onClick={() => setShowMarketplace(!showMarketplace)}
+                                    title="Open Widget Marketplace"
+                                >
+                                    <Layers size={12} />
+                                    <span>Marketplace</span>
+                                </button>
 
-            {/* Export Dialog Modal */}
-            {showExportModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid var(--studio-border)',
-                        borderRadius: '16px',
-                        padding: '1.75rem',
-                        width: '380px',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1.25rem'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Download size={18} style={{ color: '#4f46e5' }} /> Export Dashboard
-                            </h3>
-                            <button onClick={() => setShowExportModal(false)} disabled={exporting} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.1rem', cursor: 'pointer', padding: 0 }}>
-                                ×
-                            </button>
-                        </div>
-                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)' }}>
-                            Save a high-resolution export matching the exact dimensions of your dashboard grid.
-                        </p>
+                                {/* Chart Builder Toggle */}
+                                <button
+                                    className={`studio-segmented-btn ${showChartBuilder ? 'active' : ''}`}
+                                    onClick={() => setShowChartBuilder(!showChartBuilder)}
+                                    title="Open Visual Chart Builder"
+                                >
+                                    <Edit2 size={12} />
+                                    <span>Chart Builder</span>
+                                </button>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                                {/* Filters Toggle */}
+                                <button
+                                    className={`studio-segmented-btn ${showFilterPanel || Object.keys(activeFilters).length > 0 ? 'active' : ''}`}
+                                    onClick={() => setShowFilterPanel(!showFilterPanel)}
+                                    title="Toggle Filters Panel"
+                                >
+                                    <Sliders size={12} />
+                                    <span>Filters</span>
+                                    {Object.keys(activeFilters).length > 0 && (
+                                        <span style={{ backgroundColor: '#4f46e5', color: '#ffffff', borderRadius: '99px', padding: '1px 5px', fontSize: '0.55rem', fontWeight: 800, marginLeft: '0.15rem' }}>
+                                            {Object.keys(activeFilters).length}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* More Actions Dropdown (Versions, Alerts, Comments, Health Score, Diagnostics, Auto Refresh, Regenerate, Reset) */}
+                            <div style={{ position: 'relative' }} ref={overflowRef}>
+                                <button
+                                    className={`studio-topnav-btn ${(showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'active-filter' : ''}`}
+                                    onClick={() => setShowOverflowMenu(!showOverflowMenu)}
+                                    style={{
+                                        padding: '0.35rem 0.5rem',
+                                        backgroundColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.08)' : 'var(--studio-card-bg)',
+                                        color: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? '#4f46e5' : 'var(--studio-text)',
+                                        borderColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.3)' : 'var(--studio-border)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    title="More Dashboard Tools"
+                                >
+                                    <MoreHorizontal size={14} />
+                                </button>
+
+                                {showOverflowMenu && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 4px)',
+                                        right: 0,
+                                        backgroundColor: 'var(--studio-card-bg)',
+                                        border: '1px solid var(--studio-border)',
+                                        borderRadius: '6px',
+                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                                        padding: '4px',
+                                        zIndex: 1000,
+                                        minWidth: '180px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '2px'
+                                    }}>
+                                        {/* Version History */}
+                                        <button
+                                            className="overflow-menu-item"
+                                            onClick={() => {
+                                                setShowVersionsPanel(!showVersionsPanel);
+                                                setShowOverflowMenu(false);
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.4rem 0.6rem',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                backgroundColor: showVersionsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                color: showVersionsPanel ? '#4f46e5' : 'var(--studio-text)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                width: '100%',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <History size={12} />
+                                            <span>Versions</span>
+                                        </button>
+
+                                        {/* Alerts */}
+                                        <button
+                                            className="overflow-menu-item"
+                                            onClick={() => {
+                                                setShowAlertsPanel(!showAlertsPanel);
+                                                setShowOverflowMenu(false);
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.4rem 0.6rem',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                backgroundColor: showAlertsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                color: showAlertsPanel ? '#4f46e5' : 'var(--studio-text)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                width: '100%',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <Bell size={12} />
+                                            <span>Alerts</span>
+                                        </button>
+
+                                        {/* Comments */}
+                                        <button
+                                            className="overflow-menu-item"
+                                            onClick={() => {
+                                                setShowCommentsPanel(!showCommentsPanel);
+                                                setShowOverflowMenu(false);
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.4rem 0.6rem',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                backgroundColor: showCommentsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                color: showCommentsPanel ? '#4f46e5' : 'var(--studio-text)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                width: '100%',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <MessageSquare size={12} />
+                                            <span>Comments</span>
+                                        </button>
+
+                                        {/* Health Score */}
+                                        <button
+                                            className="overflow-menu-item"
+                                            onClick={() => {
+                                                setShowHealthModal(!showHealthModal);
+                                                setShowOverflowMenu(false);
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.4rem 0.6rem',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                backgroundColor: showHealthModal ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                color: showHealthModal ? '#4f46e5' : 'var(--studio-text)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                width: '100%',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <Cpu size={12} />
+                                            <span>Health Score</span>
+                                        </button>
+
+                                        {/* Diagnostics */}
+                                        <button
+                                            className="overflow-menu-item"
+                                            onClick={() => {
+                                                setShowDiagnostics(!showDiagnostics);
+                                                setShowOverflowMenu(false);
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.4rem 0.6rem',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                backgroundColor: showDiagnostics ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                color: showDiagnostics ? '#4f46e5' : 'var(--studio-text)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                width: '100%',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <Settings size={12} />
+                                            <span>Diagnostics</span>
+                                        </button>
+
+                                        {/* Divider */}
+                                        <div style={{ height: '1px', backgroundColor: 'var(--studio-border)', margin: '4px 0' }} />
+
+                                        {/* Auto Refresh Toggle */}
+                                        <div className="overflow-menu-item" style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '0.4rem 0.6rem',
+                                            borderRadius: '4px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            color: 'var(--studio-text)',
+                                            cursor: 'default',
+                                            transition: 'all 0.15s'
+                                        }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <RefreshCw size={12} style={{ animation: autoRefresh ? 'spin 6s linear infinite' : 'none' }} />
+                                                <span>Auto Refresh</span>
+                                            </span>
+                                            <label className="studio-switch" style={{ margin: 0, transform: 'scale(0.8)', cursor: 'pointer' }}>
+                                                <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
+                                                <span className="studio-switch-slider"></span>
+                                            </label>
+                                        </div>
+
+                                        {/* Regenerate Template */}
+                                        <button
+                                            className="overflow-menu-item"
+                                            onClick={() => {
+                                                setShowOverflowMenu(false);
+                                                if (!dsAnalytics || activeRawData.length === 0) {
+                                                    showToast('No active dataset loaded.', 'error');
+                                                    return;
+                                                }
+                                                const classification = detectDatasetCategory(dsAnalytics);
+                                                setDetectedCategory(classification.category);
+                                                setDetectedConfidence(classification.confidence);
+                                                const explanation = generateAiExplanation(classification.category, dsAnalytics);
+                                                setAiExplanation(explanation);
+                                                buildExecutiveDashboard(dsAnalytics, activeRawData, classification.category);
+                                                setCardSizes({});
+                                                showToast(`Regenerated ${classification.category} dashboard layout!`, 'success');
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.4rem 0.6rem',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                backgroundColor: 'transparent',
+                                                color: 'var(--studio-text)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                width: '100%',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <Sparkles size={12} color="var(--studio-purple)" />
+                                            <span>Regenerate Template</span>
+                                        </button>
+
+                                        {/* Reset Layout */}
+                                        <button
+                                            className="overflow-menu-item"
+                                            onClick={() => {
+                                                setShowOverflowMenu(false);
+                                                handleResetLayout();
+                                            }}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.4rem 0.6rem',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                backgroundColor: 'transparent',
+                                                color: 'var(--studio-text)',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                width: '100%',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            <LayoutGrid size={12} />
+                                            <span>Reset Layout</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Toggle AI Chat Button (Icon with custom tooltip) */}
                             <button
-                                onClick={() => handleExportFormat('pdf')}
-                                disabled={exporting}
-                                className="studio-topnav-btn"
+                                className={`studio-topnav-btn studio-tooltip-trigger ${chatCollapsed ? '' : 'active-filter'}`}
+                                onClick={() => setChatCollapsed(!chatCollapsed)}
                                 style={{
-                                    width: '100%',
-                                    justifyContent: 'center',
-                                    padding: '0.6rem',
-                                    borderRadius: '10px',
-                                    backgroundColor: '#4f46e5',
-                                    color: '#ffffff',
-                                    borderColor: '#4f46e5',
-                                    fontWeight: 700,
-                                    fontSize: '0.78rem',
+                                    padding: '0.35rem 0.5rem',
+                                    backgroundColor: chatCollapsed ? '#ffffff' : 'rgba(99, 102, 241, 0.08)',
+                                    color: chatCollapsed ? 'var(--studio-text)' : '#4f46e5',
+                                    borderColor: chatCollapsed ? 'var(--studio-border)' : 'rgba(99, 102, 241, 0.3)',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '0.35rem'
-                                }}
-                            >
-                                {exporting ? <RefreshCw size={14} className="animate-spin" /> : 'Export as PDF Document'}
-                            </button>
-
-                            <button
-                                onClick={() => handleExportFormat('png')}
-                                disabled={exporting}
-                                className="studio-topnav-btn"
-                                style={{
-                                    width: '100%',
                                     justifyContent: 'center',
-                                    padding: '0.6rem',
-                                    borderRadius: '10px',
-                                    fontWeight: 600,
-                                    fontSize: '0.78rem'
+                                    position: 'relative'
                                 }}
                             >
-                                Export as PNG Image
+                                <MessageSquare size={12} />
+                                <span className="studio-tooltip">{chatCollapsed ? "Show AI Chat" : "Hide AI Chat"}</span>
                             </button>
 
+                            {/* Share Button (Icon with custom tooltip) */}
                             <button
-                                onClick={() => handleExportFormat('jpeg')}
-                                disabled={exporting}
-                                className="studio-topnav-btn"
+                                className="studio-topnav-btn studio-tooltip-trigger"
+                                onClick={() => setShowShareModal(true)}
                                 style={{
-                                    width: '100%',
+                                    padding: '0.35rem 0.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'center',
-                                    padding: '0.6rem',
-                                    borderRadius: '10px',
-                                    fontWeight: 600,
-                                    fontSize: '0.78rem'
+                                    position: 'relative'
                                 }}
                             >
-                                Export as JPEG Image
+                                <Share2 size={12} />
+                                <span className="studio-tooltip">Share Dashboard</span>
+                            </button>
+
+                            {/* Export Button (Icon with custom tooltip) */}
+                            <button
+                                className="studio-topnav-btn studio-tooltip-trigger"
+                                onClick={() => setShowExportModal(true)}
+                                style={{
+                                    padding: '0.35rem 0.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative'
+                                }}
+                            >
+                                <Download size={12} />
+                                <span className="studio-tooltip">Export Options</span>
+                            </button>
+
+                            {/* Present Button (Icon with custom tooltip) */}
+                            <button
+                                className="studio-topnav-btn studio-tooltip-trigger"
+                                onClick={toggleFullscreen}
+                                style={{
+                                    padding: '0.35rem 0.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    position: 'relative'
+                                }}
+                            >
+                                <Maximize2 size={12} />
+                                <span className="studio-tooltip">Present</span>
+                            </button>
+
+                            {/* Primary Save Action */}
+                            <button className="studio-topnav-btn primary" onClick={() => handleSaveDashboard(false)}>
+                                Save
                             </button>
                         </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowExportModal(false)}
-                                disabled={exporting}
-                                style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}
-                            >
-                                Cancel
-                            </Button>
-                        </div>
                     </div>
-                </div>
-            )}
 
-            {/* Widget Marketplace Drawer */}
-            {showMarketplace && (
-                <div className="studio-drawer-overlay" onClick={() => setShowMarketplace(false)}>
-                    <div className="studio-drawer" onClick={e => e.stopPropagation()}>
-                        <div className="studio-drawer-header">
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Layers size={16} color="#6366f1" /> Widget Marketplace
-                            </h3>
-                            <button onClick={() => setShowMarketplace(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                        </div>
-                        <div className="studio-drawer-content">
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
-                                Select a professional BI widget template, map dimensions/measures, and deploy to your dashboard grid.
-                            </p>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Widget Format</label>
-                                <select 
-                                    value={marketType} 
-                                    onChange={e => setMarketType(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value="kpi">KPI Summary Aggregator</option>
-                                    <option value="line">Line Trend Chart</option>
-                                    <option value="bar">Bar Ranking Chart</option>
-                                    <option value="pie">Pie Donut Share</option>
-                                    <option value="area">Area Area Chart</option>
-                                    <option value="table">Details Data Grid</option>
-                                    <option value="heatmap">Pivot Density Heatmap</option>
-                                    <option value="forecast">Linear Forecast Trend</option>
-                                    <option value="scatter">Continuous Scatter Plot</option>
-                                    <option value="treemap">Hierarchical Treemap</option>
-                                    <option value="histogram">Distribution Histogram</option>
-                                    <option value="map">Latitude/Longitude Coordinate Map</option>
-                                    <option value="waterfall">Waterfall Revenue Bridge</option>
-                                    <option value="bubble">3D Continuous Bubble Chart</option>
-                                    <option value="radar">Polar Radar Spider Chart</option>
-                                    <option value="gauge">Target Dial Gauge</option>
-                                    <option value="progress">Horizontal Progress Bar</option>
-                                    <option value="pivot">Cross-tab Pivot Grid</option>
-                                    <option value="wordcloud">Keyword Density Word Cloud</option>
-                                    <option value="calendar">Activity Intensity Calendar</option>
-                                    <option value="boxplot">Statistical Range Box Plot</option>
-                                </select>
+                    {/* Collapsible Filter Panel */}
+                    {showFilterPanel && (
+                        <div className="studio-filter-panel" style={{
+                            backgroundColor: '#ffffff',
+                            border: '1px solid var(--studio-border)',
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.75rem',
+                            marginTop: '0.5rem',
+                            marginBottom: '0.5rem'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h4 style={{ margin: 0, fontSize: '0.825rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <Sliders size={13} color="#6366f1" /> Interactive Filter Hub
+                                </h4>
+                                {Object.keys(activeFilters).length > 0 && (
+                                    <button onClick={handleClearAllFilters} style={{ background: 'transparent', border: 'none', color: '#6366f1', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                                        <Trash2 size={11} /> Clear All Filters
+                                    </button>
+                                )}
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Custom Title</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Enter descriptive title..." 
-                                    value={marketTitle}
-                                    onChange={e => setMarketTitle(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', backgroundColor: '#f8fafc', outline: 'none' }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Dimension Column (X-Axis)</label>
-                                <select 
-                                    value={marketDim} 
-                                    onChange={e => setMarketDim(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value="">-- Choose Categorical / Date --</option>
-                                    {dsAnalytics?.columns.map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Measure Column (Y-Axis)</label>
-                                <select 
-                                    value={marketMeas} 
-                                    onChange={e => setMarketMeas(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value="">-- Choose Numeric Measure --</option>
-                                    {dsAnalytics?.columns.map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Grid Width Span</label>
-                                <select 
-                                    value={marketWidth} 
-                                    onChange={e => setMarketWidth(Number(e.target.value))}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value={3}>3 Cols (Quarter Page Width)</option>
-                                    <option value={4}>4 Cols (Third Page Width)</option>
-                                    <option value={6}>6 Cols (Half Page Width)</option>
-                                    <option value={8}>8 Cols (Two-Third Page Width)</option>
-                                    <option value={12}>12 Cols (Full Grid Width)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div className="studio-drawer-footer">
-                            <Button variant="outline" onClick={() => setShowMarketplace(false)} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Cancel</Button>
-                            <Button variant="primary" onClick={() => handleAddCustomWidget(marketType, marketTitle, marketDim, marketMeas, marketWidth)} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Add Widget</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Visual Chart Builder Sliding Sidebar Drawer */}
-            {showChartBuilder && (
-                <div className="studio-drawer-overlay" onClick={() => setShowChartBuilder(false)}>
-                    <div className="studio-drawer" onClick={e => e.stopPropagation()}>
-                        <div className="studio-drawer-header">
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Edit2 size={16} color="#6366f1" /> Visual Chart Builder
-                            </h3>
-                            <button onClick={() => setShowChartBuilder(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                        </div>
-                        <div className="studio-drawer-content">
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
-                                Map dimensions and measures continuously, choose aggregate computations, and view live chart previews.
-                            </p>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Visual Type</label>
-                                <select 
-                                    value={builderType} 
-                                    onChange={e => setBuilderType(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value="line">Line Trend Chart</option>
-                                    <option value="bar">Bar Ranking Chart</option>
-                                    <option value="area">Area Area Chart</option>
-                                    <option value="pie">Pie Donut Share</option>
-                                    <option value="scatter">Continuous Scatter Plot</option>
-                                    <option value="radar">Polar Radar Spider</option>
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>X-Axis Column (Dimension)</label>
-                                <select 
-                                    value={builderX} 
-                                    onChange={e => setBuilderX(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value="">-- Choose Column --</option>
-                                    {dsAnalytics?.columns.map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Y-Axis Column (Measure)</label>
-                                <select 
-                                    value={builderY} 
-                                    onChange={e => setBuilderY(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value="">-- Choose Column --</option>
-                                    {dsAnalytics?.columns.map(c => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Aggregate Calculation</label>
-                                <select 
-                                    value={builderAgg} 
-                                    onChange={e => setBuilderAgg(e.target.value)}
-                                    style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
-                                >
-                                    <option value="sum">SUM Value</option>
-                                    <option value="avg">AVERAGE Value</option>
-                                    <option value="count">COUNT Records</option>
-                                </select>
-                            </div>
-
-                            {/* Live SVG Preview Block */}
-                            {builderX && builderY && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1px dashed var(--studio-border)', borderRadius: '8px', padding: '0.5rem', height: '140px', background: '#f8fafc' }}>
-                                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Live Visual Builder Preview</span>
-                                    <div style={{ flex: 1, minHeight: 0 }}>
-                                        {builderType === 'line' && (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
-                                                    <XAxis dataKey="label" hide />
-                                                    <YAxis hide />
-                                                    <Line type="monotone" dataKey="value" stroke="#4f46e5" dot />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        )}
-                                        {builderType === 'bar' && (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
-                                                    <XAxis hide />
-                                                    <YAxis hide />
-                                                    <Bar dataKey="value" fill="#4f46e5" />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        )}
-                                        {builderType === 'area' && (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
-                                                    <XAxis hide />
-                                                    <YAxis hide />
-                                                    <Area type="monotone" dataKey="value" fill="rgba(79, 70, 229, 0.2)" stroke="#4f46e5" />
-                                                </AreaChart>
-                                            </ResponsiveContainer>
-                                        )}
-                                        {builderType === 'pie' && (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <PieChart>
-                                                    <Pie data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)} dataKey="value" cx="50%" cy="50%" outerRadius={35} fill="#4f46e5" />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                        )}
-                                        {builderType === 'scatter' && (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <ScatterChart>
-                                                    <Scatter data={activeRawData.slice(0, 15).map(r => ({ x: Number(r[builderX]) || 0, y: Number(r[builderY]) || 0 }))} fill="#4f46e5" />
-                                                </ScatterChart>
-                                            </ResponsiveContainer>
-                                        )}
-                                        {builderType === 'radar' && (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <RadarChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
-                                                    <PolarGrid />
-                                                    <Radar dataKey="value" fill="#4f46e5" fillOpacity={0.3} />
-                                                </RadarChart>
-                                            </ResponsiveContainer>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="studio-drawer-footer">
-                            <Button variant="outline" onClick={() => setShowChartBuilder(false)} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Cancel</Button>
-                            <Button variant="primary" onClick={handleChartBuilderAdd} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Deploy Visual</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Version History sliding sidebar panel */}
-            {showVersionsPanel && (
-                <div className="studio-drawer-overlay" onClick={() => setShowVersionsPanel(false)}>
-                    <div className="studio-drawer" onClick={e => e.stopPropagation()}>
-                        <div className="studio-drawer-header">
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <History size={16} color="#6366f1" /> Version History Log
-                            </h3>
-                            <button onClick={() => setShowVersionsPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                        </div>
-                        <div className="studio-drawer-content">
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
-                                Save current snapshot workspace configuration (widget counts, column settings, filters, and drag card positions).
-                            </p>
-
-                            {/* Create layout snapshot version */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
-                                <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Change Description</label>
-                                <textarea 
-                                    placeholder="Enter changelog comment..." 
-                                    value={newVersionChangelog}
-                                    onChange={e => setNewVersionChangelog(e.target.value)}
-                                    style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', height: '50px', outline: 'none', resize: 'none' }}
-                                />
-                                <Button variant="primary" onClick={handleSaveVersion} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
-                                    Save Layout Snapshot
-                                </Button>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Saved Snapshots List</span>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                    {versionsList.map((ver, idx) => (
-                                        <div key={ver.id || idx} style={{ border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.5rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', background: 'white', position: 'relative' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--studio-text)' }}>Version {ver.version}</span>
-                                                <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>{new Date(ver.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
-                                            </div>
-                                            <span style={{ fontSize: '0.68rem', color: 'var(--studio-text-sub)' }}>{ver.changeLog}</span>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem', borderTop: '1px dashed #f1f5f9', paddingTop: '0.25rem' }}>
-                                                <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>By: <strong>{ver.changedBy}</strong></span>
-                                                <button 
-                                                    onClick={() => handleRollbackVersion(ver.id)}
-                                                    style={{ border: 'none', background: 'var(--studio-purple-light)', color: '#4f46e5', fontSize: '0.625rem', padding: '0.15rem 0.45rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}
-                                                >
-                                                    Rollback to This
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Alerts Configuration Panel */}
-            {showAlertsPanel && (
-                <div className="studio-drawer-overlay" onClick={() => setShowAlertsPanel(false)}>
-                    <div className="studio-drawer" onClick={e => e.stopPropagation()}>
-                        <div className="studio-drawer-header">
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Bell size={16} color="#6366f1" /> Business Alert Rules
-                            </h3>
-                            <button onClick={() => setShowAlertsPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                        </div>
-                        <div className="studio-drawer-content">
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
-                                Setup target conditional alerts. Rules evaluate instantly and dispatch notifications.
-                            </p>
-
-                            {/* Create alert form */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                    <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Select Metric Column</label>
-                                    <select 
-                                        value={newAlertMetric} 
-                                        onChange={e => setNewAlertMetric(e.target.value)}
-                                        style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Select Dimension</label>
+                                    <select
+                                        value={filterCol}
+                                        onChange={e => { setFilterCol(e.target.value); setFilterVal(''); }}
+                                        style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: '#f8fafc', fontWeight: 600, cursor: 'pointer', minWidth: '150px' }}
                                     >
                                         <option value="">-- Choose Column --</option>
-                                        {Object.keys(dsAnalytics?.stats || {}).filter(c => dsAnalytics?.stats[c]?.type === 'numeric').map(c => (
-                                            <option key={c} value={c}>{c}</option>
+                                        {dsAnalytics?.columns.map(col => (
+                                            <option key={col} value={col}>{col}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                    <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Comparison Operator</label>
-                                    <select 
-                                        value={newAlertOperator} 
-                                        onChange={e => setNewAlertOperator(e.target.value)}
-                                        style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Select Value</label>
+                                    <select
+                                        value={filterVal}
+                                        onChange={e => setFilterVal(e.target.value)}
+                                        disabled={!filterCol}
+                                        style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: '#f8fafc', fontWeight: 600, cursor: 'pointer', minWidth: '180px' }}
                                     >
-                                        <option value="below">Is Below (&lt;)</option>
-                                        <option value="above">Is Above (&gt;)</option>
-                                        <option value="equals">Is Equal (=)</option>
+                                        <option value="">-- Choose Value --</option>
+                                        {uniqueValues.map(val => (
+                                            <option key={val} value={val}>{val}</option>
+                                        ))}
                                     </select>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                    <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Value Threshold</label>
-                                    <input 
-                                        type="number" 
-                                        placeholder="Enter threshold amount..." 
-                                        value={newAlertThreshold}
-                                        onChange={e => setNewAlertThreshold(e.target.value)}
-                                        style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
-                                    />
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem' }}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={newAlertEmail} 
-                                        onChange={e => setNewAlertEmail(e.target.checked)} 
-                                        style={{ cursor: 'pointer' }}
-                                    />
-                                    <span>Send instantaneous email alerts on breach</span>
-                                </div>
-                                <Button variant="primary" onClick={handleAddAlertRule} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
-                                    Deploy Alert Rule
+
+                                <Button
+                                    variant="primary"
+                                    onClick={handleAddFilter}
+                                    disabled={!filterCol || !filterVal}
+                                    style={{ padding: '0.35rem 0.85rem', height: '30px', fontSize: '0.72rem', fontWeight: 700 }}
+                                >
+                                    Apply Filter
                                 </Button>
                             </div>
 
-                            {/* Active rules list */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Active Trigger Rules</span>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                    {activeAlerts.map((alert) => (
-                                        <div key={alert.id} style={{ border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{alert.metric.replace('_', ' ')}</span>
-                                                <span style={{ fontSize: '0.65rem', color: 'var(--studio-text-sub)' }}>Condition: {alert.operator} {alert.threshold.toLocaleString()}</span>
-                                                <span style={{ fontSize: '0.55rem', color: 'var(--studio-green)' }}>Preference: Email alerts enabled</span>
-                                            </div>
-                                            <button 
-                                                onClick={() => handleDeleteAlertRule(alert.id)}
-                                                style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
-                                            >
-                                                <Trash2 size={13} />
+                            {/* Active Filters Pills */}
+                            {Object.keys(activeFilters).length > 0 && (
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.25rem', borderTop: '1px dashed #f1f5f9', paddingTop: '0.5rem' }}>
+                                    {Object.entries(activeFilters).map(([col, val]) => (
+                                        <div key={col} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', backgroundColor: 'rgba(99, 102, 241, 0.06)', border: '1px solid rgba(99, 102, 241, 0.12)', color: '#4f46e5', padding: '0.2rem 0.4rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700 }}>
+                                            <span>{col}: <strong>{val}</strong></span>
+                                            <button onClick={() => handleRemoveFilter(col)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', marginLeft: '0.15rem' }}>
+                                                <Trash2 size={10} />
                                             </button>
                                         </div>
                                     ))}
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Share Dialog Modal */}
+                    {showShareModal && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(15, 23, 42, 0.3)',
+                            backdropFilter: 'blur(4px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 99999
+                        }}>
+                            <div style={{
+                                backgroundColor: '#ffffff',
+                                border: '1px solid var(--studio-border)',
+                                borderRadius: '16px',
+                                padding: '1.5rem',
+                                width: '90%',
+                                maxWidth: '460px',
+                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1rem'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Share2 size={18} color="#6366f1" /> Share Dashboard
+                                    </h3>
+                                    <button onClick={() => setShowShareModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.1rem', cursor: 'pointer', padding: 0 }}>
+                                        ×
+                                    </button>
+                                </div>
+                                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
+                                    Generate a sharing link for colleagues. Recipients will see this dashboard and any active filters you have currently applied.
+                                </p>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                    <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Sharing Link</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <input
+                                            readOnly
+                                            value={
+                                                typeof window !== 'undefined'
+                                                    ? `${window.location.origin}${window.location.pathname}?filters=${encodeURIComponent(JSON.stringify(activeFilters))}`
+                                                    : ''
+                                            }
+                                            style={{
+                                                flex: 1,
+                                                padding: '0.5rem 0.75rem',
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--studio-border)',
+                                                fontSize: '0.75rem',
+                                                backgroundColor: '#f8fafc',
+                                                color: '#334155',
+                                                outline: 'none',
+                                                fontFamily: 'monospace'
+                                            }}
+                                        />
+                                        <Button
+                                            variant="primary"
+                                            onClick={() => {
+                                                const url = typeof window !== 'undefined'
+                                                    ? `${window.location.origin}${window.location.pathname}?filters=${encodeURIComponent(JSON.stringify(activeFilters))}`
+                                                    : '';
+                                                navigator.clipboard.writeText(url);
+                                                showToast('Dashboard sharing link copied!', 'success');
+                                            }}
+                                            style={{ padding: '0.5rem 0.85rem', fontSize: '0.75rem', fontWeight: 700 }}
+                                            icon={<Copy size={13} />}
+                                        >
+                                            Copy
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Additional sharing methods */}
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            const url = typeof window !== 'undefined'
+                                                ? `${window.location.origin}${window.location.pathname}?filters=${encodeURIComponent(JSON.stringify(activeFilters))}`
+                                                : '';
+                                            window.open(`mailto:?subject=Executive Report Dashboard&body=Here is the dashboard link: ${encodeURIComponent(url)}`);
+                                        }}
+                                        style={{ flex: 1, fontSize: '0.72rem', borderRadius: '8px', padding: '0.5rem' }}
+                                    >
+                                        Email link
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowShareModal(false)}
+                                        style={{ flex: 1, fontSize: '0.72rem', borderRadius: '8px', padding: '0.5rem' }}
+                                    >
+                                        Close
+                                    </Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    )}
 
-            {/* Collaboration Discussions Panel */}
-            {showCommentsPanel && (
-                <div className="studio-drawer-overlay" onClick={() => setShowCommentsPanel(false)}>
-                    <div className="studio-drawer" onClick={e => e.stopPropagation()}>
-                        <div className="studio-drawer-header">
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <MessageSquare size={16} color="#6366f1" /> Widget Discussions
-                            </h3>
-                            <button onClick={() => setShowCommentsPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                    {/* Export Dialog Modal */}
+                    {showExportModal && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                            backdropFilter: 'blur(4px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 99999
+                        }}>
+                            <div style={{
+                                backgroundColor: '#ffffff',
+                                border: '1px solid var(--studio-border)',
+                                borderRadius: '16px',
+                                padding: '1.75rem',
+                                width: '380px',
+                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1.25rem'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Download size={18} style={{ color: '#4f46e5' }} /> Export Dashboard
+                                    </h3>
+                                    <button onClick={() => setShowExportModal(false)} disabled={exporting} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.1rem', cursor: 'pointer', padding: 0 }}>
+                                        ×
+                                    </button>
+                                </div>
+                                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)' }}>
+                                    Save a high-resolution export matching the exact dimensions of your dashboard grid.
+                                </p>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                                    <button
+                                        onClick={() => handleExportFormat('pdf')}
+                                        disabled={exporting}
+                                        className="studio-topnav-btn"
+                                        style={{
+                                            width: '100%',
+                                            justifyContent: 'center',
+                                            padding: '0.6rem',
+                                            borderRadius: '10px',
+                                            backgroundColor: '#4f46e5',
+                                            color: '#ffffff',
+                                            borderColor: '#4f46e5',
+                                            fontWeight: 700,
+                                            fontSize: '0.78rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.35rem'
+                                        }}
+                                    >
+                                        {exporting ? <RefreshCw size={14} className="animate-spin" /> : 'Export as PDF Document'}
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleExportFormat('png')}
+                                        disabled={exporting}
+                                        className="studio-topnav-btn"
+                                        style={{
+                                            width: '100%',
+                                            justifyContent: 'center',
+                                            padding: '0.6rem',
+                                            borderRadius: '10px',
+                                            fontWeight: 600,
+                                            fontSize: '0.78rem'
+                                        }}
+                                    >
+                                        Export as PNG Image
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleExportFormat('jpeg')}
+                                        disabled={exporting}
+                                        className="studio-topnav-btn"
+                                        style={{
+                                            width: '100%',
+                                            justifyContent: 'center',
+                                            padding: '0.6rem',
+                                            borderRadius: '10px',
+                                            fontWeight: 600,
+                                            fontSize: '0.78rem'
+                                        }}
+                                    >
+                                        Export as JPEG Image
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowExportModal(false)}
+                                        disabled={exporting}
+                                        style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
-                        <div className="studio-drawer-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 60px)' }}>
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
-                                Post collaborative messages, tag specific widgets, or resolve discussion threads.
-                            </p>
+                    )}
 
-                            {/* Comments scrolling thread */}
-                            <div style={{ flex: 1, overflowY: 'auto', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.5rem', backgroundColor: 'var(--studio-bg)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {collaborationComments.map((comment) => {
-                                    const relatedWidget = widgets.find(w => w.id === comment.widgetId);
-                                    return (
-                                        <div key={comment.id} style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: comment.isResolved ? 'var(--studio-bg)' : 'var(--studio-card-bg)', border: '1px solid var(--studio-border)', display: 'flex', flexDirection: 'column', gap: '0.2', position: 'relative' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--studio-text)' }}>{comment.userName}</span>
-                                                <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>{new Date(comment.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
-                                            </div>
-                                            {relatedWidget && (
-                                                <span style={{ fontSize: '0.55rem', alignSelf: 'flex-start', padding: '0.1rem 0.3rem', backgroundColor: 'var(--studio-purple-light)', color: 'var(--studio-purple)', borderRadius: '4px', fontWeight: 700 }}>
-                                                    Widget: {relatedWidget.title}
-                                                </span>
-                                            )}
-                                            <span style={{ fontSize: '0.7rem', color: 'var(--studio-text)', textDecoration: comment.isResolved ? 'line-through' : 'none' }}>{comment.content}</span>
-                                            
-                                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
-                                                {!comment.isResolved ? (
-                                                    <button 
-                                                        onClick={() => handleResolveComment(comment.id)}
-                                                        style={{ border: 'none', backgroundColor: 'var(--studio-green-light)', color: 'var(--studio-green)', fontSize: '0.55rem', padding: '0.1rem 0.35rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}
-                                                    >
-                                                        Resolve Thread
-                                                    </button>
-                                                ) : (
-                                                    <span style={{ fontSize: '0.55rem', color: 'var(--studio-green)', fontWeight: 700 }}>✓ Resolved</span>
+                    {/* Widget Marketplace Drawer */}
+                    {showMarketplace && (
+                        <div className="studio-drawer-overlay" onClick={() => setShowMarketplace(false)}>
+                            <div className="studio-drawer" onClick={e => e.stopPropagation()}>
+                                <div className="studio-drawer-header">
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Layers size={16} color="#6366f1" /> Widget Marketplace
+                                    </h3>
+                                    <button onClick={() => setShowMarketplace(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+                                <div className="studio-drawer-content">
+                                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
+                                        Select a professional BI widget template, map dimensions/measures, and deploy to your dashboard grid.
+                                    </p>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Widget Format</label>
+                                        <select
+                                            value={marketType}
+                                            onChange={e => setMarketType(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value="kpi">KPI Summary Aggregator</option>
+                                            <option value="line">Line Trend Chart</option>
+                                            <option value="bar">Bar Ranking Chart</option>
+                                            <option value="pie">Pie Donut Share</option>
+                                            <option value="area">Area Area Chart</option>
+                                            <option value="table">Details Data Grid</option>
+                                            <option value="heatmap">Pivot Density Heatmap</option>
+                                            <option value="forecast">Linear Forecast Trend</option>
+                                            <option value="scatter">Continuous Scatter Plot</option>
+                                            <option value="treemap">Hierarchical Treemap</option>
+                                            <option value="histogram">Distribution Histogram</option>
+                                            <option value="map">Latitude/Longitude Coordinate Map</option>
+                                            <option value="waterfall">Waterfall Revenue Bridge</option>
+                                            <option value="bubble">3D Continuous Bubble Chart</option>
+                                            <option value="radar">Polar Radar Spider Chart</option>
+                                            <option value="gauge">Target Dial Gauge</option>
+                                            <option value="progress">Horizontal Progress Bar</option>
+                                            <option value="pivot">Cross-tab Pivot Grid</option>
+                                            <option value="wordcloud">Keyword Density Word Cloud</option>
+                                            <option value="calendar">Activity Intensity Calendar</option>
+                                            <option value="boxplot">Statistical Range Box Plot</option>
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Custom Title</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter descriptive title..."
+                                            value={marketTitle}
+                                            onChange={e => setMarketTitle(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', backgroundColor: '#f8fafc', outline: 'none' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Dimension Column (X-Axis)</label>
+                                        <select
+                                            value={marketDim}
+                                            onChange={e => setMarketDim(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value="">-- Choose Categorical / Date --</option>
+                                            {dsAnalytics?.columns.map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Measure Column (Y-Axis)</label>
+                                        <select
+                                            value={marketMeas}
+                                            onChange={e => setMarketMeas(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value="">-- Choose Numeric Measure --</option>
+                                            {dsAnalytics?.columns.map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Grid Width Span</label>
+                                        <select
+                                            value={marketWidth}
+                                            onChange={e => setMarketWidth(Number(e.target.value))}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value={3}>3 Cols (Quarter Page Width)</option>
+                                            <option value={4}>4 Cols (Third Page Width)</option>
+                                            <option value={6}>6 Cols (Half Page Width)</option>
+                                            <option value={8}>8 Cols (Two-Third Page Width)</option>
+                                            <option value={12}>12 Cols (Full Grid Width)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="studio-drawer-footer">
+                                    <Button variant="outline" onClick={() => setShowMarketplace(false)} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Cancel</Button>
+                                    <Button variant="primary" onClick={() => handleAddCustomWidget(marketType, marketTitle, marketDim, marketMeas, marketWidth)} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Add Widget</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Visual Chart Builder Sliding Sidebar Drawer */}
+                    {showChartBuilder && (
+                        <div className="studio-drawer-overlay" onClick={() => setShowChartBuilder(false)}>
+                            <div className="studio-drawer" onClick={e => e.stopPropagation()}>
+                                <div className="studio-drawer-header">
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Edit2 size={16} color="#6366f1" /> Visual Chart Builder
+                                    </h3>
+                                    <button onClick={() => setShowChartBuilder(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+                                <div className="studio-drawer-content">
+                                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
+                                        Map dimensions and measures continuously, choose aggregate computations, and view live chart previews.
+                                    </p>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Visual Type</label>
+                                        <select
+                                            value={builderType}
+                                            onChange={e => setBuilderType(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value="line">Line Trend Chart</option>
+                                            <option value="bar">Bar Ranking Chart</option>
+                                            <option value="area">Area Area Chart</option>
+                                            <option value="pie">Pie Donut Share</option>
+                                            <option value="scatter">Continuous Scatter Plot</option>
+                                            <option value="radar">Polar Radar Spider</option>
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>X-Axis Column (Dimension)</label>
+                                        <select
+                                            value={builderX}
+                                            onChange={e => setBuilderX(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value="">-- Choose Column --</option>
+                                            {dsAnalytics?.columns.map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Y-Axis Column (Measure)</label>
+                                        <select
+                                            value={builderY}
+                                            onChange={e => setBuilderY(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value="">-- Choose Column --</option>
+                                            {dsAnalytics?.columns.map(c => (
+                                                <option key={c} value={c}>{c}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Aggregate Calculation</label>
+                                        <select
+                                            value={builderAgg}
+                                            onChange={e => setBuilderAgg(e.target.value)}
+                                            style={{ padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', fontWeight: 600, backgroundColor: '#f8fafc', outline: 'none' }}
+                                        >
+                                            <option value="sum">SUM Value</option>
+                                            <option value="avg">AVERAGE Value</option>
+                                            <option value="count">COUNT Records</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Live SVG Preview Block */}
+                                    {builderX && builderY && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1px dashed var(--studio-border)', borderRadius: '8px', padding: '0.5rem', height: '140px', background: '#f8fafc' }}>
+                                            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Live Visual Builder Preview</span>
+                                            <div style={{ flex: 1, minHeight: 0 }}>
+                                                {builderType === 'line' && (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <LineChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
+                                                            <XAxis dataKey="label" hide />
+                                                            <YAxis hide />
+                                                            <Line type="monotone" dataKey="value" stroke="#4f46e5" dot />
+                                                        </LineChart>
+                                                    </ResponsiveContainer>
+                                                )}
+                                                {builderType === 'bar' && (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
+                                                            <XAxis hide />
+                                                            <YAxis hide />
+                                                            <Bar dataKey="value" fill="#4f46e5" />
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                )}
+                                                {builderType === 'area' && (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <AreaChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
+                                                            <XAxis hide />
+                                                            <YAxis hide />
+                                                            <Area type="monotone" dataKey="value" fill="rgba(79, 70, 229, 0.2)" stroke="#4f46e5" />
+                                                        </AreaChart>
+                                                    </ResponsiveContainer>
+                                                )}
+                                                {builderType === 'pie' && (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Pie data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)} dataKey="value" cx="50%" cy="50%" outerRadius={35} fill="#4f46e5" />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                )}
+                                                {builderType === 'scatter' && (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <ScatterChart>
+                                                            <Scatter data={activeRawData.slice(0, 15).map(r => ({ x: Number(r[builderX]) || 0, y: Number(r[builderY]) || 0 }))} fill="#4f46e5" />
+                                                        </ScatterChart>
+                                                    </ResponsiveContainer>
+                                                )}
+                                                {builderType === 'radar' && (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <RadarChart data={aggregateMetric(activeRawData, builderX, builderY, builderAgg as any).slice(0, 5)}>
+                                                            <PolarGrid />
+                                                            <Radar dataKey="value" fill="#4f46e5" fillOpacity={0.3} />
+                                                        </RadarChart>
+                                                    </ResponsiveContainer>
                                                 )}
                                             </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="studio-drawer-footer">
+                                    <Button variant="outline" onClick={() => setShowChartBuilder(false)} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Cancel</Button>
+                                    <Button variant="primary" onClick={handleChartBuilderAdd} style={{ fontSize: '0.72rem', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>Deploy Visual</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Version History sliding sidebar panel */}
+                    {showVersionsPanel && (
+                        <div className="studio-drawer-overlay" onClick={() => setShowVersionsPanel(false)}>
+                            <div className="studio-drawer" onClick={e => e.stopPropagation()}>
+                                <div className="studio-drawer-header">
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <History size={16} color="#6366f1" /> Version History Log
+                                    </h3>
+                                    <button onClick={() => setShowVersionsPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+                                <div className="studio-drawer-content">
+                                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
+                                        Save current snapshot workspace configuration (widget counts, column settings, filters, and drag card positions).
+                                    </p>
+
+                                    {/* Create layout snapshot version */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
+                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Change Description</label>
+                                        <textarea
+                                            placeholder="Enter changelog comment..."
+                                            value={newVersionChangelog}
+                                            onChange={e => setNewVersionChangelog(e.target.value)}
+                                            style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', height: '50px', outline: 'none', resize: 'none' }}
+                                        />
+                                        <Button variant="primary" onClick={handleSaveVersion} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
+                                            Save Layout Snapshot
+                                        </Button>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Saved Snapshots List</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                            {versionsList.map((ver, idx) => (
+                                                <div key={ver.id || idx} style={{ border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.5rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', background: 'white', position: 'relative' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--studio-text)' }}>Version {ver.version}</span>
+                                                        <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>{new Date(ver.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                                    </div>
+                                                    <span style={{ fontSize: '0.68rem', color: 'var(--studio-text-sub)' }}>{ver.changeLog}</span>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem', borderTop: '1px dashed #f1f5f9', paddingTop: '0.25rem' }}>
+                                                        <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>By: <strong>{ver.changedBy}</strong></span>
+                                                        <button
+                                                            onClick={() => handleRollbackVersion(ver.id)}
+                                                            style={{ border: 'none', background: 'var(--studio-purple-light)', color: '#4f46e5', fontSize: '0.625rem', padding: '0.15rem 0.45rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}
+                                                        >
+                                                            Rollback to This
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Alerts Configuration Panel */}
+                    {showAlertsPanel && (
+                        <div className="studio-drawer-overlay" onClick={() => setShowAlertsPanel(false)}>
+                            <div className="studio-drawer" onClick={e => e.stopPropagation()}>
+                                <div className="studio-drawer-header">
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Bell size={16} color="#6366f1" /> Business Alert Rules
+                                    </h3>
+                                    <button onClick={() => setShowAlertsPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+                                <div className="studio-drawer-content">
+                                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
+                                        Setup target conditional alerts. Rules evaluate instantly and dispatch notifications.
+                                    </p>
+
+                                    {/* Create alert form */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Select Metric Column</label>
+                                            <select
+                                                value={newAlertMetric}
+                                                onChange={e => setNewAlertMetric(e.target.value)}
+                                                style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+                                            >
+                                                <option value="">-- Choose Column --</option>
+                                                {Object.keys(dsAnalytics?.stats || {}).filter(c => dsAnalytics?.stats[c]?.type === 'numeric').map(c => (
+                                                    <option key={c} value={c}>{c}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Comparison Operator</label>
+                                            <select
+                                                value={newAlertOperator}
+                                                onChange={e => setNewAlertOperator(e.target.value)}
+                                                style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+                                            >
+                                                <option value="below">Is Below (&lt;)</option>
+                                                <option value="above">Is Above (&gt;)</option>
+                                                <option value="equals">Is Equal (=)</option>
+                                            </select>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Value Threshold</label>
+                                            <input
+                                                type="number"
+                                                placeholder="Enter threshold amount..."
+                                                value={newAlertThreshold}
+                                                onChange={e => setNewAlertThreshold(e.target.value)}
+                                                style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={newAlertEmail}
+                                                onChange={e => setNewAlertEmail(e.target.checked)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                            <span>Send instantaneous email alerts on breach</span>
+                                        </div>
+                                        <Button variant="primary" onClick={handleAddAlertRule} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
+                                            Deploy Alert Rule
+                                        </Button>
+                                    </div>
+
+                                    {/* Active rules list */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Active Trigger Rules</span>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                            {activeAlerts.map((alert) => (
+                                                <div key={alert.id} style={{ border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.5rem 0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>{alert.metric.replace('_', ' ')}</span>
+                                                        <span style={{ fontSize: '0.65rem', color: 'var(--studio-text-sub)' }}>Condition: {alert.operator} {alert.threshold.toLocaleString()}</span>
+                                                        <span style={{ fontSize: '0.55rem', color: 'var(--studio-green)' }}>Preference: Email alerts enabled</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleDeleteAlertRule(alert.id)}
+                                                        style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Collaboration Discussions Panel */}
+                    {showCommentsPanel && (
+                        <div className="studio-drawer-overlay" onClick={() => setShowCommentsPanel(false)}>
+                            <div className="studio-drawer" onClick={e => e.stopPropagation()}>
+                                <div className="studio-drawer-header">
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <MessageSquare size={16} color="#6366f1" /> Widget Discussions
+                                    </h3>
+                                    <button onClick={() => setShowCommentsPanel(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+                                <div className="studio-drawer-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 60px)' }}>
+                                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)', lineHeight: 1.5 }}>
+                                        Post collaborative messages, tag specific widgets, or resolve discussion threads.
+                                    </p>
+
+                                    {/* Comments scrolling thread */}
+                                    <div style={{ flex: 1, overflowY: 'auto', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.5rem', backgroundColor: 'var(--studio-bg)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {collaborationComments.map((comment) => {
+                                            const relatedWidget = widgets.find(w => w.id === comment.widgetId);
+                                            return (
+                                                <div key={comment.id} style={{ padding: '0.5rem', borderRadius: '8px', backgroundColor: comment.isResolved ? 'var(--studio-bg)' : 'var(--studio-card-bg)', border: '1px solid var(--studio-border)', display: 'flex', flexDirection: 'column', gap: '0.2', position: 'relative' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--studio-text)' }}>{comment.userName}</span>
+                                                        <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>{new Date(comment.createdAt).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                                    </div>
+                                                    {relatedWidget && (
+                                                        <span style={{ fontSize: '0.55rem', alignSelf: 'flex-start', padding: '0.1rem 0.3rem', backgroundColor: 'var(--studio-purple-light)', color: 'var(--studio-purple)', borderRadius: '4px', fontWeight: 700 }}>
+                                                            Widget: {relatedWidget.title}
+                                                        </span>
+                                                    )}
+                                                    <span style={{ fontSize: '0.7rem', color: 'var(--studio-text)', textDecoration: comment.isResolved ? 'line-through' : 'none' }}>{comment.content}</span>
+
+                                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
+                                                        {!comment.isResolved ? (
+                                                            <button
+                                                                onClick={() => handleResolveComment(comment.id)}
+                                                                style={{ border: 'none', backgroundColor: 'var(--studio-green-light)', color: 'var(--studio-green)', fontSize: '0.55rem', padding: '0.1rem 0.35rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}
+                                                            >
+                                                                Resolve Thread
+                                                            </button>
+                                                        ) : (
+                                                            <span style={{ fontSize: '0.55rem', color: 'var(--studio-green)', fontWeight: 700 }}>✓ Resolved</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Create comment form */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', borderTop: '1px dashed var(--studio-border)', paddingTop: '0.5rem' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                            <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Attach Comment to Widget (Optional)</label>
+                                            <select
+                                                value={commentWidgetId || ''}
+                                                onChange={e => setCommentWidgetId(e.target.value || null)}
+                                                style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: '#f8fafc' }}
+                                            >
+                                                <option value="">-- General Dashboard --</option>
+                                                {widgets.map(w => (
+                                                    <option key={w.id} value={w.id}>{w.title}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Add comment..."
+                                                value={newCommentText}
+                                                onChange={e => setNewCommentText(e.target.value)}
+                                                style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', outline: 'none' }}
+                                            />
+                                            <Button variant="primary" onClick={handleAddComment} style={{ fontSize: '0.75rem', padding: '0 0.75rem' }}>
+                                                Post
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Dashboard Health Score Modal */}
+                    {showHealthModal && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                            backdropFilter: 'blur(4px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 99999
+                        }}>
+                            <div style={{
+                                backgroundColor: '#ffffff',
+                                border: '1px solid var(--studio-border)',
+                                borderRadius: '16px',
+                                padding: '1.5rem',
+                                width: '420px',
+                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1rem'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Cpu size={18} color="#6366f1" /> Dashboard Health Diagnostics
+                                    </h3>
+                                    <button onClick={() => setShowHealthModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--studio-border)' }}>
+                                    <div style={{
+                                        width: '60px', height: '60px', borderRadius: '50%',
+                                        background: 'conic-gradient(#4f46e5 0% ' + dashboardHealth.score + '%, #e2e8f0 ' + dashboardHealth.score + '% 100%)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'
+                                    }}>
+                                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 800 }}>
+                                            {dashboardHealth.score}%
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: '0.825rem', fontWeight: 800 }}>Data Quality Score</span>
+                                        <span style={{ fontSize: '0.68rem', color: 'var(--studio-text-sub)' }}>
+                                            We computed column structures, counts, null rates, and distribution variance metrics.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <span style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Optimizations Checklist</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                                        {(dashboardHealth.suggestions || []).map((suggestion, idx) => (
+                                            <div key={idx} style={{ display: 'flex', gap: '0.4rem', fontSize: '0.7rem', color: 'var(--studio-text)' }}>
+                                                <span style={{ color: '#6366f1' }}>✦</span>
+                                                <span>{suggestion}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                                    <Button variant="outline" onClick={() => setShowHealthModal(false)} style={{ fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>Close</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Performance Diagnostics Panel */}
+                    {showDiagnostics && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                            backdropFilter: 'blur(4px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 99999
+                        }}>
+                            <div style={{
+                                backgroundColor: '#ffffff',
+                                border: '1px solid var(--studio-border)',
+                                borderRadius: '16px',
+                                padding: '1.5rem',
+                                width: '380px',
+                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1rem'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Settings size={18} color="#6366f1" /> Developer Diagnostics
+                                    </h3>
+                                    <button onClick={() => setShowDiagnostics(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Data Loading Latency</span>
+                                        <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{perfLoadTime || 28} ms</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Widget Rendering Time</span>
+                                        <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{perfRenderTime || 12} ms</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>API Query Latency</span>
+                                        <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{perfApiLatency || 45} ms</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Total Active Widgets</span>
+                                        <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{widgets.length}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
+                                        <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Filtered Records Count</span>
+                                        <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{activeRawData.length}</span>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                                    <Button variant="outline" onClick={() => setShowDiagnostics(false)} style={{ fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>Close</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Drill-Through Details Table Modal */}
+                    {showDrillThrough && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                            backdropFilter: 'blur(4px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 99999
+                        }}>
+                            <div style={{
+                                backgroundColor: '#ffffff',
+                                border: '1px solid var(--studio-border)',
+                                borderRadius: '16px',
+                                padding: '1.5rem',
+                                width: '90%',
+                                maxWidth: '850px',
+                                height: '80%',
+                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1rem'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Table size={18} color="#6366f1" /> Drill-Through Details: {drillThroughFilter}
+                                    </h3>
+                                    <button onClick={() => setShowDrillThrough(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
+                                </div>
+
+                                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)' }}>
+                                    Showing underlying database records matching current dashboard filters ({drillThroughRows.length.toLocaleString()} matching records).
+                                </p>
+
+                                <div style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid var(--studio-border)', borderRadius: '8px' }}>
+                                    <table className="studio-table" style={{ width: '100%', fontSize: '0.7rem' }}>
+                                        <thead>
+                                            <tr style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 10 }}>
+                                                {dsAnalytics?.columns.map(col => (
+                                                    <th key={col} style={{ borderBottom: '1px solid var(--studio-border)', padding: '0.4rem 0.6rem', textAlign: 'left' }}>{col}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {drillThroughRows.slice(0, 50).map((row, i) => (
+                                                <tr key={i}>
+                                                    {dsAnalytics?.columns.map(col => (
+                                                        <td key={col} style={{ borderBottom: '1px solid var(--studio-border)', padding: '0.4rem 0.6rem' }}>
+                                                            {row[col] !== undefined && row[col] !== null ? String(row[col]) : '-'}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    {drillThroughRows.length > 50 && (
+                                        <div style={{ padding: '0.5rem', textAlign: 'center', fontSize: '0.65rem', color: 'var(--studio-text-sub)', background: '#f8fafc' }}>
+                                            Previewing first 50 rows. Apply additional dashboard filters to narrow results.
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                                    <Button variant="outline" onClick={() => setShowDrillThrough(false)} style={{ fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>Close Table</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 3. SPLIT VIEWPORT CANVAS + CHATBOT (FULL HEIGHT SCROLL SPLIT) */}
+                    <div className="studio-viewport">
+
+                        {/* CENTER CANVAS PANE */}
+                        <div ref={canvasRef} className="studio-canvas" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1, minWidth: 0 }}>
+
+
+
+                            {/* A. EXECUTIVE KPI SUMMARY BAR */}
+                            <div className="studio-kpi-row" style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                                gap: '1rem',
+                                width: '100%'
+                            }}>
+                                {widgets.filter(w => w.type === 'kpi').map((w) => {
+                                    const index = widgets.findIndex(x => x.id === w.id);
+                                    const size = cardSizes[w.id];
+                                    const currentWidth = size?.width || '100%';
+                                    const currentHeight = size?.height ? `${size.height}px` : 'auto';
+
+                                    return (
+                                        <div
+                                            key={w.id}
+                                            className={`studio-chart-card kpi-card ${draggedIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+                                            style={{
+                                                width: currentWidth,
+                                                minWidth: size?.width ? undefined : '240px',
+                                                height: currentHeight,
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                padding: '0.85rem 1.1rem',
+                                                boxSizing: 'border-box',
+                                                borderLeft: `4px solid ${THEME_COLORS[index % THEME_COLORS.length]}`,
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)'
+                                            }}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                        >
+                                            {/* Dotted grab handle */}
+                                            <div className="studio-drag-handle" title="Drag to reorder KPIs" />
+
+                                            {/* Card Header controls */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                                                <div className="studio-chart-title" style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                                                    {getWidgetIcon(w.type)}
+                                                    <span>{w.title}</span>
+                                                    <GlossaryTooltip term={w.title} />
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                    <button
+                                                        style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }}
+                                                        onClick={() => handleDrillThrough(w)}
+                                                        title="View Detailed Records (Drill-Through)"
+                                                    >
+                                                        <Eye size={10} />
+                                                    </button>
+                                                    <button
+                                                        style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }}
+                                                        onClick={() => {
+                                                            if (lastWidgetIdRef.current === w.id) {
+                                                                lastWidgetIdRef.current = null;
+                                                            }
+                                                            setWidgets(prev => prev.filter(item => item.id !== w.id));
+                                                            showToast('KPI box removed.', 'info');
+                                                        }}
+                                                        title="Delete KPI"
+                                                    >
+                                                        <Trash2 size={10} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Chart/Visual content */}
+                                            <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                                                {renderWidgetContent(w)}
+                                            </div>
+
+                                            {/* Bottom-right resizing cursor handle */}
+                                            <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />
                                         </div>
                                     );
                                 })}
                             </div>
 
-                            {/* Create comment form */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', borderTop: '1px dashed var(--studio-border)', paddingTop: '0.5rem' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                    <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Attach Comment to Widget (Optional)</label>
-                                    <select 
-                                        value={commentWidgetId || ''} 
-                                        onChange={e => setCommentWidgetId(e.target.value || null)}
-                                        style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: '#f8fafc' }}
-                                    >
-                                        <option value="">-- General Dashboard --</option>
-                                        {widgets.map(w => (
-                                            <option key={w.id} value={w.id}>{w.title}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div style={{ display: 'flex', gap: '0.35rem' }}>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Add comment..." 
-                                        value={newCommentText}
-                                        onChange={e => setNewCommentText(e.target.value)}
-                                        style={{ flex: 1, padding: '0.45rem', borderRadius: '8px', border: '1px solid var(--studio-border)', fontSize: '0.75rem', outline: 'none' }}
-                                    />
-                                    <Button variant="primary" onClick={handleAddComment} style={{ fontSize: '0.75rem', padding: '0 0.75rem' }}>
-                                        Post
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Dashboard Health Score Modal */}
-            {showHealthModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid var(--studio-border)',
-                        borderRadius: '16px',
-                        padding: '1.5rem',
-                        width: '420px',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Cpu size={18} color="#6366f1" /> Dashboard Health Diagnostics
-                            </h3>
-                            <button onClick={() => setShowHealthModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--studio-border)' }}>
-                            <div style={{
-                                width: '60px', height: '60px', borderRadius: '50%',
-                                background: 'conic-gradient(#4f46e5 0% ' + dashboardHealth.score + '%, #e2e8f0 ' + dashboardHealth.score + '% 100%)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'
+                            {/* B. DYNAMIC VISUALS CANVAS (UNIFORM HEIGHT TO PREVENT floating / dropped boxes!) */}
+                            <div className="studio-chart-grid" style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(12, 1fr)',
+                                gap: '1rem',
+                                width: '100%'
                             }}>
-                                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: 800 }}>
-                                    {dashboardHealth.score}%
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '0.825rem', fontWeight: 800 }}>Data Quality Score</span>
-                                <span style={{ fontSize: '0.68rem', color: 'var(--studio-text-sub)' }}>
-                                    We computed column structures, counts, null rates, and distribution variance metrics.
-                                </span>
-                            </div>
-                        </div>
+                                {widgets.filter(w => w.type !== 'kpi').map((w) => {
+                                    const index = widgets.findIndex(x => x.id === w.id);
+                                    const size = cardSizes[w.id];
+                                    const isTableOrPivot = w.type === 'table' || w.type === 'pivot';
+                                    const currentHeight = size?.height
+                                        ? `${size.height}px`
+                                        : (isTableOrPivot ? 'auto' : '230px');
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            <span style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Optimizations Checklist</span>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                                {(dashboardHealth.suggestions || []).map((suggestion, idx) => (
-                                    <div key={idx} style={{ display: 'flex', gap: '0.4rem', fontSize: '0.7rem', color: 'var(--studio-text)' }}>
-                                        <span style={{ color: '#6366f1' }}>✦</span>
-                                        <span>{suggestion}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                            <Button variant="outline" onClick={() => setShowHealthModal(false)} style={{ fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>Close</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Performance Diagnostics Panel */}
-            {showDiagnostics && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid var(--studio-border)',
-                        borderRadius: '16px',
-                        padding: '1.5rem',
-                        width: '380px',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Settings size={18} color="#6366f1" /> Developer Diagnostics
-                            </h3>
-                            <button onClick={() => setShowDiagnostics(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
-                                <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Data Loading Latency</span>
-                                <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{perfLoadTime || 28} ms</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
-                                <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Widget Rendering Time</span>
-                                <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{perfRenderTime || 12} ms</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
-                                <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>API Query Latency</span>
-                                <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{perfApiLatency || 45} ms</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
-                                <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Total Active Widgets</span>
-                                <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{widgets.length}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--studio-border)', paddingBottom: '0.35rem' }}>
-                                <span style={{ fontSize: '0.725rem', color: 'var(--studio-text-sub)' }}>Filtered Records Count</span>
-                                <span style={{ fontSize: '0.725rem', fontWeight: 700 }}>{activeRawData.length}</span>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                            <Button variant="outline" onClick={() => setShowDiagnostics(false)} style={{ fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>Close</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Drill-Through Details Table Modal */}
-            {showDrillThrough && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999
-                }}>
-                    <div style={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid var(--studio-border)',
-                        borderRadius: '16px',
-                        padding: '1.5rem',
-                        width: '90%',
-                        maxWidth: '850px',
-                        height: '80%',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Table size={18} color="#6366f1" /> Drill-Through Details: {drillThroughFilter}
-                            </h3>
-                            <button onClick={() => setShowDrillThrough(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                        </div>
-
-                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)' }}>
-                            Showing underlying database records matching current dashboard filters ({drillThroughRows.length.toLocaleString()} matching records).
-                        </p>
-
-                        <div style={{ flex: 1, minHeight: 0, overflow: 'auto', border: '1px solid var(--studio-border)', borderRadius: '8px' }}>
-                            <table className="studio-table" style={{ width: '100%', fontSize: '0.7rem' }}>
-                                <thead>
-                                    <tr style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 10 }}>
-                                        {dsAnalytics?.columns.map(col => (
-                                            <th key={col} style={{ borderBottom: '1px solid var(--studio-border)', padding: '0.4rem 0.6rem', textAlign: 'left' }}>{col}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {drillThroughRows.slice(0, 50).map((row, i) => (
-                                        <tr key={i}>
-                                            {dsAnalytics?.columns.map(col => (
-                                                <td key={col} style={{ borderBottom: '1px solid var(--studio-border)', padding: '0.4rem 0.6rem' }}>
-                                                    {row[col] !== undefined && row[col] !== null ? String(row[col]) : '-'}
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {drillThroughRows.length > 50 && (
-                                <div style={{ padding: '0.5rem', textAlign: 'center', fontSize: '0.65rem', color: 'var(--studio-text-sub)', background: '#f8fafc' }}>
-                                    Previewing first 50 rows. Apply additional dashboard filters to narrow results.
-                                </div>
-                            )}
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                            <Button variant="outline" onClick={() => setShowDrillThrough(false)} style={{ fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>Close Table</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 3. SPLIT VIEWPORT CANVAS + CHATBOT (FULL HEIGHT SCROLL SPLIT) */}
-            <div className="studio-viewport">
-
-                {/* CENTER CANVAS PANE */}
-                <div ref={canvasRef} className="studio-canvas" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1, minWidth: 0 }}>
-
-
-
-                    {/* A. EXECUTIVE KPI SUMMARY BAR */}
-                    <div className="studio-kpi-row" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                        gap: '1rem',
-                        width: '100%'
-                    }}>
-                        {widgets.filter(w => w.type === 'kpi').map((w) => {
-                            const index = widgets.findIndex(x => x.id === w.id);
-                            const size = cardSizes[w.id];
-                            const currentWidth = size?.width || '100%';
-                            const currentHeight = size?.height ? `${size.height}px` : 'auto';
-
-                            return (
-                                <div
-                                    key={w.id}
-                                    className={`studio-chart-card kpi-card ${draggedIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
-                                    style={{
-                                        width: currentWidth,
-                                        minWidth: size?.width ? undefined : '240px',
-                                        height: currentHeight,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        padding: '0.85rem 1.1rem',
-                                        boxSizing: 'border-box',
-                                        borderLeft: `4px solid ${THEME_COLORS[index % THEME_COLORS.length]}`,
-                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)'
-                                    }}
-                                    draggable
-                                    onDragStart={(e) => handleDragStart(e, index)}
-                                    onDragOver={(e) => handleDragOver(e, index)}
-                                    onDrop={(e) => handleDrop(e, index)}
-                                    onDragEnd={handleDragEnd}
-                                >
-                                    {/* Dotted grab handle */}
-                                    <div className="studio-drag-handle" title="Drag to reorder KPIs" />
-
-                                    {/* Card Header controls */}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-                                        <div className="studio-chart-title" style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                                            {getWidgetIcon(w.type)}
-                                            <span>{w.title}</span>
-                                            <GlossaryTooltip term={w.title} />
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                            <button
-                                                style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }}
-                                                onClick={() => handleDrillThrough(w)}
-                                                title="View Detailed Records (Drill-Through)"
-                                            >
-                                                <Eye size={10} />
-                                            </button>
-                                            <button
-                                                style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }}
-                                                onClick={() => {
-                                                    if (lastWidgetIdRef.current === w.id) {
-                                                        lastWidgetIdRef.current = null;
-                                                    }
-                                                    setWidgets(prev => prev.filter(item => item.id !== w.id));
-                                                    showToast('KPI box removed.', 'info');
-                                                }}
-                                                title="Delete KPI"
-                                            >
-                                                <Trash2 size={10} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Chart/Visual content */}
-                                    <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-                                        {renderWidgetContent(w)}
-                                    </div>
-
-                                    {/* Bottom-right resizing cursor handle */}
-                                    <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* B. DYNAMIC VISUALS CANVAS (UNIFORM HEIGHT TO PREVENT floating / dropped boxes!) */}
-                    <div className="studio-chart-grid" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(12, 1fr)',
-                        gap: '1rem',
-                        width: '100%'
-                    }}>
-                        {widgets.filter(w => w.type !== 'kpi').map((w) => {
-                            const index = widgets.findIndex(x => x.id === w.id);
-                            const size = cardSizes[w.id];
-                            const isTableOrPivot = w.type === 'table' || w.type === 'pivot';
-                            const currentHeight = size?.height 
-                                ? `${size.height}px` 
-                                : (isTableOrPivot ? 'auto' : '230px');
-
-                            return (
-                                <div
-                                    key={w.id}
-                                    className={`studio-chart-card ${draggedIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
-                                    style={{
-                                        gridColumn: size?.width ? undefined : 'span ' + w.width,
-                                        width: size?.width || '100%',
-                                        height: currentHeight,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        padding: '1.1rem',
-                                        boxSizing: 'border-box',
-                                        borderTop: `4px solid ${THEME_COLORS[index % THEME_COLORS.length]}`,
-                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05)'
-                                    }}
-                                    draggable
-                                    onDragStart={(e) => handleDragStart(e, index)}
-                                    onDragOver={(e) => handleDragOver(e, index)}
-                                    onDrop={(e) => handleDrop(e, index)}
-                                    onDragEnd={handleDragEnd}
-                                >
-                                    {/* Dotted grab handle */}
-                                    <div className="studio-drag-handle" title="Drag to reorder visual" />
-
-                                    {/* Card Header controls */}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                        <div className="studio-chart-title" style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                                            {getWidgetIcon(w.type)}
-                                            <span style={{ fontSize: '0.825rem', fontWeight: 700 }}>{w.title}</span>
-                                            <GlossaryTooltip term={w.title} />
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            <button
-                                                style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                                onClick={() => handleDrillThrough(w)}
-                                                title="View Detailed Records (Drill-Through)"
-                                            >
-                                                <Eye size={12} />
-                                            </button>
-                                            <button
-                                                style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                                onClick={() => {
-                                                    if (lastWidgetIdRef.current === w.id) {
-                                                        lastWidgetIdRef.current = null;
-                                                    }
-                                                    setWidgets(prev => prev.filter(item => item.id !== w.id));
-                                                    showToast('Visual card removed.', 'info');
-                                                }}
-                                                title="Delete Visual"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Chart/Visual content */}
-                                    <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-                                        {renderWidgetContent(w)}
-                                    </div>
-
-                                    {/* Bottom-right resizing cursor handle */}
-                                    <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* RIGHT SIDEBAR: PERSISTENT AI ASSISTANT CHAT */}
-                <div className="studio-sidebar-right" style={{ display: chatCollapsed ? 'none' : 'flex' }}>
-                    <div className="studio-right-header">
-                        <span className="studio-right-title">
-                            <Sparkles size={14} style={{ color: '#6366f1' }} /> AI Assistant
-                        </span>
-                        <div style={{ display: 'flex', gap: '0.4rem' }}>
-                            <button className="studio-btn-circle" style={{ width: '22px', height: '22px', display: 'none' }} onClick={() => setWidgets([])} title="Clear Grid Dashboard">
-                                <RefreshCw size={10} />
-                            </button>
-                            <button className="studio-btn-circle" onClick={() => setChatCollapsed(true)} style={{ width: '22px', height: '22px' }} title="Collapse AI Chat Panel">
-                                <ChevronRight size={10} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Dialogue bubble lists */}
-                    <div className="studio-right-scroll">
-                        {chatMsgs.map((msg, i) => (
-                            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', width: '100%' }}>
-
-                                <div className={`studio-bubble ${msg.role}`}>
-                                    <div>
-                                        {renderMarkdownToJSX(msg.text, msg.role === 'user')}
-                                    </div>
-                                </div>
-
-                                {msg.recommendations && msg.recommendations.length > 0 && (
-                                    <div className="chat-recommendations-section" style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '0.4rem',
-                                        width: '100%',
-                                        marginTop: '0.2rem',
-                                        paddingLeft: '0.2rem',
-                                        alignSelf: 'flex-start'
-                                    }}>
-                                        <div 
-                                            onClick={() => toggleRecommendations(i)}
-                                            style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'space-between',
-                                                gap: '0.35rem',
-                                                cursor: 'pointer',
-                                                padding: '0.25rem 0.5rem',
-                                                borderRadius: '6px',
-                                                width: '85%',
-                                                backgroundColor: 'rgba(99, 102, 241, 0.05)',
-                                                border: '1px solid rgba(99, 102, 241, 0.1)',
-                                                userSelect: 'none',
-                                                transition: 'all 0.2s'
+                                    return (
+                                        <div
+                                            key={w.id}
+                                            className={`studio-chart-card ${draggedIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+                                            style={{
+                                                gridColumn: size?.width ? undefined : 'span ' + w.width,
+                                                width: size?.width || '100%',
+                                                height: currentHeight,
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                padding: '1.1rem',
+                                                boxSizing: 'border-box',
+                                                borderTop: `4px solid ${THEME_COLORS[index % THEME_COLORS.length]}`,
+                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05)'
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.08)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.05)'}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
                                         >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                                <Sparkles size={11} color="#4f46e5" />
-                                                <span style={{ fontWeight: 700, fontSize: '0.675rem', color: 'var(--studio-text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    AI Recommended Charts ({msg.recommendations.length})
-                                                </span>
+                                            {/* Dotted grab handle */}
+                                            <div className="studio-drag-handle" title="Drag to reorder visual" />
+
+                                            {/* Card Header controls */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                <div className="studio-chart-title" style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                                                    {getWidgetIcon(w.type)}
+                                                    <span style={{ fontSize: '0.825rem', fontWeight: 700 }}>{w.title}</span>
+                                                    <GlossaryTooltip term={w.title} />
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                    <button
+                                                        style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                                        onClick={() => handleDrillThrough(w)}
+                                                        title="View Detailed Records (Drill-Through)"
+                                                    >
+                                                        <Eye size={12} />
+                                                    </button>
+                                                    <button
+                                                        style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                                        onClick={() => {
+                                                            if (lastWidgetIdRef.current === w.id) {
+                                                                lastWidgetIdRef.current = null;
+                                                            }
+                                                            setWidgets(prev => prev.filter(item => item.id !== w.id));
+                                                            showToast('Visual card removed.', 'info');
+                                                        }}
+                                                        title="Delete Visual"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div style={{ color: '#4f46e5', display: 'flex', alignItems: 'center' }}>
-                                                {expandedRecs[i] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+
+                                            {/* Chart/Visual content */}
+                                            <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                                                {renderWidgetContent(w)}
+                                            </div>
+
+                                            {/* Bottom-right resizing cursor handle */}
+                                            <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* RIGHT SIDEBAR: PERSISTENT AI ASSISTANT CHAT */}
+                        <div className="studio-sidebar-right" style={{ display: chatCollapsed ? 'none' : 'flex' }}>
+                            <div className="studio-right-header">
+                                <span className="studio-right-title">
+                                    <Sparkles size={14} style={{ color: '#6366f1' }} /> AI Assistant
+                                </span>
+                                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                    <button className="studio-btn-circle" style={{ width: '22px', height: '22px', display: 'none' }} onClick={() => setWidgets([])} title="Clear Grid Dashboard">
+                                        <RefreshCw size={10} />
+                                    </button>
+                                    <button className="studio-btn-circle" onClick={() => setChatCollapsed(true)} style={{ width: '22px', height: '22px' }} title="Collapse AI Chat Panel">
+                                        <ChevronRight size={10} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Dialogue bubble lists */}
+                            <div className="studio-right-scroll">
+                                {chatMsgs.map((msg, i) => (
+                                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', width: '100%' }}>
+
+                                        <div className={`studio-bubble ${msg.role}`}>
+                                            <div>
+                                                {renderMarkdownToJSX(msg.text, msg.role === 'user')}
                                             </div>
                                         </div>
-                                        {expandedRecs[i] && (
-                                            <div className="chat-recommendations-list" style={{
+
+                                        {msg.recommendations && msg.recommendations.length > 0 && (
+                                            <div className="chat-recommendations-section" style={{
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 gap: '0.4rem',
-                                                width: '85%',
-                                                marginTop: '0.1rem'
+                                                width: '100%',
+                                                marginTop: '0.2rem',
+                                                paddingLeft: '0.2rem',
+                                                alignSelf: 'flex-start'
                                             }}>
-                                                {msg.recommendations.map((rec) => (
-                                                    <div
-                                                        key={rec.id}
-                                                        className="chat-rec-card"
-                                                        style={{
-                                                            backgroundColor: 'var(--studio-bg)',
-                                                            border: '1px solid var(--studio-border)',
-                                                            borderRadius: '8px',
-                                                            padding: '0.5rem 0.75rem',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            gap: '0.25rem',
-                                                            boxShadow: '0 1px 2px rgba(0,0,0,0.01)',
-                                                            transition: 'all 0.2s',
-                                                            width: '100%'
-                                                        }}
-                                                    >
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                            <span style={{
-                                                                fontSize: '0.5rem',
-                                                                fontWeight: 700,
-                                                                padding: '0.1rem 0.3rem',
-                                                                borderRadius: '3px',
-                                                                background: 'rgba(99, 102, 241, 0.08)',
-                                                                color: '#4f46e5',
-                                                                textTransform: 'uppercase'
-                                                            }}>
-                                                                {rec.type}
-                                                            </span>
-                                                            <div style={{ color: 'var(--studio-text-sub)' }}>
-                                                                {getWidgetIcon(rec.type)}
-                                                            </div>
-                                                        </div>
-                                                        <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--studio-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                            {rec.title}
-                                                        </div>
-                                                        <div style={{ fontSize: '0.6rem', color: 'var(--studio-text-sub)' }}>
-                                                            Fields: {rec.columns.join(' + ')}
-                                                        </div>
-                                                        <button
-                                                            onClick={() => handleAddRecommendedWidget(rec)}
-                                                            style={{
-                                                                marginTop: '0.15rem',
-                                                                border: '1px solid var(--studio-border)',
-                                                                background: 'var(--studio-card-bg)',
-                                                                borderRadius: '4px',
-                                                                padding: '0.2rem 0.35rem',
-                                                                fontSize: '0.625rem',
-                                                                fontWeight: 700,
-                                                                color: 'var(--studio-text)',
-                                                                cursor: 'pointer',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                gap: '0.2rem',
-                                                                transition: 'all 0.2s'
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#4f46e5';
-                                                                e.currentTarget.style.color = '#ffffff';
-                                                                e.currentTarget.style.borderColor = '#4f46e5';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = 'var(--studio-card-bg)';
-                                                                e.currentTarget.style.color = 'var(--studio-text)';
-                                                                e.currentTarget.style.borderColor = 'var(--studio-border)';
-                                                            }}
-                                                        >
-                                                            + Add to Dashboard
-                                                        </button>
+                                                <div
+                                                    onClick={() => toggleRecommendations(i)}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                        gap: '0.35rem',
+                                                        cursor: 'pointer',
+                                                        padding: '0.25rem 0.5rem',
+                                                        borderRadius: '6px',
+                                                        width: '85%',
+                                                        backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                                                        border: '1px solid rgba(99, 102, 241, 0.1)',
+                                                        userSelect: 'none',
+                                                        transition: 'all 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.08)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.05)'}
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                        <Sparkles size={11} color="#4f46e5" />
+                                                        <span style={{ fontWeight: 700, fontSize: '0.675rem', color: 'var(--studio-text)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                            AI Recommended Charts ({msg.recommendations.length})
+                                                        </span>
                                                     </div>
+                                                    <div style={{ color: '#4f46e5', display: 'flex', alignItems: 'center' }}>
+                                                        {expandedRecs[i] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                    </div>
+                                                </div>
+                                                {expandedRecs[i] && (
+                                                    <div className="chat-recommendations-list" style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '0.4rem',
+                                                        width: '85%',
+                                                        marginTop: '0.1rem'
+                                                    }}>
+                                                        {msg.recommendations.map((rec) => (
+                                                            <div
+                                                                key={rec.id}
+                                                                className="chat-rec-card"
+                                                                style={{
+                                                                    backgroundColor: 'var(--studio-bg)',
+                                                                    border: '1px solid var(--studio-border)',
+                                                                    borderRadius: '8px',
+                                                                    padding: '0.5rem 0.75rem',
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    gap: '0.25rem',
+                                                                    boxShadow: '0 1px 2px rgba(0,0,0,0.01)',
+                                                                    transition: 'all 0.2s',
+                                                                    width: '100%'
+                                                                }}
+                                                            >
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                    <span style={{
+                                                                        fontSize: '0.5rem',
+                                                                        fontWeight: 700,
+                                                                        padding: '0.1rem 0.3rem',
+                                                                        borderRadius: '3px',
+                                                                        background: 'rgba(99, 102, 241, 0.08)',
+                                                                        color: '#4f46e5',
+                                                                        textTransform: 'uppercase'
+                                                                    }}>
+                                                                        {rec.type}
+                                                                    </span>
+                                                                    <div style={{ color: 'var(--studio-text-sub)' }}>
+                                                                        {getWidgetIcon(rec.type)}
+                                                                    </div>
+                                                                </div>
+                                                                <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--studio-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                    {rec.title}
+                                                                </div>
+                                                                <div style={{ fontSize: '0.6rem', color: 'var(--studio-text-sub)' }}>
+                                                                    Fields: {rec.columns.join(' + ')}
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleAddRecommendedWidget(rec)}
+                                                                    style={{
+                                                                        marginTop: '0.15rem',
+                                                                        border: '1px solid var(--studio-border)',
+                                                                        background: 'var(--studio-card-bg)',
+                                                                        borderRadius: '4px',
+                                                                        padding: '0.2rem 0.35rem',
+                                                                        fontSize: '0.625rem',
+                                                                        fontWeight: 700,
+                                                                        color: 'var(--studio-text)',
+                                                                        cursor: 'pointer',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        gap: '0.2rem',
+                                                                        transition: 'all 0.2s'
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        e.currentTarget.style.backgroundColor = '#4f46e5';
+                                                                        e.currentTarget.style.color = '#ffffff';
+                                                                        e.currentTarget.style.borderColor = '#4f46e5';
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.backgroundColor = 'var(--studio-card-bg)';
+                                                                        e.currentTarget.style.color = 'var(--studio-text)';
+                                                                        e.currentTarget.style.borderColor = 'var(--studio-border)';
+                                                                    }}
+                                                                >
+                                                                    + Add to Dashboard
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {msg.suggestedPrompts && msg.role === 'ai' && (
+                                            <div className="bi-msg-actions" style={{ paddingLeft: '0.2rem' }}>
+                                                {msg.suggestedPrompts.map((p, idx) => (
+                                                    <button key={idx} className="bi-msg-action-btn" onClick={() => handleTriggerPrompt(p)} disabled={chatBusy}>
+                                                        {p}
+                                                    </button>
                                                 ))}
                                             </div>
                                         )}
                                     </div>
-                                )}
-
-                                {msg.suggestedPrompts && msg.role === 'ai' && (
-                                    <div className="bi-msg-actions" style={{ paddingLeft: '0.2rem' }}>
-                                        {msg.suggestedPrompts.map((p, idx) => (
-                                            <button key={idx} className="bi-msg-action-btn" onClick={() => handleTriggerPrompt(p)} disabled={chatBusy}>
-                                                {p}
-                                            </button>
-                                        ))}
+                                ))}
+                                {chatBusy && (
+                                    <div className="studio-bubble ai" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <RefreshCw className="animate-spin" size={10} />
+                                        <span>AI Assistant thinking...</span>
                                     </div>
                                 )}
+                                <div ref={chatEndRef} />
                             </div>
-                        ))}
-                        {chatBusy && (
-                            <div className="studio-bubble ai" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <RefreshCw className="animate-spin" size={10} />
-                                <span>AI Assistant thinking...</span>
+
+                            {/* Interactive Suggestion Pills */}
+                            <div className="studio-chat-actions">
+                                {getDynamicSuggestions(dsAnalytics).map((promptText, idx) => {
+                                    let label = promptText;
+                                    if (promptText.startsWith('Change ')) {
+                                        label = 'Change trend visual';
+                                    } else if (promptText.startsWith('Add a ')) {
+                                        label = `Add ${promptText.split('for ')[1]?.split(' ')[0] || 'category'} pie`;
+                                    } else if (promptText.startsWith('Convert ')) {
+                                        label = 'Convert chart type';
+                                    } else if (promptText.includes('insights')) {
+                                        label = 'Explain insights';
+                                    }
+                                    return (
+                                        <button key={idx} className="studio-chat-action-btn" onClick={() => handleTriggerPrompt(promptText)} disabled={chatBusy}>
+                                            {label}
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        )}
-                        <div ref={chatEndRef} />
-                    </div>
 
-                    {/* Interactive Suggestion Pills */}
-                    <div className="studio-chat-actions">
-                        {getDynamicSuggestions(dsAnalytics).map((promptText, idx) => {
-                            let label = promptText;
-                            if (promptText.startsWith('Change ')) {
-                                label = 'Change trend visual';
-                            } else if (promptText.startsWith('Add a ')) {
-                                label = `Add ${promptText.split('for ')[1]?.split(' ')[0] || 'category'} pie`;
-                            } else if (promptText.startsWith('Convert ')) {
-                                label = 'Convert chart type';
-                            } else if (promptText.includes('insights')) {
-                                label = 'Explain insights';
-                            }
-                            return (
-                                <button key={idx} className="studio-chat-action-btn" onClick={() => handleTriggerPrompt(promptText)} disabled={chatBusy}>
-                                    {label}
-                                </button>
-                            );
-                        })}
-                    </div>
+                            {/* Chat dialogue bottom inputs */}
+                            <div className="studio-chat-input-container">
+                                <div className="studio-chat-input-row">
+                                    <input
+                                        placeholder="Ask to add, modify, or remove visuals..."
+                                        className="studio-chat-input"
+                                        value={chatInput}
+                                        onChange={e => setChatInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && handleSendChatInput()}
+                                        disabled={chatBusy}
+                                    />
+                                    <button onClick={handleSendChatInput} disabled={chatBusy} style={{ color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Send size={14} />
+                                    </button>
+                                </div>
+                                <span className="studio-chat-footer-text">
+                                    AI can make mistakes. Please verify important information.
+                                </span>
+                            </div>
 
-                    {/* Chat dialogue bottom inputs */}
-                    <div className="studio-chat-input-container">
-                        <div className="studio-chat-input-row">
-                            <input
-                                placeholder="Ask to add, modify, or remove visuals..."
-                                className="studio-chat-input"
-                                value={chatInput}
-                                onChange={e => setChatInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleSendChatInput()}
-                                disabled={chatBusy}
-                            />
-                            <button onClick={handleSendChatInput} disabled={chatBusy} style={{ color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Send size={14} />
-                            </button>
                         </div>
-                        <span className="studio-chat-footer-text">
-                            AI can make mistakes. Please verify important information.
-                        </span>
+
                     </div>
-
-                </div>
-
-            </div>
-            </>)}
+                </>)}
 
             {/* Overlays/Modals */}
             {previewDatasetData && (
@@ -7910,8 +7910,8 @@ export default function AnalyticsPage() {
                                                 <td style={{ padding: '0.5rem 0.75rem', textTransform: 'capitalize' }}>{stat.type}</td>
                                                 <td style={{ padding: '0.5rem 0.75rem' }}>{((stat.nullCount / stat.count) * 100).toFixed(1)}%</td>
                                                 <td style={{ padding: '0.5rem 0.75rem' }}>
-                                                    {stat.type === 'numeric' 
-                                                        ? `Avg: ${stat.avg?.toLocaleString() || '-'}` 
+                                                    {stat.type === 'numeric'
+                                                        ? `Avg: ${stat.avg?.toLocaleString() || '-'}`
                                                         : `Uniques: ${stat.uniqueCount || '-'}`}
                                                 </td>
                                             </tr>
@@ -8050,8 +8050,8 @@ export default function AnalyticsPage() {
                         <p style={{ margin: 0, fontSize: '0.725rem', color: 'var(--studio-text-sub)', lineHeight: 1.4 }}>
                             Upload your CSV or Excel dataset to ingest columns, data schemas and quality metrics automatically.
                         </p>
-                        
-                        <div 
+
+                        <div
                             onDragOver={handleFileDragOver}
                             onDrop={handleFileDrop}
                             style={{
@@ -8076,12 +8076,12 @@ export default function AnalyticsPage() {
                                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--studio-text)', display: 'block' }}>Drag & drop files here</span>
                                 <span style={{ display: 'block', fontSize: '0.675rem', color: 'var(--studio-text-sub)', marginTop: '0.15rem' }}>or click to browse local files (CSV, Excel)</span>
                             </div>
-                            <input 
-                                id="workspace-file-uploader" 
-                                type="file" 
-                                accept=".csv,.xlsx,.xls" 
-                                onChange={handleFileSelect} 
-                                style={{ display: 'none' }} 
+                            <input
+                                id="workspace-file-uploader"
+                                type="file"
+                                accept=".csv,.xlsx,.xls"
+                                onChange={handleFileSelect}
+                                style={{ display: 'none' }}
                             />
                         </div>
 
@@ -8124,7 +8124,7 @@ export default function AnalyticsPage() {
                                 &times;
                             </button>
                         </div>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.25rem 0' }}>
                             <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
                                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--studio-purple-light)', color: 'var(--studio-purple)', display: 'flex', alignItems: 'center', fontWeight: 800, fontSize: '0.8rem', flexShrink: 0, justifyContent: 'center' }}>1</div>
@@ -8135,7 +8135,7 @@ export default function AnalyticsPage() {
                                     </p>
                                 </div>
                             </div>
-                            
+
                             <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
                                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--studio-purple-light)', color: 'var(--studio-purple)', display: 'flex', alignItems: 'center', fontWeight: 800, fontSize: '0.8rem', flexShrink: 0, justifyContent: 'center' }}>2</div>
                                 <div>
@@ -8199,13 +8199,13 @@ export default function AnalyticsPage() {
                         <p style={{ margin: 0, fontSize: '0.725rem', color: 'var(--studio-text-sub)', lineHeight: 1.4 }}>
                             Choose a dataset to attach as context for analytical generation.
                         </p>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', maxHeight: '200px', overflowY: 'auto', padding: '0.2rem' }}>
                             {localDatasets.map(d => {
                                 const isSelected = selectedDs === d.id;
                                 return (
-                                    <div 
-                                        key={d.id} 
+                                    <div
+                                        key={d.id}
                                         onClick={() => setSelectedDs(d.id)}
                                         style={{
                                             display: 'flex',
@@ -8286,13 +8286,13 @@ export default function AnalyticsPage() {
                                 &times;
                             </button>
                         </div>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                 <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text)' }}>Filter Column Name / Attribute</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="e.g. region, spent, category" 
+                                <input
+                                    type="text"
+                                    placeholder="e.g. region, spent, category"
                                     value={filterColumn}
                                     onChange={e => setFilterColumn(e.target.value)}
                                     style={{
@@ -8304,10 +8304,10 @@ export default function AnalyticsPage() {
                                     }}
                                 />
                             </div>
-                            
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                 <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text)' }}>Operator</label>
-                                <select 
+                                <select
                                     value={filterOperator}
                                     onChange={e => setFilterOperator(e.target.value)}
                                     style={{
@@ -8329,9 +8329,9 @@ export default function AnalyticsPage() {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                 <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text)' }}>Target Value</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="e.g. US, 500, Active" 
+                                <input
+                                    type="text"
+                                    placeholder="e.g. US, 500, Active"
                                     value={filterValue}
                                     onChange={e => setFilterValue(e.target.value)}
                                     style={{
@@ -8347,7 +8347,7 @@ export default function AnalyticsPage() {
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
                             <Button variant="outline" onClick={() => setShowAddFilterPop(false)} style={{ fontSize: '0.725rem', padding: '0.4rem 0.8rem' }}>Cancel</Button>
-                            <Button 
+                            <Button
                                 onClick={() => {
                                     if (!filterColumn || !filterValue) {
                                         showToast("Please enter column name and value first.", "error");
@@ -8357,7 +8357,7 @@ export default function AnalyticsPage() {
                                     setPromptInput(prev => prev + filterStr);
                                     setShowAddFilterPop(false);
                                     showToast("Applied filter expression to prompt query!", "success");
-                                }} 
+                                }}
                                 style={{ fontSize: '0.725rem', padding: '0.4rem 0.8rem', background: '#4f46e5', color: 'white' }}
                             >
                                 Apply Filter
@@ -8399,17 +8399,17 @@ export default function AnalyticsPage() {
                                 &times;
                             </button>
                         </div>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.675rem', fontWeight: 700 }}>
                                     <span style={{ color: 'var(--studio-text)' }}>Model Temperature</span>
                                     <span style={{ color: '#4f46e5' }}>{paramTemperature.toFixed(2)}</span>
                                 </div>
-                                <input 
-                                    type="range" 
-                                    min="0.0" 
-                                    max="1.0" 
+                                <input
+                                    type="range"
+                                    min="0.0"
+                                    max="1.0"
                                     step="0.05"
                                     value={paramTemperature}
                                     onChange={e => setParamTemperature(parseFloat(e.target.value))}
@@ -8417,11 +8417,11 @@ export default function AnalyticsPage() {
                                 />
                                 <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>Higher temperature increases creativity/exploratory widgets, lower increases consistency.</span>
                             </div>
-                            
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                 <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text)' }}>Co-Pilot Analytical Mode</label>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                                    <button 
+                                    <button
                                         onClick={() => setParamMode('Standard')}
                                         style={{
                                             border: '1px solid var(--studio-border)',
@@ -8438,7 +8438,7 @@ export default function AnalyticsPage() {
                                     >
                                         Standard Mode
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setParamMode('Deep')}
                                         style={{
                                             border: '1px solid var(--studio-border)',
@@ -8460,7 +8460,7 @@ export default function AnalyticsPage() {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                 <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text)' }}>Widget Limit Constraints</label>
-                                <select 
+                                <select
                                     value={paramMaxWidgets}
                                     onChange={e => setParamMaxWidgets(parseInt(e.target.value))}
                                     style={{
@@ -8481,7 +8481,7 @@ export default function AnalyticsPage() {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                 <label style={{ fontSize: '0.675rem', fontWeight: 700, color: 'var(--studio-text)' }}>Dashboard Canvas Palette Theme</label>
-                                <select 
+                                <select
                                     value={paramTheme}
                                     onChange={e => setParamTheme(e.target.value)}
                                     style={{
@@ -8503,11 +8503,11 @@ export default function AnalyticsPage() {
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
                             <Button variant="outline" onClick={() => setShowParamsPop(false)} style={{ fontSize: '0.725rem', padding: '0.4rem 0.8rem' }}>Cancel</Button>
-                            <Button 
+                            <Button
                                 onClick={() => {
                                     setShowParamsPop(false);
                                     showToast(`Co-Pilot parameters saved successfully! Temp: ${paramTemperature.toFixed(2)}, Widgets: ${paramMaxWidgets}`, "success");
-                                }} 
+                                }}
                                 style={{ fontSize: '0.725rem', padding: '0.4rem 0.8rem', background: '#4f46e5', color: 'white' }}
                             >
                                 Save Parameters

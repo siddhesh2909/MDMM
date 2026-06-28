@@ -595,9 +595,11 @@ export default function PreprocessingPage() {
                         status: d.status || 'Active',
                         contractStatus: d.contractStatus || ''
                     }));
-                    loadedDatasets = mapped.filter((d: any) => 
-                        (d.contractStatus || '').toLowerCase() === 'active'
-                    );
+                    // Show all datasets the API returned — the backend already enforces
+                    // canViewDataset() permission, so shared datasets are always included.
+                    // We do NOT filter by contractStatus here because that would hide
+                    // datasets shared by Admin with an Analyst that have a Draft contract.
+                    loadedDatasets = mapped;
                     setDatasets(loadedDatasets);
                 }
 
@@ -1092,10 +1094,12 @@ export default function PreprocessingPage() {
                             onChange={(e) => switchDataset(e.target.value)}
                         >
                             {datasets.length === 0 ? (
-                                <option value="">No Active Datasets</option>
+                                <option value="">No Datasets Available</option>
                             ) : (
                                 datasets.map((ds) => (
-                                    <option key={ds.id} value={ds.id}>{ds.name}</option>
+                                    <option key={ds.id} value={ds.id}>
+                                        {ds.name}{ds.contractStatus && ds.contractStatus.toLowerCase() !== 'active' ? ' (Draft Contract)' : ''}
+                                    </option>
                                 ))
                             )}
                         </select>
