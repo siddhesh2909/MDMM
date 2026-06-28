@@ -4583,6 +4583,12 @@ export default function AnalyticsPage() {
             node.style.overflow = 'visible';
             node.style.padding = '20px';
 
+            // Show the PDF export header
+            const pdfHeader = document.getElementById('pdf-export-header');
+            if (pdfHeader) {
+                pdfHeader.style.display = 'flex';
+            }
+
             // Filter out handles and delete buttons
             const filter = (element: HTMLElement) => {
                 const className = element.className;
@@ -4646,7 +4652,10 @@ export default function AnalyticsPage() {
                 showToast('PDF dashboard exported successfully!', 'success');
             }
 
-            // Restore original styles
+            // Restore original styles & hide header
+            if (pdfHeader) {
+                pdfHeader.style.display = 'none';
+            }
             node.style.height = originalHeight;
             node.style.overflow = originalOverflow;
             node.style.padding = originalPadding;
@@ -4655,6 +4664,16 @@ export default function AnalyticsPage() {
         } catch (err) {
             console.error('Failed to export dashboard:', err);
             showToast('Failed to generate export file.', 'error');
+            // Ensure cleanup in catch block
+            try {
+                const pdfHeader = document.getElementById('pdf-export-header');
+                if (pdfHeader) pdfHeader.style.display = 'none';
+                if (canvasRef.current) {
+                    canvasRef.current.style.height = '';
+                    canvasRef.current.style.overflow = '';
+                    canvasRef.current.style.padding = '';
+                }
+            } catch (e) {}
         } finally {
             setExporting(false);
         }
@@ -7314,44 +7333,104 @@ export default function AnalyticsPage() {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                                    <Button variant="outline" onClick={() => setShowDiagnostics(false)} style={{ fontSize: '0.72rem', padding: '0.4rem 0.8rem' }}>Close</Button>
+                    {/* PDF Export Header (Visible only during export) */}
+                    <div 
+                        id="pdf-export-header"
+                        style={{
+                            display: 'none',
+                            flexDirection: 'column',
+                            gap: '1rem',
+                            padding: '1.5rem',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid var(--studio-border, #e2e8f0)',
+                            borderRadius: '16px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                            marginBottom: '0.5rem',
+                            width: '100%',
+                            boxSizing: 'border-box'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, color: 'var(--studio-text, #0f172a)', letterSpacing: '-0.025em' }}>
+                                    {dsAnalytics?.name ? dsAnalytics.name.replace('.csv', '').replace('.xlsx', '') : 'Sales Performance'} Dashboard
+                                </h1>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--studio-text-sub, #64748b)', marginTop: '0.25rem', marginBottom: 0 }}>
+                                    Generated dynamically on {new Date().toLocaleDateString(undefined, { dateStyle: 'long' })}
+                                </p>
+                            </div>
+                            <div style={{
+                                padding: '0.35rem 0.75rem',
+                                background: 'rgba(99, 102, 241, 0.08)',
+                                border: '1px solid rgba(99, 102, 241, 0.2)',
+                                borderRadius: '99px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                color: '#4f46e5',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem'
+                            }}>
+                                ✦ AI Generated Report
+                            </div>
+                        </div>
+
+                        {/* Dataset Info Grid */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '1rem',
+                            borderTop: '1px solid var(--studio-border, #e2e8f0)',
+                            borderBottom: '1px solid var(--studio-border, #e2e8f0)',
+                            padding: '0.85rem 0',
+                            marginTop: '0.25rem'
+                        }}>
+                            <div>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Dataset Name</span>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {dsAnalytics?.name || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Total Records</span>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem' }}>
+                                    {dsAnalytics?.rows?.toLocaleString() || 'N/A'}
+                                </div>
+                            </div>
+                            <div>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Attributes</span>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {dsAnalytics?.columns?.length || 0} columns
+                                </div>
+                            </div>
+                            <div>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Data Quality Score</span>
+                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-green, #10b981)', marginTop: '0.15rem' }}>
+                                    {dsAnalytics?.qualityScore || 95}%
                                 </div>
                             </div>
                         </div>
-                    )}
 
-                    {/* Drill-Through Details Table Modal */}
-                    {showDrillThrough && (
-                        <div style={{
-                            position: 'fixed',
-                            top: 0, left: 0, right: 0, bottom: 0,
-                            backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                            backdropFilter: 'blur(4px)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 99999
-                        }}>
+                        {/* Executive Summary */}
+                        {aiExplanation && (
                             <div style={{
-                                backgroundColor: '#ffffff',
-                                border: '1px solid var(--studio-border)',
-                                borderRadius: '16px',
-                                padding: '1.5rem',
-                                width: '90%',
-                                maxWidth: '850px',
-                                height: '80%',
-                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                                backgroundColor: 'var(--studio-bg, #f8fafc)',
+                                border: '1px solid var(--studio-border, #e2e8f0)',
+                                borderRadius: '12px',
+                                padding: '1rem',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '1rem'
+                                gap: '0.35rem'
                             }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--studio-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        <Table size={18} color="#6366f1" /> Drill-Through Details: {drillThroughFilter}
-                                    </h3>
-                                    <button onClick={() => setShowDrillThrough(false)} style={{ background: 'transparent', border: 'none', color: 'var(--studio-text-sub)', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>×</button>
-                                </div>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Executive Summary
+                                </span>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--studio-text, #334155)', margin: 0, lineHeight: 1.5 }}>
+                                    {aiExplanation}
+                                </p>
+                            </div>
+                        )}
+                    </div>
 
                                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)' }}>
                                     Showing underlying database records matching current dashboard filters ({drillThroughRows.length.toLocaleString()} matching records).

@@ -1020,8 +1020,8 @@ export default function DataContractsPage() {
                             style={{
                                 padding: '1rem',
                                 borderRadius: '10px',
-                                border: '1px solid #e2e8f0',
-                                background: '#f8fafc',
+                                border: '1px solid var(--dc-border)',
+                                background: 'var(--dc-bg-sec)',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center'
@@ -1029,13 +1029,13 @@ export default function DataContractsPage() {
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 {sug.type === 'green' ? (
-                                    <CheckCircle2 size={18} style={{ color: '#10b981' }} />
+                                    <CheckCircle2 size={18} style={{ color: 'var(--success-color)' }} />
                                 ) : sug.type === 'amber' ? (
-                                    <AlertCircle size={18} style={{ color: '#f59e0b' }} />
+                                    <AlertCircle size={18} style={{ color: 'var(--warning-color)' }} />
                                 ) : (
-                                    <Info size={18} style={{ color: '#0ea5e9' }} />
+                                    <Info size={18} style={{ color: 'var(--secondary-color)' }} />
                                 )}
-                                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: '#1e293b' }}>
+                                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--dc-text)' }}>
                                     {sug.text}
                                 </span>
                             </div>
@@ -1080,8 +1080,8 @@ export default function DataContractsPage() {
                             style={{
                                 padding: '1rem',
                                 borderRadius: '10px',
-                                border: '1px solid #e2e8f0',
-                                background: '#ffffff',
+                                border: '1px solid var(--dc-border)',
+                                background: 'var(--dc-card-bg)',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center'
@@ -1089,19 +1089,19 @@ export default function DataContractsPage() {
                         >
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0f172a' }}>
+                                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--dc-text)' }}>
                                         v{versionNode.version}
                                     </span>
                                     {index === 0 && (
-                                        <span style={{ fontSize: '0.625rem', fontWeight: 600, background: 'rgba(99, 102, 241, 0.08)', color: '#6366f1', padding: '1px 5px', borderRadius: '4px' }}>
+                                        <span style={{ fontSize: '0.625rem', fontWeight: 600, background: 'rgba(99, 102, 241, 0.12)', color: '#6366f1', padding: '1px 5px', borderRadius: '4px' }}>
                                             Current
                                         </span>
                                     )}
                                 </div>
-                                <span style={{ fontSize: '0.8125rem', color: '#334155' }}>
+                                <span style={{ fontSize: '0.8125rem', color: 'var(--dc-text-sub)' }}>
                                     {versionNode.changeLog || 'Initial bootstrap of data contract'}
                                 </span>
-                                <span style={{ fontSize: '0.6875rem', color: '#64748b' }}>
+                                <span style={{ fontSize: '0.6875rem', color: 'var(--dc-text-muted)' }}>
                                     Published by {versionNode.changedBy || 'System'} on {new Date(versionNode.createdAt).toLocaleDateString()} at {new Date(versionNode.createdAt).toLocaleTimeString()}
                                 </span>
                             </div>
@@ -1276,29 +1276,29 @@ export default function DataContractsPage() {
                                             </button>
 
                                             {showActionsDropdown && (
-                                                <div style={{ position: 'absolute', right: 0, top: '38px', width: '180px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 100, display: 'flex', flexDirection: 'column', padding: '0.25rem 0' }}>
+                                                <div className="dc-dropdown-menu">
                                                     <button
                                                         onClick={() => { setShowActionsDropdown(false); setShowValidationSelect(true); }}
-                                                        style={{ padding: '0.5rem 1rem', background: 'none', border: 'none', textAlign: 'left', fontSize: '0.75rem', color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                        className="dc-dropdown-item"
                                                     >
                                                         <Play size={12} /> Validate Dataset
                                                     </button>
                                                     <button
                                                         onClick={() => { setShowActionsDropdown(false); handleToggleStatus(); }}
-                                                        style={{ padding: '0.5rem 1rem', background: 'none', border: 'none', textAlign: 'left', fontSize: '0.75rem', color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                        className="dc-dropdown-item"
                                                     >
                                                         <CheckCircle2 size={12} /> {selectedContract.status === 'Active' ? 'Demote to Draft' : 'Approve Spec'}
                                                     </button>
                                                     <button
                                                         onClick={() => { setShowActionsDropdown(false); handleSaveContract(); }}
-                                                        style={{ padding: '0.5rem 1rem', background: 'none', border: 'none', textAlign: 'left', fontSize: '0.75rem', color: '#1e293b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                        className="dc-dropdown-item"
                                                     >
                                                         <GitBranch size={12} /> Publish vNext
                                                     </button>
-                                                    <div style={{ borderTop: '1px solid #f1f5f9', margin: '0.25rem 0' }} />
+                                                    <div className="dc-dropdown-divider" />
                                                     <button
                                                         onClick={() => { setShowActionsDropdown(false); handleDeleteContract(); }}
-                                                        style={{ padding: '0.5rem 1rem', background: 'none', border: 'none', textAlign: 'left', fontSize: '0.75rem', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                        className="dc-dropdown-item danger"
                                                     >
                                                         <Trash2 size={12} /> Delete Spec
                                                     </button>
@@ -1422,13 +1422,13 @@ export default function DataContractsPage() {
 
                                         {renderSchemaBuilder()}
 
-                                        <div style={{ marginTop: '0.5rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                                            <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Governed Dataset Binding</h4>
+                                        <div style={{ marginTop: '0.5rem', background: 'var(--dc-bg-sec)', padding: '1.25rem', borderRadius: '10px', border: '1px solid var(--dc-border)' }}>
+                                            <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--dc-text)' }}>Governed Dataset Binding</h4>
                                             {selectedContract.dataset ? (
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem' }}>
                                                     <div>
                                                         <strong>{selectedContract.dataset.name}</strong> • source: {selectedContract.dataset.source}
-                                                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--dc-text-sub)', marginTop: '0.25rem' }}>
                                                             Bound on {new Date(selectedContract.dataset.createdAt).toLocaleDateString()}
                                                         </div>
                                                     </div>
@@ -1437,7 +1437,7 @@ export default function DataContractsPage() {
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>
+                                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--dc-text-sub)' }}>
                                                     No dataset actively bound to this contract gate yet. Go to ingestion or validate a dataset to map connections.
                                                 </p>
                                             )}
@@ -1453,7 +1453,7 @@ export default function DataContractsPage() {
                                     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <h3 style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Active Field Constraints</h3>
-                                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Configure constraints via the schema editor table</span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--dc-text-sub)' }}>Configure constraints via the schema editor table</span>
                                         </div>
 
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
@@ -1463,8 +1463,8 @@ export default function DataContractsPage() {
                                                     style={{
                                                         padding: '1rem',
                                                         borderRadius: '8px',
-                                                        border: '1px solid #e2e8f0',
-                                                        background: '#f8fafc',
+                                                        border: '1px solid var(--dc-border)',
+                                                        background: 'var(--dc-bg-sec)',
                                                         display: 'flex',
                                                         flexDirection: 'column',
                                                         justifyContent: 'space-between',
@@ -1473,38 +1473,38 @@ export default function DataContractsPage() {
                                                 >
                                                     <div>
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                                            <code style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366f1' }}>{field.name}</code>
+                                                            <code style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-color)' }}>{field.name}</code>
                                                             <span className={`dc-type-badge ${field.type}`}>
                                                                 {TYPE_ICONS[field.type] || <Type size={12} />}
                                                                 {field.type}
                                                             </span>
                                                         </div>
 
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', fontSize: '0.75rem', color: '#334155' }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--dc-text-sub)' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                                <span style={{ color: '#64748b' }}>Required:</span>
+                                                                <span style={{ color: 'var(--dc-text-muted)' }}>Required:</span>
                                                                 <span style={{ fontWeight: 600 }}>{field.required ? 'Strict Yes' : 'Optional'}</span>
                                                             </div>
                                                             {field.unique && (
-                                                                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success-color)' }}>
                                                                     <span>Uniqueness Check:</span>
                                                                     <span style={{ fontWeight: 600 }}>Enabled</span>
                                                                 </div>
                                                             )}
                                                             {field.format && (
                                                                 <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', gap: '0.125rem' }}>
-                                                                    <span style={{ color: '#64748b' }}>Format Regex:</span>
-                                                                    <code style={{ fontSize: '0.6875rem', background: '#ffffff', border: '1px solid #e2e8f0', padding: '2px 4px', borderRadius: '3px', wordBreak: 'break-all' }}>{field.format}</code>
+                                                                    <span style={{ color: 'var(--dc-text-muted)' }}>Format Regex:</span>
+                                                                    <code style={{ fontSize: '0.6875rem', background: 'var(--dc-bg)', border: '1px solid var(--dc-border)', padding: '2px 4px', borderRadius: '3px', wordBreak: 'break-all', color: 'var(--dc-text)' }}>{field.format}</code>
                                                                 </div>
                                                             )}
                                                             {field.enumValues && field.enumValues.length > 0 && (
                                                                 <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', gap: '0.125rem' }}>
-                                                                    <span style={{ color: '#64748b' }}>Allowed Enums:</span>
+                                                                    <span style={{ color: 'var(--dc-text-muted)' }}>Allowed Enums:</span>
                                                                     <span style={{ fontSize: '0.6875rem', fontWeight: 600 }}>{field.enumValues.join(', ')}</span>
                                                                 </div>
                                                             )}
                                                             {field.description && (
-                                                                <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.25rem', borderTop: '1px dashed #e2e8f0', paddingTop: '0.25rem', color: '#64748b' }}>
+                                                                <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.25rem', borderTop: '1px dashed var(--dc-border)', paddingTop: '0.25rem', color: 'var(--dc-text-muted)' }}>
                                                                     <span style={{ fontSize: '0.6875rem', fontStyle: 'italic' }}>{field.description}</span>
                                                                 </div>
                                                             )}
