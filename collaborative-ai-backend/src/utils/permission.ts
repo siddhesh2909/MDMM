@@ -24,6 +24,12 @@ function parseSharedWith(sharedWithStr: string): SharedUser[] {
 }
 
 export const canViewDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
+    // If the user is a Business User or Viewer, they can ONLY view explicitly shared datasets.
+    if (user.role === 'Business User' || user.role === 'Viewer') {
+        const shared = parseSharedWith(dataset.sharedWith);
+        return shared.some(s => s.userId === user.id);
+    }
+
     // Owner/Creator bypass
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
 
@@ -43,6 +49,8 @@ export const canViewDataset = (dataset: DatasetFields, user: AuthenticatedUser):
 };
 
 export const canEditDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
+    if (user.role === 'Business User' || user.role === 'Viewer') return false;
+
     // Owner/Creator bypass
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
 
@@ -60,6 +68,8 @@ export const canEditDataset = (dataset: DatasetFields, user: AuthenticatedUser):
 };
 
 export const canDeleteDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
+    if (user.role === 'Business User' || user.role === 'Viewer') return false;
+
     // Owner/Creator only
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
 
@@ -75,6 +85,8 @@ export const canDeleteDataset = (dataset: DatasetFields, user: AuthenticatedUser
 };
 
 export const canShareDataset = (dataset: DatasetFields, user: AuthenticatedUser): boolean => {
+    if (user.role === 'Business User' || user.role === 'Viewer') return false;
+
     // Owner/Creator bypass
     if (dataset.ownerId === user.id || dataset.createdBy === user.id) return true;
 

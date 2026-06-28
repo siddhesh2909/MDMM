@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/providers/ToastProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { useRole } from '@/components/providers/RoleProvider';
 import { apiClient } from '@/lib/apiClient';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
@@ -174,6 +175,18 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
 };
 
 const getUserAccess = (report: ReportItem, currentUser: any) => {
+    const resolvedRole = (() => {
+        const dbRole = currentUser?.role;
+        if (dbRole === 'Data Analyst' || dbRole === 'Analyst' || dbRole === 'Data Steward' || dbRole === 'Data Engineer') return 'Analyst';
+        if (dbRole === 'Business User' || dbRole === 'Viewer') return 'Business User';
+        if (dbRole === 'Admin') return 'Admin';
+        return 'Business User';
+    })();
+
+    if (resolvedRole === 'Business User') {
+        return { canView: true, canEdit: false, canDelete: false, canShare: false, isOwner: false };
+    }
+
     if (currentUser?.role === 'Admin') {
         return { canView: true, canEdit: true, canDelete: true, canShare: true, isOwner: true };
     }
@@ -235,6 +248,8 @@ const getUserAccess = (report: ReportItem, currentUser: any) => {
 export default function ReportsPage() {
     const { showToast } = useToast();
     const { user } = useAuth();
+    const { role } = useRole();
+    const isReadOnly = role === 'Business User';
     
     // Modal & Action states
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -300,6 +315,7 @@ export default function ReportsPage() {
     const [selectedReportType, setSelectedReportType] = useState('Data Quality Summary');
     const [selectedFormat, setSelectedFormat] = useState('PDF');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [customPrompt, setCustomPrompt] = useState('');
 
     // Dynamic Report Types based on Inferred Schema properties
     const [dynamicReportTypes, setDynamicReportTypes] = useState<string[]>(['Data Quality Summary']);
@@ -487,7 +503,7 @@ export default function ReportsPage() {
                 type: r.name.includes('Quality') ? 'Data Quality' : 
                       r.name.includes('Briefing') ? 'Executive' :
                       r.name.includes('Compliance') ? 'Compliance' : 'Validation',
-                generatedBy: r.name.includes('Scheduled') ? 'System (AI)' : (user?.name || 'Admin User'),
+                generatedBy: r.name.includes('Scheduled') ? 'System (AI)' : (r.ownerName || 'Admin User'),
                 generatedAt: new Date(r.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
             }));
             setReportsList(formatted);
@@ -531,18 +547,26 @@ export default function ReportsPage() {
                 datasetId: selectedDatasetId || 'mock-id',
                 name: reportName,
                 format: selectedFormat,
-                reportType: selectedReportType
+                reportType: selectedReportType,
+                prompt: customPrompt,
+                toggles: {
+                    summary: toggleSummary,
+                    quality: toggleQuality,
+                    schema: toggleSchema,
+                    insights: toggleInsights
+                }
             });
 
             if (res && res.success && res.report) {
                 showToast(`Report generated successfully!`, 'success');
+                setCustomPrompt('');
                 await loadReports(); // Reload history
                 
                 // Formulate ReportItem format
                 const reportItem: ReportItem = {
                     ...res.report,
                     type: res.report.name.includes('Quality') ? 'Data Quality' : 'Validation',
-                    generatedBy: user?.name || 'Admin User',
+                    generatedBy: res.report.ownerName || user?.name || 'Admin User',
                     generatedAt: new Date(res.report.createdAt).toLocaleString()
                 };
 
@@ -793,7 +817,16 @@ export default function ReportsPage() {
     const handleRegenerate = async (id: string) => {
         showToast("Regenerating report content...", "info");
         try {
-            const res = await apiClient.post(`/data/reports/${id}/regenerate`, {});
+            const res = await apiClient.post(`/data/reports/${id}/regenerate`, {
+                reportType: selectedReportType,
+                prompt: customPrompt,
+                toggles: {
+                    summary: toggleSummary,
+                    quality: toggleQuality,
+                    schema: toggleSchema,
+                    insights: toggleInsights
+                }
+            });
             if (res && res.success && res.report) {
                 showToast("Report successfully regenerated. New version saved.", "success");
                 await loadReports();
@@ -801,7 +834,7 @@ export default function ReportsPage() {
                     const formatted: ReportItem = {
                         ...res.report,
                         type: res.report.name.includes('Quality') ? 'Data Quality' : 'Validation',
-                        generatedBy: user?.name || 'Admin User',
+                        generatedBy: res.report.ownerName || user?.name || 'Admin User',
                         generatedAt: new Date(res.report.createdAt).toLocaleString()
                     };
                     setSelectedPreviewReport(formatted);
@@ -1505,204 +1538,311 @@ export default function ReportsPage() {
                         AI-powered automated reports generated from your datasets.
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <button 
-                        onClick={() => setIsScheduleModalOpen(true)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            padding: '0.55rem 1rem',
-                            fontSize: '0.825rem',
-                            fontWeight: 600,
-                            color: 'var(--text-primary)',
-                            backgroundColor: 'var(--bg-color)',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
-                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-color)'}
-                    >
-                        <Calendar size={14} />
-                        <span>Schedule Report</span>
-                    </button>
-                    <button 
-                        onClick={handleGenerateReport}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.55rem 1rem',
-                            fontSize: '0.825rem',
-                            fontWeight: 600,
-                            color: '#ffffff',
-                            cursor: 'pointer',
-                            transition: 'opacity 0.15s',
-                            boxShadow: '0 2px 4px rgba(99, 102, 241, 0.2)'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
-                        onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
-                    >
-                        <Sparkles size={14} />
-                        <span>Generate Report</span>
-                    </button>
-                </div>
+                {!isReadOnly && (
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button 
+                            onClick={() => setIsScheduleModalOpen(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '8px',
+                                padding: '0.55rem 1rem',
+                                fontSize: '0.825rem',
+                                fontWeight: 600,
+                                color: 'var(--text-primary)',
+                                backgroundColor: 'var(--bg-color)',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-color)'}
+                        >
+                            <Calendar size={14} />
+                            <span>Schedule Report</span>
+                        </button>
+                        <button 
+                            onClick={handleGenerateReport}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '0.55rem 1rem',
+                                fontSize: '0.825rem',
+                                fontWeight: 600,
+                                color: '#ffffff',
+                                cursor: 'pointer',
+                                transition: 'opacity 0.15s',
+                                boxShadow: '0 2px 4px rgba(99, 102, 241, 0.2)'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
+                            onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+                        >
+                            <Sparkles size={14} />
+                            <span>Generate Report</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* KPI Cards Row (6 Columns) */}
-            <div className="metrics-grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem', width: '100%' }}>
-                {/* KPI 1 */}
-                <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(99, 102, 241, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', flexShrink: 0 }}>
-                        <FileText size={18} />
+            {!isReadOnly && (
+                <div className="metrics-grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '1rem', width: '100%' }}>
+                    {/* KPI 1 */}
+                    <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(99, 102, 241, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', flexShrink: 0 }}>
+                            <FileText size={18} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Total Reports</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{reportsList.length}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
+                                <ArrowUpRight size={10} /> {totalReportsTrend}
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Total Reports</span>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{reportsList.length}</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
-                            <ArrowUpRight size={10} /> {totalReportsTrend}
-                        </span>
-                    </div>
-                </div>
 
-                {/* KPI 2 */}
-                <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}>
-                        <CheckCircle2 size={18} />
+                    {/* KPI 2 */}
+                    <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}>
+                            <CheckCircle2 size={18} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Generated Today</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{generatedTodayCount}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
+                                <ArrowUpRight size={10} /> {generatedTodayTrend}
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Generated Today</span>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{generatedTodayCount}</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
-                            <ArrowUpRight size={10} /> {generatedTodayTrend}
-                        </span>
-                    </div>
-                </div>
 
-                {/* KPI 3 */}
-                <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(245, 158, 11, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', flexShrink: 0 }}>
-                        <Sparkles size={18} />
+                    {/* KPI 3 */}
+                    <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(245, 158, 11, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b', flexShrink: 0 }}>
+                            <Sparkles size={18} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Success Rate</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{successRate}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
+                                <ArrowUpRight size={10} /> {successRateTrend}
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Success Rate</span>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{successRate}</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
-                            <ArrowUpRight size={10} /> {successRateTrend}
-                        </span>
-                    </div>
-                </div>
 
-                {/* KPI 4 */}
-                <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(59, 130, 246, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}>
-                        <Clock size={18} />
+                    {/* KPI 4 */}
+                    <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(59, 130, 246, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', flexShrink: 0 }}>
+                            <Clock size={18} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Avg. Gen Time</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{avgGenTime}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
+                                <ArrowDownRight size={10} /> {avgGenTimeTrend}
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Avg. Gen Time</span>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{avgGenTime}</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
-                            <ArrowDownRight size={10} /> {avgGenTimeTrend}
-                        </span>
-                    </div>
-                </div>
 
-                {/* KPI 5 */}
-                <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(6, 182, 212, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', flexShrink: 0 }}>
-                        <Download size={18} />
+                    {/* KPI 5 */}
+                    <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(6, 182, 212, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#06b6d4', flexShrink: 0 }}>
+                            <Download size={18} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Downloads</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{downloadCount}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
+                                <ArrowUpRight size={10} /> {downloadsTrend}
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Downloads</span>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{downloadCount}</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
-                            <ArrowUpRight size={10} /> {downloadsTrend}
-                        </span>
-                    </div>
-                </div>
 
-                {/* KPI 6 */}
-                <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(217, 70, 239, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d946ef', flexShrink: 0 }}>
-                        <Sparkles size={18} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>AI Insights</span>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{aiInsightsCount}</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
-                            <ArrowUpRight size={10} /> {aiInsightsTrend}
-                        </span>
+                    {/* KPI 6 */}
+                    <div style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(217, 70, 239, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d946ef', flexShrink: 0 }}>
+                            <Sparkles size={18} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>AI Insights</span>
+                            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.1rem' }}>{aiInsightsCount}</span>
+                            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.1rem', marginTop: '0.1rem' }}>
+                                <ArrowUpRight size={10} /> {aiInsightsTrend}
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Split Layout Grid */}
             <div className="reports-split-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem', width: '100%', alignItems: 'start' }}>
                 
                 {/* Left Side Content (Generator, List Table, Banner) */}
-                <div className="reports-left-col" style={{ gridColumn: 'span 9', display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
+                <div className="reports-left-col" style={{ gridColumn: isReadOnly ? 'span 12' : 'span 9', display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
                     
                     {/* AI Report Generator Panel */}
-                    <div 
-                        id="ai-generator-section"
-                        style={{
-                            backgroundColor: 'var(--bg-color)',
-                            borderRadius: '12px',
-                            padding: '1.5rem',
-                            border: '1px solid rgba(99, 102, 241, 0.15)',
-                            boxShadow: 'var(--shadow-sm)',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            gap: '1.5rem'
-                        }}
-                    >
-                        {/* Interactive glow effect */}
-                        <div style={{
-                            position: 'absolute',
-                            right: '-10%',
-                            top: '-20%',
-                            width: '45%',
-                            height: '140%',
-                            background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.02) 70%, transparent 100%)',
-                            pointerEvents: 'none'
-                        }} />
+                    {!isReadOnly && (
+                        <div 
+                            id="ai-generator-section"
+                            style={{
+                                backgroundColor: 'var(--bg-color)',
+                                borderRadius: '12px',
+                                padding: '1.5rem',
+                                border: '1px solid rgba(99, 102, 241, 0.15)',
+                                boxShadow: 'var(--shadow-sm)',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                gap: '1.5rem'
+                            }}
+                        >
+                            {/* Interactive glow effect */}
+                            <div style={{
+                                position: 'absolute',
+                                right: '-10%',
+                                top: '-20%',
+                                width: '45%',
+                                height: '140%',
+                                background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.02) 70%, transparent 100%)',
+                                pointerEvents: 'none'
+                            }} />
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Sparkles size={16} color="#6366f1" />
-                                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>AI Report Generator</h3>
-                                <span style={{
-                                    fontSize: '0.65rem',
-                                    fontWeight: 600,
-                                    color: '#6366f1',
-                                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
-                                    padding: '0.15rem 0.5rem',
-                                    borderRadius: '999px',
-                                    marginLeft: '0.25rem'
-                                }}>
-                                    Recommended by AI
-                                </span>
-                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Sparkles size={16} color="#6366f1" />
+                                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>AI Report Generator</h3>
+                                    <span style={{
+                                        fontSize: '0.65rem',
+                                        fontWeight: 600,
+                                        color: '#6366f1',
+                                        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                                        padding: '0.15rem 0.5rem',
+                                        borderRadius: '999px',
+                                        marginLeft: '0.25rem'
+                                    }}>
+                                        Recommended by AI
+                                    </span>
+                                </div>
 
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', margin: 0 }}>
-                                Let AI analyze your dataset and create a comprehensive report automatically.
-                            </p>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', margin: 0 }}>
+                                    Let AI analyze your dataset and create a comprehensive report automatically.
+                                </p>
 
-                            {/* Dropdowns row */}
-                            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                                {/* Select Dataset */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: '150px' }}>
-                                    <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Select Dataset</label>
-                                    <select 
-                                        value={selectedDatasetId}
-                                        onChange={handleDatasetSelect}
+                                {/* Dropdowns row */}
+                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                                    {/* Select Dataset */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: '150px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Select Dataset</label>
+                                        <select 
+                                            value={selectedDatasetId}
+                                            onChange={handleDatasetSelect}
+                                            style={{
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '6px',
+                                                padding: '0.5rem',
+                                                fontSize: '0.78rem',
+                                                color: 'var(--text-primary)',
+                                                backgroundColor: 'var(--bg-color)',
+                                                outline: 'none'
+                                            }}
+                                        >
+                                            {dbDatasets.length === 0 ? (
+                                                <option value="">No datasets uploaded</option>
+                                            ) : (
+                                                dbDatasets.map((d: any) => (
+                                                    <option key={d.id} value={d.id}>{d.name}</option>
+                                                ))
+                                            )}
+                                        </select>
+                                    </div>
+
+                                    {/* Report Type */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: '180px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Report Type</label>
+                                        <select 
+                                            value={selectedReportType}
+                                            onChange={(e) => setSelectedReportType(e.target.value)}
+                                            style={{
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '6px',
+                                                padding: '0.5rem',
+                                                fontSize: '0.78rem',
+                                                color: 'var(--text-primary)',
+                                                backgroundColor: 'var(--bg-color)',
+                                                outline: 'none'
+                                            }}
+                                        >
+                                            {dynamicReportTypes.map(t => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Output Format */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 0.5, minWidth: '100px' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Output Format</label>
+                                        <select 
+                                            value={selectedFormat}
+                                            onChange={(e) => setSelectedFormat(e.target.value)}
+                                            style={{
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '6px',
+                                                padding: '0.5rem',
+                                                fontSize: '0.78rem',
+                                                color: 'var(--text-primary)',
+                                                backgroundColor: 'var(--bg-color)',
+                                                outline: 'none'
+                                            }}
+                                        >
+                                            <option value="PDF">PDF</option>
+                                            <option value="Excel">Excel</option>
+                                            <option value="CSV">CSV</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Action button */}
+                                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                                        <button 
+                                            onClick={handleGenerateReport}
+                                            disabled={isGenerating || dbDatasets.length === 0}
+                                            style={{
+                                                height: '35px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                backgroundColor: '#6366f1',
+                                                color: '#ffffff',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                padding: '0 1rem',
+                                                fontSize: '0.78rem',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                transition: 'background-color 0.15s',
+                                                boxShadow: '0 2px 4px rgba(99, 102, 241, 0.15)',
+                                                opacity: dbDatasets.length === 0 ? 0.6 : 1
+                                            }}
+                                            onMouseOver={(e) => { if (dbDatasets.length > 0) e.currentTarget.style.backgroundColor = '#4f46e5'; }}
+                                            onMouseOut={(e) => { if (dbDatasets.length > 0) e.currentTarget.style.backgroundColor = '#6366f1'; }}
+                                        >
+                                            {isGenerating ? <Loader2 size={13} className="spinner" /> : <Sparkles size={13} />}
+                                            <span>{isGenerating ? 'Generating...' : 'Generate with AI'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Custom Instructions / Prompt Input */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', width: '100%', marginTop: '0.5rem' }}>
+                                    <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Custom Instructions / Prompt (Optional)</label>
+                                    <textarea
+                                        value={customPrompt}
+                                        onChange={(e) => setCustomPrompt(e.target.value)}
+                                        placeholder="E.g., Focus heavily on checking for invalid birthdates or missing country codes. Include compliance guidelines for user name encryption."
                                         style={{
                                             border: '1px solid var(--border-color)',
                                             borderRadius: '6px',
@@ -1710,157 +1850,78 @@ export default function ReportsPage() {
                                             fontSize: '0.78rem',
                                             color: 'var(--text-primary)',
                                             backgroundColor: 'var(--bg-color)',
-                                            outline: 'none'
+                                            outline: 'none',
+                                            resize: 'vertical',
+                                            minHeight: '60px',
+                                            fontFamily: 'inherit'
                                         }}
-                                    >
-                                        {dbDatasets.length === 0 ? (
-                                            <option value="">No datasets uploaded</option>
-                                        ) : (
-                                            dbDatasets.map((d: any) => (
-                                                <option key={d.id} value={d.id}>{d.name}</option>
-                                            ))
-                                        )}
-                                    </select>
+                                    />
                                 </div>
 
-                                {/* Report Type */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 1, minWidth: '180px' }}>
-                                    <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Report Type</label>
-                                    <select 
-                                        value={selectedReportType}
-                                        onChange={(e) => setSelectedReportType(e.target.value)}
-                                        style={{
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '6px',
-                                            padding: '0.5rem',
-                                            fontSize: '0.78rem',
-                                            color: 'var(--text-primary)',
-                                            backgroundColor: 'var(--bg-color)',
-                                            outline: 'none'
-                                        }}
-                                    >
-                                        {dynamicReportTypes.map(t => (
-                                            <option key={t} value={t}>{t}</option>
-                                        ))}
-                                    </select>
+                                {/* Switches row */}
+                                <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                                    <ToggleSwitch checked={toggleSummary} onChange={setToggleSummary} label="AI Executive Summary" />
+                                    <ToggleSwitch checked={toggleQuality} onChange={setToggleQuality} label="Data Quality Analysis" />
+                                    <ToggleSwitch checked={toggleSchema} onChange={setToggleSchema} label="Schema & Metadata" />
+                                    <ToggleSwitch checked={toggleInsights} onChange={setToggleInsights} label="Insights & Recommendations" />
                                 </div>
 
-                                {/* Output Format */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', flex: 0.5, minWidth: '100px' }}>
-                                    <label style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Output Format</label>
-                                    <select 
-                                        value={selectedFormat}
-                                        onChange={(e) => setSelectedFormat(e.target.value)}
-                                        style={{
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '6px',
-                                            padding: '0.5rem',
-                                            fontSize: '0.78rem',
-                                            color: 'var(--text-primary)',
-                                            backgroundColor: 'var(--bg-color)',
-                                            outline: 'none'
-                                        }}
-                                    >
-                                        <option value="PDF">PDF</option>
-                                        <option value="Excel">Excel</option>
-                                        <option value="CSV">CSV</option>
-                                    </select>
-                                </div>
-
-                                {/* Action button */}
-                                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                                    <button 
-                                        onClick={handleGenerateReport}
-                                        disabled={isGenerating || dbDatasets.length === 0}
-                                        style={{
-                                            height: '35px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            backgroundColor: '#6366f1',
-                                            color: '#ffffff',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            padding: '0 1rem',
-                                            fontSize: '0.78rem',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            transition: 'background-color 0.15s',
-                                            boxShadow: '0 2px 4px rgba(99, 102, 241, 0.15)',
-                                            opacity: dbDatasets.length === 0 ? 0.6 : 1
-                                        }}
-                                        onMouseOver={(e) => { if (dbDatasets.length > 0) e.currentTarget.style.backgroundColor = '#4f46e5'; }}
-                                        onMouseOut={(e) => { if (dbDatasets.length > 0) e.currentTarget.style.backgroundColor = '#6366f1'; }}
-                                    >
-                                        {isGenerating ? <Loader2 size={13} className="spinner" /> : <Sparkles size={13} />}
-                                        <span>{isGenerating ? 'Generating...' : 'Generate with AI'}</span>
-                                    </button>
+                                {/* Disclaimer / Note */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                                    <ShieldCheck size={14} color="#10b981" />
+                                    <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
+                                        AI will analyze your data and generate a customized report. No data is shared with third parties.
+                                    </span>
                                 </div>
                             </div>
 
-                            {/* Switches row */}
-                            <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                                <ToggleSwitch checked={toggleSummary} onChange={setToggleSummary} label="AI Executive Summary" />
-                                <ToggleSwitch checked={toggleQuality} onChange={setToggleQuality} label="Data Quality Analysis" />
-                                <ToggleSwitch checked={toggleSchema} onChange={setToggleSchema} label="Schema & Metadata" />
-                                <ToggleSwitch checked={toggleInsights} onChange={setToggleInsights} label="Insights & Recommendations" />
-                            </div>
-
-                            {/* Disclaimer / Note */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                                <ShieldCheck size={14} color="#10b981" />
-                                <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
-                                    AI will analyze your data and generate a customized report. No data is shared with third parties.
-                                </span>
+                            {/* Graphic Section on Right */}
+                            <div style={{ width: '130px', height: '100%', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} className="reports-right-col">
+                                <svg width="100%" height="100%" viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="80" cy="70" r="50" fill="rgba(99, 102, 241, 0.03)" />
+                                    <circle cx="80" cy="70" r="30" stroke="rgba(99, 102, 241, 0.08)" strokeDasharray="3 3" />
+                                    
+                                    <g transform="translate(15, 30)">
+                                        <rect x="0" y="0" width="30" height="40" rx="4" fill="var(--bg-color)" stroke="var(--border-color)" strokeWidth="1.5" />
+                                        <line x1="6" y1="10" x2="24" y2="10" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="6" y1="16" x2="20" y2="16" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="6" y1="22" x2="16" y2="22" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" />
+                                    </g>
+                                    
+                                    <g transform="translate(115, 60)">
+                                        <rect x="0" y="0" width="30" height="40" rx="4" fill="var(--bg-color)" stroke="var(--border-color)" strokeWidth="1.5" />
+                                        <line x1="6" y1="10" x2="24" y2="10" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="6" y1="16" x2="18" y2="16" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="6" y1="22" x2="22" y2="22" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
+                                    </g>
+                                    
+                                    <g transform="translate(62, 45)">
+                                        <rect x="0" y="0" width="36" height="36" rx="8" fill="url(#aiCoreGradient)" filter="drop-shadow(0px 4px 10px rgba(99, 102, 241, 0.2))" />
+                                        <path d="M18 10L22 17H14L18 10Z" fill="#ffffff" opacity="0.9" />
+                                        <circle cx="18" cy="22" r="3.5" fill="#ffffff" />
+                                        <path d="M12 22H24" stroke="#ffffff" strokeWidth="1.5" />
+                                    </g>
+                                    
+                                    <path d="M45 50 Q 60 50 62 60" stroke="var(--border-color)" strokeWidth="1.5" strokeDasharray="3 3" />
+                                    <path d="M115 80 Q 100 80 98 72" stroke="var(--border-color)" strokeWidth="1.5" strokeDasharray="3 3" />
+                                    
+                                    <g transform="translate(48, 20)">
+                                        <path d="M4 0L5 3L8 4L5 5L4 8L3 5L0 4L3 3L4 0Z" fill="#a855f7" />
+                                    </g>
+                                    <g transform="translate(95, 25)">
+                                        <path d="M3 0L3.8 2.2L6 3L3.8 3.8L3 6L2.2 3.8L0 3L2.2 2.2L3 0Z" fill="#f59e0b" />
+                                    </g>
+                                    
+                                    <defs>
+                                        <linearGradient id="aiCoreGradient" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                                            <stop stopColor="#6366f1" />
+                                            <stop offset="1" stopColor="#a855f7" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
                             </div>
                         </div>
-
-                        {/* Graphic Section on Right */}
-                        <div style={{ width: '130px', height: '100%', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} className="reports-right-col">
-                            <svg width="100%" height="100%" viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="80" cy="70" r="50" fill="rgba(99, 102, 241, 0.03)" />
-                                <circle cx="80" cy="70" r="30" stroke="rgba(99, 102, 241, 0.08)" strokeDasharray="3 3" />
-                                
-                                <g transform="translate(15, 30)">
-                                    <rect x="0" y="0" width="30" height="40" rx="4" fill="var(--bg-color)" stroke="var(--border-color)" strokeWidth="1.5" />
-                                    <line x1="6" y1="10" x2="24" y2="10" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
-                                    <line x1="6" y1="16" x2="20" y2="16" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
-                                    <line x1="6" y1="22" x2="16" y2="22" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" />
-                                </g>
-                                
-                                <g transform="translate(115, 60)">
-                                    <rect x="0" y="0" width="30" height="40" rx="4" fill="var(--bg-color)" stroke="var(--border-color)" strokeWidth="1.5" />
-                                    <line x1="6" y1="10" x2="24" y2="10" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
-                                    <line x1="6" y1="16" x2="18" y2="16" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
-                                    <line x1="6" y1="22" x2="22" y2="22" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" />
-                                </g>
-                                
-                                <g transform="translate(62, 45)">
-                                    <rect x="0" y="0" width="36" height="36" rx="8" fill="url(#aiCoreGradient)" filter="drop-shadow(0px 4px 10px rgba(99, 102, 241, 0.2))" />
-                                    <path d="M18 10L22 17H14L18 10Z" fill="#ffffff" opacity="0.9" />
-                                    <circle cx="18" cy="22" r="3.5" fill="#ffffff" />
-                                    <path d="M12 22H24" stroke="#ffffff" strokeWidth="1.5" />
-                                </g>
-                                
-                                <path d="M45 50 Q 60 50 62 60" stroke="var(--border-color)" strokeWidth="1.5" strokeDasharray="3 3" />
-                                <path d="M115 80 Q 100 80 98 72" stroke="var(--border-color)" strokeWidth="1.5" strokeDasharray="3 3" />
-                                
-                                <g transform="translate(48, 20)">
-                                    <path d="M4 0L5 3L8 4L5 5L4 8L3 5L0 4L3 3L4 0Z" fill="#a855f7" />
-                                </g>
-                                <g transform="translate(95, 25)">
-                                    <path d="M3 0L3.8 2.2L6 3L3.8 3.8L3 6L2.2 3.8L0 3L2.2 2.2L3 0Z" fill="#f59e0b" />
-                                </g>
-                                
-                                <defs>
-                                    <linearGradient id="aiCoreGradient" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-                                        <stop stopColor="#6366f1" />
-                                        <stop offset="1" stopColor="#a855f7" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                    </div>
+                    )}
 
                     {/* Reports Table Section */}
                     <Card style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
@@ -1868,25 +1929,31 @@ export default function ReportsPage() {
                             
                             {/* Toolbar: Tabs and filter tools */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                                <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.825rem', fontWeight: 600 }}>
-                                    {(['All', 'My', 'Shared', 'Scheduled', 'Failed'] as const).map((tab) => (
-                                        <span 
-                                            key={tab}
-                                            onClick={() => setActiveReportsTab(tab)}
-                                            style={{
-                                                color: activeReportsTab === tab ? '#6366f1' : 'var(--text-secondary)',
-                                                borderBottom: activeReportsTab === tab ? '2px solid #6366f1' : '2px solid transparent',
-                                                paddingBottom: '0.85rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                marginBottom: '-0.95rem',
-                                                zIndex: 2
-                                            }}
-                                        >
-                                            {tab === 'All' ? 'All Reports' : tab === 'My' ? 'My Reports' : tab === 'Shared' ? 'Shared With Me' : tab}
-                                        </span>
-                                    ))}
-                                </div>
+                                {isReadOnly ? (
+                                    <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)', paddingBottom: '0.85rem', marginBottom: '-0.95rem' }}>
+                                        Shared Reports
+                                    </span>
+                                ) : (
+                                    <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.825rem', fontWeight: 600 }}>
+                                        {(['All', 'My', 'Shared', 'Scheduled', 'Failed'] as const).map((tab) => (
+                                            <span 
+                                                key={tab}
+                                                onClick={() => setActiveReportsTab(tab)}
+                                                style={{
+                                                    color: activeReportsTab === tab ? '#6366f1' : 'var(--text-secondary)',
+                                                    borderBottom: activeReportsTab === tab ? '2px solid #6366f1' : '2px solid transparent',
+                                                    paddingBottom: '0.85rem',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    marginBottom: '-0.95rem',
+                                                    zIndex: 2
+                                                }}
+                                            >
+                                                {tab === 'All' ? 'All Reports' : tab === 'My' ? 'My Reports' : tab === 'Shared' ? 'Shared With Me' : tab}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     {/* Search Bar */}
@@ -2351,51 +2418,54 @@ export default function ReportsPage() {
                     </Card>
 
                     {/* AI Insight banner at bottom */}
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        backgroundColor: 'rgba(99, 102, 241, 0.04)',
-                        border: '1px solid rgba(99, 102, 241, 0.08)',
-                        borderRadius: '10px',
-                        padding: '0.85rem 1.25rem',
-                        flexWrap: 'wrap',
-                        gap: '0.75rem'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                            <div style={{ color: '#6366f1', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                                <Sparkles size={16} />
+                    {!isReadOnly && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            backgroundColor: 'rgba(99, 102, 241, 0.04)',
+                            border: '1px solid rgba(99, 102, 241, 0.08)',
+                            borderRadius: '10px',
+                            padding: '0.85rem 1.25rem',
+                            flexWrap: 'wrap',
+                            gap: '0.75rem'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <div style={{ color: '#6366f1', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                                    <Sparkles size={16} />
+                                </div>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                    <span style={{ color: '#6366f1', marginRight: '0.25rem' }}>AI Insight:</span>
+                                    AI analyzed your datasets and compiled {aiInsightsCount} technical validation insights across your schema properties.
+                                </span>
                             </div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                <span style={{ color: '#6366f1', marginRight: '0.25rem' }}>AI Insight:</span>
-                                AI analyzed your datasets and compiled {aiInsightsCount} technical validation insights across your schema properties.
-                            </span>
+                            <button 
+                                onClick={() => {
+                                    handleAssistantPrompt(`Tell me about the key insights found in my datasets. There are currently ${aiInsightsCount} insights calculated.`);
+                                }}
+                                style={{
+                                    fontSize: '0.72rem',
+                                    color: '#6366f1',
+                                    fontWeight: 700,
+                                    backgroundColor: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem'
+                                }}
+                            >
+                                <span>View AI Insights</span>
+                                <ChevronRight size={13} />
+                            </button>
                         </div>
-                        <button 
-                            onClick={() => {
-                                handleAssistantPrompt(`Tell me about the key insights found in my datasets. There are currently ${aiInsightsCount} insights calculated.`);
-                            }}
-                            style={{
-                                fontSize: '0.72rem',
-                                color: '#6366f1',
-                                fontWeight: 700,
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.25rem'
-                            }}
-                        >
-                            <span>View AI Insights</span>
-                            <ChevronRight size={13} />
-                        </button>
-                    </div>
+                    )}
 
                 </div>
 
                 {/* Right Side Content (Assistant, Scheduled Reports, Templates) */}
-                <div className="reports-right-col" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                {!isReadOnly && (
+                    <div className="reports-right-col" style={{ gridColumn: 'span 3', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     
                     {/* AI Report Assistant Card */}
                     <Card style={{ backgroundColor: 'var(--bg-color)', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
@@ -2609,58 +2679,64 @@ export default function ReportsPage() {
                                             }}>
                                                 {sched.status}
                                             </span>
-                                            <button 
-                                                onClick={() => handleRunScheduleNow(sched.id, sched.name)}
-                                                style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px', display: 'flex' }}
-                                                title="Trigger distribution"
-                                            >
-                                                <Play size={11} fill="currentColor" />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleToggleSchedule(sched.id, sched.status, sched.name)}
-                                                style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px', display: 'flex' }}
-                                                title="Toggle Active/Inactive"
-                                            >
-                                                <RefreshCw size={11} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteSchedule(sched.id, sched.name)}
-                                                style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', display: 'flex' }}
-                                                title="Delete Schedule"
-                                            >
-                                                <X size={11} />
-                                            </button>
+                                            {!isReadOnly && (
+                                                <>
+                                                    <button 
+                                                        onClick={() => handleRunScheduleNow(sched.id, sched.name)}
+                                                        style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                                                        title="Trigger distribution"
+                                                    >
+                                                        <Play size={11} fill="currentColor" />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleToggleSchedule(sched.id, sched.status, sched.name)}
+                                                        style={{ border: 'none', background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                                                        title="Toggle Active/Inactive"
+                                                    >
+                                                        <RefreshCw size={11} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteSchedule(sched.id, sched.name)}
+                                                        style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                                                        title="Delete Schedule"
+                                                    >
+                                                        <X size={11} />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            <button 
-                                onClick={() => setIsScheduleModalOpen(true)}
-                                style={{
-                                    width: '100%',
-                                    backgroundColor: 'rgba(99, 102, 241, 0.04)',
-                                    border: '1px dashed rgba(99, 102, 241, 0.3)',
-                                    borderRadius: '8px',
-                                    padding: '0.55rem',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 700,
-                                    color: '#6366f1',
-                                    cursor: 'pointer',
-                                    textAlign: 'center',
-                                    transition: 'all 0.15s'
-                                }}
-                                onMouseOver={(e) => {
-                                    e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.08)';
-                                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
-                                }}
-                                onMouseOut={(e) => {
-                                    e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.04)';
-                                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
-                                }}
-                            >
-                                + Create Schedule
-                            </button>
+                            {!isReadOnly && (
+                                <button 
+                                    onClick={() => setIsScheduleModalOpen(true)}
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: 'rgba(99, 102, 241, 0.04)',
+                                        border: '1px dashed rgba(99, 102, 241, 0.3)',
+                                        borderRadius: '8px',
+                                        padding: '0.55rem',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        color: '#6366f1',
+                                        cursor: 'pointer',
+                                        textAlign: 'center',
+                                        transition: 'all 0.15s'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.08)';
+                                        e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'rgba(99, 102, 241, 0.04)';
+                                        e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+                                    }}
+                                >
+                                    + Create Schedule
+                                </button>
+                            )}
 
                         </CardContent>
                     </Card>
@@ -2795,6 +2871,7 @@ export default function ReportsPage() {
                     </Card>
 
                 </div>
+                )}
 
             </div>
 
@@ -2870,14 +2947,16 @@ export default function ReportsPage() {
                                 >
                                     Download {selectedPreviewReport.format}
                                 </Button>
-                                <Button 
-                                    variant="outline" 
-                                    onClick={() => handleOpenShare(selectedPreviewReport)}
-                                    icon={<Share size={13} />}
-                                    style={{ fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}
-                                >
-                                    Share Settings
-                                </Button>
+                                {!isReadOnly && (
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => handleOpenShare(selectedPreviewReport)}
+                                        icon={<Share size={13} />}
+                                        style={{ fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}
+                                    >
+                                        Share Settings
+                                    </Button>
+                                )}
                                 <Button 
                                     variant="outline" 
                                     onClick={handlePrint}
@@ -2911,14 +2990,16 @@ export default function ReportsPage() {
                                     <option value="JSON">JSON Schema</option>
                                 </select>
 
-                                <Button 
-                                    variant="primary" 
-                                    onClick={() => handleRegenerate(selectedPreviewReport.id)}
-                                    icon={<RefreshCw size={13} />}
-                                    style={{ backgroundColor: '#6366f1', fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}
-                                >
-                                    Regenerate
-                                </Button>
+                                {!isReadOnly && (
+                                    <Button 
+                                        variant="primary" 
+                                        onClick={() => handleRegenerate(selectedPreviewReport.id)}
+                                        icon={<RefreshCw size={13} />}
+                                        style={{ backgroundColor: '#6366f1', fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}
+                                    >
+                                        Regenerate
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>

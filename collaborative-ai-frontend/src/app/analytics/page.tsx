@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/providers/ToastProvider';
+import { useRole } from '@/components/providers/RoleProvider';
 import {
     Sparkles, Send, Database, Hash, Type, Download, AlertTriangle,
     BarChart3, PieChart as PieIcon, TrendingUp, Table, Eye, Plus,
@@ -346,6 +347,8 @@ function computeClientSideAnalytics(name: string, rows: any[]): DatasetAnalytics
 
 export default function AnalyticsPage() {
     const { showToast } = useToast();
+    const { role } = useRole();
+    const isReadOnly = role === 'Business User';
 
     // Datasets and state variables
     const [datasets, setDatasets] = useState<DatasetMeta[]>([]);
@@ -754,7 +757,7 @@ export default function AnalyticsPage() {
                     }
                 ];
                 // Combine and prevent duplicate IDs
-                const combined = [...mockLibrary];
+                const combined = role === 'Business User' ? [] : [...mockLibrary];
                 if (dbMapped.length > 0) {
                     dbMapped.forEach((dbItem: any) => {
                         if (!combined.some(c => c.id === dbItem.id)) {
@@ -821,6 +824,13 @@ export default function AnalyticsPage() {
             }
         }
     }, [selectedDs]);
+
+    // For read-only users, immediately direct to dashboard view if a dataset is selected
+    useEffect(() => {
+        if (isReadOnly && selectedDs && workspaceState !== 'dashboard') {
+            setWorkspaceState('dashboard');
+        }
+    }, [isReadOnly, selectedDs, workspaceState]);
 
     // Load dataset and boot BI studio canvas
     useEffect(() => {
@@ -4673,7 +4683,7 @@ export default function AnalyticsPage() {
                     canvasRef.current.style.overflow = '';
                     canvasRef.current.style.padding = '';
                 }
-            } catch (e) {}
+            } catch (e) { }
         } finally {
             setExporting(false);
         }
@@ -5276,26 +5286,28 @@ export default function AnalyticsPage() {
                                     {filteredDatasets.length}
                                 </span>
                             </div>
-                            <button
-                                onClick={() => setShowUploadDsModal(true)}
-                                style={{
-                                    border: 'none',
-                                    background: 'var(--studio-bg)',
-                                    color: 'var(--studio-text)',
-                                    borderRadius: '6px',
-                                    width: '22px',
-                                    height: '22px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    fontWeight: 800,
-                                    fontSize: '0.9rem'
-                                }}
-                                title="Ingest new CSV file"
-                            >
-                                +
-                            </button>
+                            {!isReadOnly && (
+                                <button
+                                    onClick={() => setShowUploadDsModal(true)}
+                                    style={{
+                                        border: 'none',
+                                        background: 'var(--studio-bg)',
+                                        color: 'var(--studio-text)',
+                                        borderRadius: '6px',
+                                        width: '22px',
+                                        height: '22px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        fontWeight: 800,
+                                        fontSize: '0.9rem'
+                                    }}
+                                    title="Ingest new CSV file"
+                                >
+                                    +
+                                </button>
+                            )}
                         </div>
 
                         {/* Search datasets */}
@@ -5448,23 +5460,27 @@ export default function AnalyticsPage() {
                                                 >
                                                     <Cpu size={11} />
                                                 </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setRenamingDsId(d.id);
-                                                        setRenamingDsValue(d.name);
-                                                    }}
-                                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--studio-text-sub)', display: 'flex', alignItems: 'center' }}
-                                                    title="Rename"
-                                                >
-                                                    <Edit2 size={11} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteDataset(d.id)}
-                                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={11} />
-                                                </button>
+                                                {!isReadOnly && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => {
+                                                                setRenamingDsId(d.id);
+                                                                setRenamingDsValue(d.name);
+                                                            }}
+                                                            style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--studio-text-sub)', display: 'flex', alignItems: 'center' }}
+                                                            title="Rename"
+                                                        >
+                                                            <Edit2 size={11} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteDataset(d.id)}
+                                                            style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#ef4444', display: 'flex', alignItems: 'center' }}
+                                                            title="Delete"
+                                                        >
+                                                            <Trash2 size={11} />
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -5519,31 +5535,33 @@ export default function AnalyticsPage() {
                                         />
                                     </div>
 
-                                    <button
-                                        onClick={() => {
-                                            if (selectedDs) {
-                                                setPromptInput("Build an Executive Dashboard tracking key metrics");
-                                                handleGenerateWorkspaceDashboard("Build an Executive Dashboard tracking key metrics");
-                                            } else {
-                                                showToast("Please select a dataset from the library first.", "info");
-                                            }
-                                        }}
-                                        style={{
-                                            border: 'none',
-                                            background: '#4f46e5',
-                                            color: 'white',
-                                            fontSize: '0.725rem',
-                                            fontWeight: 700,
-                                            padding: '0.4rem 0.8rem',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.25rem'
-                                        }}
-                                    >
-                                        <Plus size={12} /> New Dashboard
-                                    </button>
+                                    {!isReadOnly && (
+                                        <button
+                                            onClick={() => {
+                                                if (selectedDs) {
+                                                    setPromptInput("Build an Executive Dashboard tracking key metrics");
+                                                    handleGenerateWorkspaceDashboard("Build an Executive Dashboard tracking key metrics");
+                                                } else {
+                                                    showToast("Please select a dataset from the library first.", "info");
+                                                }
+                                            }}
+                                            style={{
+                                                border: 'none',
+                                                background: '#4f46e5',
+                                                color: 'white',
+                                                fontSize: '0.725rem',
+                                                fontWeight: 700,
+                                                padding: '0.4rem 0.8rem',
+                                                borderRadius: '8px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.25rem'
+                                            }}
+                                        >
+                                            <Plus size={12} /> New Dashboard
+                                        </button>
+                                    )}
 
                                     <button style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--studio-text-sub)' }} onClick={() => setShowTourModal(true)}>
                                         <HelpCircle size={14} />
@@ -5611,9 +5629,10 @@ export default function AnalyticsPage() {
 
                                 <div style={{ display: 'flex', flexDirection: 'column', border: '1.5px solid var(--studio-border)', borderRadius: '14px', padding: '0.75rem', backgroundColor: 'white', position: 'relative' }}>
                                     <textarea
-                                        placeholder="Ask anything about your data..."
+                                        placeholder={isReadOnly ? "AI Analytics Studio is in View-Only mode for Business Users." : "Ask anything about your data..."}
                                         value={promptInput}
                                         onChange={e => setPromptInput(e.target.value)}
+                                        disabled={isReadOnly}
                                         style={{
                                             width: '100%',
                                             height: '70px',
@@ -5629,141 +5648,145 @@ export default function AnalyticsPage() {
                                         }}
                                     />
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--studio-border)', paddingTop: '0.6rem', marginTop: '0.35rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    {!isReadOnly && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--studio-border)', paddingTop: '0.6rem', marginTop: '0.35rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <button
+                                                    onClick={() => setShowAttachFilesModal(true)}
+                                                    style={{ border: 'none', background: 'var(--studio-bg)', color: 'var(--studio-text-sub)', fontSize: '0.675rem', fontWeight: 600, padding: '0.3rem 0.55rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                                >
+                                                    <FileText size={10} /> Attach files
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowAddFilterPop(true)}
+                                                    style={{ border: 'none', background: 'var(--studio-bg)', color: 'var(--studio-text-sub)', fontSize: '0.675rem', fontWeight: 600, padding: '0.3rem 0.55rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                                >
+                                                    <Sliders size={10} /> Add filter
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowParamsPop(true)}
+                                                    style={{ border: 'none', background: 'var(--studio-bg)', color: 'var(--studio-text-sub)', fontSize: '0.675rem', fontWeight: 600, padding: '0.3rem 0.55rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                                >
+                                                    <Settings size={10} /> Parameters
+                                                </button>
+                                            </div>
+
                                             <button
-                                                onClick={() => setShowAttachFilesModal(true)}
-                                                style={{ border: 'none', background: 'var(--studio-bg)', color: 'var(--studio-text-sub)', fontSize: '0.675rem', fontWeight: 600, padding: '0.3rem 0.55rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                                onClick={() => handleGenerateWorkspaceDashboard(promptInput)}
+                                                disabled={!selectedDs || !promptInput.trim()}
+                                                style={{
+                                                    border: 'none',
+                                                    background: (!selectedDs || !promptInput.trim()) ? 'var(--studio-border)' : 'var(--studio-purple)',
+                                                    color: 'white',
+                                                    borderRadius: '50%',
+                                                    width: '26px',
+                                                    height: '26px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
                                             >
-                                                <FileText size={10} /> Attach files
-                                            </button>
-                                            <button
-                                                onClick={() => setShowAddFilterPop(true)}
-                                                style={{ border: 'none', background: 'var(--studio-bg)', color: 'var(--studio-text-sub)', fontSize: '0.675rem', fontWeight: 600, padding: '0.3rem 0.55rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-                                            >
-                                                <Sliders size={10} /> Add filter
-                                            </button>
-                                            <button
-                                                onClick={() => setShowParamsPop(true)}
-                                                style={{ border: 'none', background: 'var(--studio-bg)', color: 'var(--studio-text-sub)', fontSize: '0.675rem', fontWeight: 600, padding: '0.3rem 0.55rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-                                            >
-                                                <Settings size={10} /> Parameters
+                                                <Send size={11} />
                                             </button>
                                         </div>
-
-                                        <button
-                                            onClick={() => handleGenerateWorkspaceDashboard(promptInput)}
-                                            disabled={!selectedDs || !promptInput.trim()}
-                                            style={{
-                                                border: 'none',
-                                                background: (!selectedDs || !promptInput.trim()) ? 'var(--studio-border)' : 'var(--studio-purple)',
-                                                color: 'white',
-                                                borderRadius: '50%',
-                                                width: '26px',
-                                                height: '26px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            <Send size={11} />
-                                        </button>
-                                    </div>
+                                    )}
                                 </div>
 
                                 {/* Try these examples */}
-                                <div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-                                        <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Try these examples</span>
-                                        <button
-                                            onClick={() => {
-                                                setPromptInput("Analyze regional performance parameters and item ranges");
-                                                showToast("Example loaded!", "info");
-                                            }}
-                                            style={{ border: 'none', background: 'transparent', color: '#4f46e5', fontSize: '0.65rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-                                        >
-                                            <RefreshCw size={9} /> Refresh
-                                        </button>
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem' }}>
-                                        {[
-                                            {
-                                                title: "Executive Dashboard",
-                                                desc: "Create an executive summary dashboard",
-                                                prompt: "Build an Executive Dashboard tracking total spent, demographics, and product revenue ranking",
-                                                datasetId: "products-50"
-                                            },
-                                            {
-                                                title: "Sales Performance",
-                                                desc: "Analyze sales performance trends",
-                                                prompt: "Show me sales trend by month with top 5 products",
-                                                datasetId: "products-50"
-                                            },
-                                            {
-                                                title: "Revenue Analysis",
-                                                desc: "Deep dive into revenue insights",
-                                                prompt: "Generate a Finance and Expense breakdown mapping budgets against payroll and department costs",
-                                                datasetId: "mock-finance"
-                                            },
-                                            {
-                                                title: "Customer Insights",
-                                                desc: "Understand customer behavior",
-                                                prompt: "Create a Customer Retention analysis with contract type breakdowns and churn scores",
-                                                datasetId: "mock-churn"
-                                            },
-                                            {
-                                                title: "Inventory Overview",
-                                                desc: "Analyze inventory & stock levels",
-                                                prompt: "Analyze inventory stock levels and identify slow moving items",
-                                                datasetId: "mock-finance"
-                                            },
-                                            {
-                                                title: "Top Products",
-                                                desc: "Find top performing products",
-                                                prompt: "Show product category distribution, total transactions and product rankings",
-                                                datasetId: "products-50"
-                                            },
-                                            {
-                                                title: "Monthly Trends",
-                                                desc: "Show monthly performance trends",
-                                                prompt: "Plot spending trends over signup dates and monthly performance trends",
-                                                datasetId: "products-50"
-                                            },
-                                            {
-                                                title: "Business Risks",
-                                                desc: "Identify business risks & anomalies",
-                                                prompt: "Identify operational business risks, anomalies and contract variances",
-                                                datasetId: "mock-churn"
-                                            }
-                                        ].map((item, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="suggestion-prompt-card"
+                                {!isReadOnly && (
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Try these examples</span>
+                                            <button
                                                 onClick={() => {
-                                                    setSelectedDs(item.datasetId);
-                                                    setPromptInput(item.prompt);
-                                                    handleGenerateWorkspaceDashboard(item.prompt);
+                                                    setPromptInput("Analyze regional performance parameters and item ranges");
+                                                    showToast("Example loaded!", "info");
                                                 }}
-                                                style={{
-                                                    border: '1px solid var(--studio-border)',
-                                                    borderRadius: '8px',
-                                                    padding: '0.65rem',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: '0.15rem',
-                                                    backgroundColor: 'white'
-                                                }}
+                                                style={{ border: 'none', background: 'transparent', color: '#4f46e5', fontSize: '0.65rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
                                             >
-                                                <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--studio-text)' }}>{item.title}</span>
-                                                <span style={{ fontSize: '0.6rem', color: 'var(--studio-text-sub)', lineHeight: 1.3 }}>{item.desc}</span>
-                                            </div>
-                                        ))}
+                                                <RefreshCw size={9} /> Refresh
+                                            </button>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem' }}>
+                                            {[
+                                                {
+                                                    title: "Executive Dashboard",
+                                                    desc: "Create an executive summary dashboard",
+                                                    prompt: "Build an Executive Dashboard tracking total spent, demographics, and product revenue ranking",
+                                                    datasetId: "products-50"
+                                                },
+                                                {
+                                                    title: "Sales Performance",
+                                                    desc: "Analyze sales performance trends",
+                                                    prompt: "Show me sales trend by month with top 5 products",
+                                                    datasetId: "products-50"
+                                                },
+                                                {
+                                                    title: "Revenue Analysis",
+                                                    desc: "Deep dive into revenue insights",
+                                                    prompt: "Generate a Finance and Expense breakdown mapping budgets against payroll and department costs",
+                                                    datasetId: "mock-finance"
+                                                },
+                                                {
+                                                    title: "Customer Insights",
+                                                    desc: "Understand customer behavior",
+                                                    prompt: "Create a Customer Retention analysis with contract type breakdowns and churn scores",
+                                                    datasetId: "mock-churn"
+                                                },
+                                                {
+                                                    title: "Inventory Overview",
+                                                    desc: "Analyze inventory & stock levels",
+                                                    prompt: "Analyze inventory stock levels and identify slow moving items",
+                                                    datasetId: "mock-finance"
+                                                },
+                                                {
+                                                    title: "Top Products",
+                                                    desc: "Find top performing products",
+                                                    prompt: "Show product category distribution, total transactions and product rankings",
+                                                    datasetId: "products-50"
+                                                },
+                                                {
+                                                    title: "Monthly Trends",
+                                                    desc: "Show monthly performance trends",
+                                                    prompt: "Plot spending trends over signup dates and monthly performance trends",
+                                                    datasetId: "products-50"
+                                                },
+                                                {
+                                                    title: "Business Risks",
+                                                    desc: "Identify business risks & anomalies",
+                                                    prompt: "Identify operational business risks, anomalies and contract variances",
+                                                    datasetId: "mock-churn"
+                                                }
+                                            ].map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="suggestion-prompt-card"
+                                                    onClick={() => {
+                                                        setSelectedDs(item.datasetId);
+                                                        setPromptInput(item.prompt);
+                                                        handleGenerateWorkspaceDashboard(item.prompt);
+                                                    }}
+                                                    style={{
+                                                        border: '1px solid var(--studio-border)',
+                                                        borderRadius: '8px',
+                                                        padding: '0.65rem',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '0.15rem',
+                                                        backgroundColor: 'white'
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: '0.725rem', fontWeight: 700, color: 'var(--studio-text)' }}>{item.title}</span>
+                                                    <span style={{ fontSize: '0.6rem', color: 'var(--studio-text-sub)', lineHeight: 1.3 }}>{item.desc}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             {/* D. RECENT CONVERSATIONS TABLE */}
@@ -5997,27 +6020,29 @@ export default function AnalyticsPage() {
                     }}>
                         <div className="studio-dash-title-group">
                             <div className="studio-dash-title-row" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <button
-                                    onClick={() => setWorkspaceState('home')}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.35rem',
-                                        border: '1px solid var(--studio-border)',
-                                        borderRadius: '8px',
-                                        padding: '0.35rem 0.65rem',
-                                        background: 'var(--studio-card-bg)',
-                                        color: 'var(--studio-text)',
-                                        fontSize: '0.725rem',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s'
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--studio-bg)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'var(--studio-card-bg)'}
-                                >
-                                    <Home size={12} /> Back to Home
-                                </button>
+                                {!isReadOnly && (
+                                    <button
+                                        onClick={() => setWorkspaceState('home')}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.35rem',
+                                            border: '1px solid var(--studio-border)',
+                                            borderRadius: '8px',
+                                            padding: '0.35rem 0.65rem',
+                                            background: 'var(--studio-card-bg)',
+                                            color: 'var(--studio-text)',
+                                            fontSize: '0.725rem',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--studio-bg)'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'var(--studio-card-bg)'}
+                                    >
+                                        <Home size={12} /> Back to Home
+                                    </button>
+                                )}
                                 <h2 className="studio-dash-title" style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--studio-text)' }}>
                                     {dsAnalytics?.name ? dsAnalytics.name.replace('.csv', '').replace('.xlsx', '') : 'Sales Performance'} Dashboard
                                 </h2>
@@ -6068,25 +6093,29 @@ export default function AnalyticsPage() {
 
                             {/* Segmented Control Builder Tabs (Marketplace, Chart Builder, Filters) */}
                             <div className="studio-segmented-tabs">
-                                {/* Marketplace Toggle */}
-                                <button
-                                    className={`studio-segmented-btn ${showMarketplace ? 'active' : ''}`}
-                                    onClick={() => setShowMarketplace(!showMarketplace)}
-                                    title="Open Widget Marketplace"
-                                >
-                                    <Layers size={12} />
-                                    <span>Marketplace</span>
-                                </button>
+                                {!isReadOnly && (
+                                    <>
+                                        {/* Marketplace Toggle */}
+                                        <button
+                                            className={`studio-segmented-btn ${showMarketplace ? 'active' : ''}`}
+                                            onClick={() => setShowMarketplace(!showMarketplace)}
+                                            title="Open Widget Marketplace"
+                                        >
+                                            <Layers size={12} />
+                                            <span>Marketplace</span>
+                                        </button>
 
-                                {/* Chart Builder Toggle */}
-                                <button
-                                    className={`studio-segmented-btn ${showChartBuilder ? 'active' : ''}`}
-                                    onClick={() => setShowChartBuilder(!showChartBuilder)}
-                                    title="Open Visual Chart Builder"
-                                >
-                                    <Edit2 size={12} />
-                                    <span>Chart Builder</span>
-                                </button>
+                                        {/* Chart Builder Toggle */}
+                                        <button
+                                            className={`studio-segmented-btn ${showChartBuilder ? 'active' : ''}`}
+                                            onClick={() => setShowChartBuilder(!showChartBuilder)}
+                                            title="Open Visual Chart Builder"
+                                        >
+                                            <Edit2 size={12} />
+                                            <span>Chart Builder</span>
+                                        </button>
+                                    </>
+                                )}
 
                                 {/* Filters Toggle */}
                                 <button
@@ -6105,310 +6134,316 @@ export default function AnalyticsPage() {
                             </div>
 
                             {/* More Actions Dropdown (Versions, Alerts, Comments, Health Score, Diagnostics, Auto Refresh, Regenerate, Reset) */}
-                            <div style={{ position: 'relative' }} ref={overflowRef}>
-                                <button
-                                    className={`studio-topnav-btn ${(showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'active-filter' : ''}`}
-                                    onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-                                    style={{
-                                        padding: '0.35rem 0.5rem',
-                                        backgroundColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.08)' : 'var(--studio-card-bg)',
-                                        color: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? '#4f46e5' : 'var(--studio-text)',
-                                        borderColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.3)' : 'var(--studio-border)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                    title="More Dashboard Tools"
-                                >
-                                    <MoreHorizontal size={14} />
-                                </button>
-
-                                {showOverflowMenu && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: 'calc(100% + 4px)',
-                                        right: 0,
-                                        backgroundColor: 'var(--studio-card-bg)',
-                                        border: '1px solid var(--studio-border)',
-                                        borderRadius: '6px',
-                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                                        padding: '4px',
-                                        zIndex: 1000,
-                                        minWidth: '180px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '2px'
-                                    }}>
-                                        {/* Version History */}
-                                        <button
-                                            className="overflow-menu-item"
-                                            onClick={() => {
-                                                setShowVersionsPanel(!showVersionsPanel);
-                                                setShowOverflowMenu(false);
-                                            }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.4rem 0.6rem',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                backgroundColor: showVersionsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                                color: showVersionsPanel ? '#4f46e5' : 'var(--studio-text)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                width: '100%',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <History size={12} />
-                                            <span>Versions</span>
-                                        </button>
-
-                                        {/* Alerts */}
-                                        <button
-                                            className="overflow-menu-item"
-                                            onClick={() => {
-                                                setShowAlertsPanel(!showAlertsPanel);
-                                                setShowOverflowMenu(false);
-                                            }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.4rem 0.6rem',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                backgroundColor: showAlertsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                                color: showAlertsPanel ? '#4f46e5' : 'var(--studio-text)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                width: '100%',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <Bell size={12} />
-                                            <span>Alerts</span>
-                                        </button>
-
-                                        {/* Comments */}
-                                        <button
-                                            className="overflow-menu-item"
-                                            onClick={() => {
-                                                setShowCommentsPanel(!showCommentsPanel);
-                                                setShowOverflowMenu(false);
-                                            }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.4rem 0.6rem',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                backgroundColor: showCommentsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                                color: showCommentsPanel ? '#4f46e5' : 'var(--studio-text)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                width: '100%',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <MessageSquare size={12} />
-                                            <span>Comments</span>
-                                        </button>
-
-                                        {/* Health Score */}
-                                        <button
-                                            className="overflow-menu-item"
-                                            onClick={() => {
-                                                setShowHealthModal(!showHealthModal);
-                                                setShowOverflowMenu(false);
-                                            }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.4rem 0.6rem',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                backgroundColor: showHealthModal ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                                color: showHealthModal ? '#4f46e5' : 'var(--studio-text)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                width: '100%',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <Cpu size={12} />
-                                            <span>Health Score</span>
-                                        </button>
-
-                                        {/* Diagnostics */}
-                                        <button
-                                            className="overflow-menu-item"
-                                            onClick={() => {
-                                                setShowDiagnostics(!showDiagnostics);
-                                                setShowOverflowMenu(false);
-                                            }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.4rem 0.6rem',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                backgroundColor: showDiagnostics ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
-                                                color: showDiagnostics ? '#4f46e5' : 'var(--studio-text)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                width: '100%',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <Settings size={12} />
-                                            <span>Diagnostics</span>
-                                        </button>
-
-                                        {/* Divider */}
-                                        <div style={{ height: '1px', backgroundColor: 'var(--studio-border)', margin: '4px 0' }} />
-
-                                        {/* Auto Refresh Toggle */}
-                                        <div className="overflow-menu-item" style={{
+                            {!isReadOnly && (
+                                <div style={{ position: 'relative' }} ref={overflowRef}>
+                                    <button
+                                        className={`studio-topnav-btn ${(showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'active-filter' : ''}`}
+                                        onClick={() => setShowOverflowMenu(!showOverflowMenu)}
+                                        style={{
+                                            padding: '0.35rem 0.5rem',
+                                            backgroundColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.08)' : 'var(--studio-card-bg)',
+                                            color: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? '#4f46e5' : 'var(--studio-text)',
+                                            borderColor: (showVersionsPanel || showAlertsPanel || showCommentsPanel || showHealthModal || showDiagnostics) ? 'rgba(99, 102, 241, 0.3)' : 'var(--studio-border)',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            padding: '0.4rem 0.6rem',
-                                            borderRadius: '4px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 500,
-                                            color: 'var(--studio-text)',
-                                            cursor: 'default',
-                                            transition: 'all 0.15s'
+                                            justifyContent: 'center'
+                                        }}
+                                        title="More Dashboard Tools"
+                                    >
+                                        <MoreHorizontal size={14} />
+                                    </button>
+
+                                    {showOverflowMenu && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 'calc(100% + 4px)',
+                                            right: 0,
+                                            backgroundColor: 'var(--studio-card-bg)',
+                                            border: '1px solid var(--studio-border)',
+                                            borderRadius: '6px',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                                            padding: '4px',
+                                            zIndex: 1000,
+                                            minWidth: '180px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '2px'
                                         }}>
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <RefreshCw size={12} style={{ animation: autoRefresh ? 'spin 6s linear infinite' : 'none' }} />
-                                                <span>Auto Refresh</span>
-                                            </span>
-                                            <label className="studio-switch" style={{ margin: 0, transform: 'scale(0.8)', cursor: 'pointer' }}>
-                                                <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
-                                                <span className="studio-switch-slider"></span>
-                                            </label>
+                                            {/* Version History */}
+                                            <button
+                                                className="overflow-menu-item"
+                                                onClick={() => {
+                                                    setShowVersionsPanel(!showVersionsPanel);
+                                                    setShowOverflowMenu(false);
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: showVersionsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                    color: showVersionsPanel ? '#4f46e5' : 'var(--studio-text)',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textAlign: 'left',
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                <History size={12} />
+                                                <span>Versions</span>
+                                            </button>
+
+                                            {/* Alerts */}
+                                            <button
+                                                className="overflow-menu-item"
+                                                onClick={() => {
+                                                    setShowAlertsPanel(!showAlertsPanel);
+                                                    setShowOverflowMenu(false);
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: showAlertsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                    color: showAlertsPanel ? '#4f46e5' : 'var(--studio-text)',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textAlign: 'left',
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                <Bell size={12} />
+                                                <span>Alerts</span>
+                                            </button>
+
+                                            {/* Comments */}
+                                            <button
+                                                className="overflow-menu-item"
+                                                onClick={() => {
+                                                    setShowCommentsPanel(!showCommentsPanel);
+                                                    setShowOverflowMenu(false);
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: showCommentsPanel ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                    color: showCommentsPanel ? '#4f46e5' : 'var(--studio-text)',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textAlign: 'left',
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                <MessageSquare size={12} />
+                                                <span>Comments</span>
+                                            </button>
+
+                                            {/* Health Score */}
+                                            <button
+                                                className="overflow-menu-item"
+                                                onClick={() => {
+                                                    setShowHealthModal(!showHealthModal);
+                                                    setShowOverflowMenu(false);
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: showHealthModal ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                    color: showHealthModal ? '#4f46e5' : 'var(--studio-text)',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textAlign: 'left',
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                <Cpu size={12} />
+                                                <span>Health Score</span>
+                                            </button>
+
+                                            {/* Diagnostics */}
+                                            <button
+                                                className="overflow-menu-item"
+                                                onClick={() => {
+                                                    setShowDiagnostics(!showDiagnostics);
+                                                    setShowOverflowMenu(false);
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: showDiagnostics ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                                                    color: showDiagnostics ? '#4f46e5' : 'var(--studio-text)',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textAlign: 'left',
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                <Settings size={12} />
+                                                <span>Diagnostics</span>
+                                            </button>
+
+                                            {/* Divider */}
+                                            <div style={{ height: '1px', backgroundColor: 'var(--studio-border)', margin: '4px 0' }} />
+
+                                            {/* Auto Refresh Toggle */}
+                                            <div className="overflow-menu-item" style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '0.4rem 0.6rem',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                                color: 'var(--studio-text)',
+                                                cursor: 'default',
+                                                transition: 'all 0.15s'
+                                            }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <RefreshCw size={12} style={{ animation: autoRefresh ? 'spin 6s linear infinite' : 'none' }} />
+                                                    <span>Auto Refresh</span>
+                                                </span>
+                                                <label className="studio-switch" style={{ margin: 0, transform: 'scale(0.8)', cursor: 'pointer' }}>
+                                                    <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
+                                                    <span className="studio-switch-slider"></span>
+                                                </label>
+                                            </div>
+
+                                            {/* Regenerate Template */}
+                                            <button
+                                                className="overflow-menu-item"
+                                                onClick={() => {
+                                                    setShowOverflowMenu(false);
+                                                    if (!dsAnalytics || activeRawData.length === 0) {
+                                                        showToast('No active dataset loaded.', 'error');
+                                                        return;
+                                                    }
+                                                    const classification = detectDatasetCategory(dsAnalytics);
+                                                    setDetectedCategory(classification.category);
+                                                    setDetectedConfidence(classification.confidence);
+                                                    const explanation = generateAiExplanation(classification.category, dsAnalytics);
+                                                    setAiExplanation(explanation);
+                                                    buildExecutiveDashboard(dsAnalytics, activeRawData, classification.category);
+                                                    setCardSizes({});
+                                                    showToast(`Regenerated ${classification.category} dashboard layout!`, 'success');
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: 'transparent',
+                                                    color: 'var(--studio-text)',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textAlign: 'left',
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                <Sparkles size={12} color="var(--studio-purple)" />
+                                                <span>Regenerate Template</span>
+                                            </button>
+
+                                            {/* Reset Layout */}
+                                            <button
+                                                className="overflow-menu-item"
+                                                onClick={() => {
+                                                    setShowOverflowMenu(false);
+                                                    handleResetLayout();
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: 'transparent',
+                                                    color: 'var(--studio-text)',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 500,
+                                                    textAlign: 'left',
+                                                    cursor: 'pointer',
+                                                    width: '100%',
+                                                    transition: 'all 0.15s'
+                                                }}
+                                            >
+                                                <LayoutGrid size={12} />
+                                                <span>Reset Layout</span>
+                                            </button>
                                         </div>
-
-                                        {/* Regenerate Template */}
-                                        <button
-                                            className="overflow-menu-item"
-                                            onClick={() => {
-                                                setShowOverflowMenu(false);
-                                                if (!dsAnalytics || activeRawData.length === 0) {
-                                                    showToast('No active dataset loaded.', 'error');
-                                                    return;
-                                                }
-                                                const classification = detectDatasetCategory(dsAnalytics);
-                                                setDetectedCategory(classification.category);
-                                                setDetectedConfidence(classification.confidence);
-                                                const explanation = generateAiExplanation(classification.category, dsAnalytics);
-                                                setAiExplanation(explanation);
-                                                buildExecutiveDashboard(dsAnalytics, activeRawData, classification.category);
-                                                setCardSizes({});
-                                                showToast(`Regenerated ${classification.category} dashboard layout!`, 'success');
-                                            }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.4rem 0.6rem',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                backgroundColor: 'transparent',
-                                                color: 'var(--studio-text)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                width: '100%',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <Sparkles size={12} color="var(--studio-purple)" />
-                                            <span>Regenerate Template</span>
-                                        </button>
-
-                                        {/* Reset Layout */}
-                                        <button
-                                            className="overflow-menu-item"
-                                            onClick={() => {
-                                                setShowOverflowMenu(false);
-                                                handleResetLayout();
-                                            }}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                padding: '0.4rem 0.6rem',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                backgroundColor: 'transparent',
-                                                color: 'var(--studio-text)',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                textAlign: 'left',
-                                                cursor: 'pointer',
-                                                width: '100%',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <LayoutGrid size={12} />
-                                            <span>Reset Layout</span>
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Toggle AI Chat Button (Icon with custom tooltip) */}
-                            <button
-                                className={`studio-topnav-btn studio-tooltip-trigger ${chatCollapsed ? '' : 'active-filter'}`}
-                                onClick={() => setChatCollapsed(!chatCollapsed)}
-                                style={{
-                                    padding: '0.35rem 0.5rem',
-                                    backgroundColor: chatCollapsed ? '#ffffff' : 'rgba(99, 102, 241, 0.08)',
-                                    color: chatCollapsed ? 'var(--studio-text)' : '#4f46e5',
-                                    borderColor: chatCollapsed ? 'var(--studio-border)' : 'rgba(99, 102, 241, 0.3)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    position: 'relative'
-                                }}
-                            >
-                                <MessageSquare size={12} />
-                                <span className="studio-tooltip">{chatCollapsed ? "Show AI Chat" : "Hide AI Chat"}</span>
-                            </button>
+                            {!isReadOnly && (
+                                <button
+                                    className={`studio-topnav-btn studio-tooltip-trigger ${chatCollapsed ? '' : 'active-filter'}`}
+                                    onClick={() => setChatCollapsed(!chatCollapsed)}
+                                    style={{
+                                        padding: '0.35rem 0.5rem',
+                                        backgroundColor: chatCollapsed ? '#ffffff' : 'rgba(99, 102, 241, 0.08)',
+                                        color: chatCollapsed ? 'var(--studio-text)' : '#4f46e5',
+                                        borderColor: chatCollapsed ? 'var(--studio-border)' : 'rgba(99, 102, 241, 0.3)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <MessageSquare size={12} />
+                                    <span className="studio-tooltip">{chatCollapsed ? "Show AI Chat" : "Hide AI Chat"}</span>
+                                </button>
+                            )}
 
                             {/* Share Button (Icon with custom tooltip) */}
-                            <button
-                                className="studio-topnav-btn studio-tooltip-trigger"
-                                onClick={() => setShowShareModal(true)}
-                                style={{
-                                    padding: '0.35rem 0.5rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    position: 'relative'
-                                }}
-                            >
-                                <Share2 size={12} />
-                                <span className="studio-tooltip">Share Dashboard</span>
-                            </button>
+                            {!isReadOnly && (
+                                <button
+                                    className="studio-topnav-btn studio-tooltip-trigger"
+                                    onClick={() => setShowShareModal(true)}
+                                    style={{
+                                        padding: '0.35rem 0.5rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <Share2 size={12} />
+                                    <span className="studio-tooltip">Share Dashboard</span>
+                                </button>
+                            )}
 
                             {/* Export Button (Icon with custom tooltip) */}
                             <button
@@ -6443,9 +6478,11 @@ export default function AnalyticsPage() {
                             </button>
 
                             {/* Primary Save Action */}
-                            <button className="studio-topnav-btn primary" onClick={() => handleSaveDashboard(false)}>
-                                Save
-                            </button>
+                            {!isReadOnly && (
+                                <button className="studio-topnav-btn primary" onClick={() => handleSaveDashboard(false)}>
+                                    Save
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -6998,18 +7035,20 @@ export default function AnalyticsPage() {
                                     </p>
 
                                     {/* Create layout snapshot version */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
-                                        <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Change Description</label>
-                                        <textarea
-                                            placeholder="Enter changelog comment..."
-                                            value={newVersionChangelog}
-                                            onChange={e => setNewVersionChangelog(e.target.value)}
-                                            style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', height: '50px', outline: 'none', resize: 'none' }}
-                                        />
-                                        <Button variant="primary" onClick={handleSaveVersion} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
-                                            Save Layout Snapshot
-                                        </Button>
-                                    </div>
+                                    {!isReadOnly && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
+                                            <label style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Change Description</label>
+                                            <textarea
+                                                placeholder="Enter changelog comment..."
+                                                value={newVersionChangelog}
+                                                onChange={e => setNewVersionChangelog(e.target.value)}
+                                                style={{ padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', height: '50px', outline: 'none', resize: 'none' }}
+                                            />
+                                            <Button variant="primary" onClick={handleSaveVersion} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
+                                                Save Layout Snapshot
+                                            </Button>
+                                        </div>
+                                    )}
 
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
                                         <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub)', textTransform: 'uppercase' }}>Saved Snapshots List</span>
@@ -7023,12 +7062,14 @@ export default function AnalyticsPage() {
                                                     <span style={{ fontSize: '0.68rem', color: 'var(--studio-text-sub)' }}>{ver.changeLog}</span>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem', borderTop: '1px dashed #f1f5f9', paddingTop: '0.25rem' }}>
                                                         <span style={{ fontSize: '0.55rem', color: 'var(--studio-text-sub)' }}>By: <strong>{ver.changedBy}</strong></span>
-                                                        <button
-                                                            onClick={() => handleRollbackVersion(ver.id)}
-                                                            style={{ border: 'none', background: 'var(--studio-purple-light)', color: '#4f46e5', fontSize: '0.625rem', padding: '0.15rem 0.45rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}
-                                                        >
-                                                            Rollback to This
-                                                        </button>
+                                                        {!isReadOnly && (
+                                                            <button
+                                                                onClick={() => handleRollbackVersion(ver.id)}
+                                                                style={{ border: 'none', background: 'var(--studio-purple-light)', color: '#4f46e5', fontSize: '0.625rem', padding: '0.15rem 0.45rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 700 }}
+                                                            >
+                                                                Rollback to This
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -7055,55 +7096,57 @@ export default function AnalyticsPage() {
                                     </p>
 
                                     {/* Create alert form */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                            <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Select Metric Column</label>
-                                            <select
-                                                value={newAlertMetric}
-                                                onChange={e => setNewAlertMetric(e.target.value)}
-                                                style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
-                                            >
-                                                <option value="">-- Choose Column --</option>
-                                                {Object.keys(dsAnalytics?.stats || {}).filter(c => dsAnalytics?.stats[c]?.type === 'numeric').map(c => (
-                                                    <option key={c} value={c}>{c}</option>
-                                                ))}
-                                            </select>
+                                    {!isReadOnly && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', border: '1px solid var(--studio-border)', borderRadius: '8px', padding: '0.65rem', background: '#f8fafc' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Select Metric Column</label>
+                                                <select
+                                                    value={newAlertMetric}
+                                                    onChange={e => setNewAlertMetric(e.target.value)}
+                                                    style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+                                                >
+                                                    <option value="">-- Choose Column --</option>
+                                                    {Object.keys(dsAnalytics?.stats || {}).filter(c => dsAnalytics?.stats[c]?.type === 'numeric').map(c => (
+                                                        <option key={c} value={c}>{c}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Comparison Operator</label>
+                                                <select
+                                                    value={newAlertOperator}
+                                                    onChange={e => setNewAlertOperator(e.target.value)}
+                                                    style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+                                                >
+                                                    <option value="below">Is Below (&lt;)</option>
+                                                    <option value="above">Is Above (&gt;)</option>
+                                                    <option value="equals">Is Equal (=)</option>
+                                                </select>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Value Threshold</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Enter threshold amount..."
+                                                    value={newAlertThreshold}
+                                                    onChange={e => setNewAlertThreshold(e.target.value)}
+                                                    style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={newAlertEmail}
+                                                    onChange={e => setNewAlertEmail(e.target.checked)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                                <span>Send instantaneous email alerts on breach</span>
+                                            </div>
+                                            <Button variant="primary" onClick={handleAddAlertRule} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
+                                                Deploy Alert Rule
+                                            </Button>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                            <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Comparison Operator</label>
-                                            <select
-                                                value={newAlertOperator}
-                                                onChange={e => setNewAlertOperator(e.target.value)}
-                                                style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
-                                            >
-                                                <option value="below">Is Below (&lt;)</option>
-                                                <option value="above">Is Above (&gt;)</option>
-                                                <option value="equals">Is Equal (=)</option>
-                                            </select>
-                                        </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                            <label style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--studio-text-sub)' }}>Value Threshold</label>
-                                            <input
-                                                type="number"
-                                                placeholder="Enter threshold amount..."
-                                                value={newAlertThreshold}
-                                                onChange={e => setNewAlertThreshold(e.target.value)}
-                                                style={{ padding: '0.35rem', borderRadius: '6px', border: '1px solid var(--studio-border)', fontSize: '0.72rem', outline: 'none', backgroundColor: 'white' }}
-                                            />
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={newAlertEmail}
-                                                onChange={e => setNewAlertEmail(e.target.checked)}
-                                                style={{ cursor: 'pointer' }}
-                                            />
-                                            <span>Send instantaneous email alerts on breach</span>
-                                        </div>
-                                        <Button variant="primary" onClick={handleAddAlertRule} style={{ width: '100%', fontSize: '0.7rem', height: '28px', padding: 0, fontWeight: 700 }}>
-                                            Deploy Alert Rule
-                                        </Button>
-                                    </div>
+                                    )}
 
                                     {/* Active rules list */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -7116,12 +7159,14 @@ export default function AnalyticsPage() {
                                                         <span style={{ fontSize: '0.65rem', color: 'var(--studio-text-sub)' }}>Condition: {alert.operator} {alert.threshold.toLocaleString()}</span>
                                                         <span style={{ fontSize: '0.55rem', color: 'var(--studio-green)' }}>Preference: Email alerts enabled</span>
                                                     </div>
-                                                    <button
-                                                        onClick={() => handleDeleteAlertRule(alert.id)}
-                                                        style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
-                                                    >
-                                                        <Trash2 size={13} />
-                                                    </button>
+                                                    {!isReadOnly && (
+                                                        <button
+                                                            onClick={() => handleDeleteAlertRule(alert.id)}
+                                                            style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -7333,104 +7378,104 @@ export default function AnalyticsPage() {
                                     </div>
                                 </div>
 
-                    {/* PDF Export Header (Visible only during export) */}
-                    <div 
-                        id="pdf-export-header"
-                        style={{
-                            display: 'none',
-                            flexDirection: 'column',
-                            gap: '1rem',
-                            padding: '1.5rem',
-                            backgroundColor: '#ffffff',
-                            border: '1px solid var(--studio-border, #e2e8f0)',
-                            borderRadius: '16px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-                            marginBottom: '0.5rem',
-                            width: '100%',
-                            boxSizing: 'border-box'
-                        }}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, color: 'var(--studio-text, #0f172a)', letterSpacing: '-0.025em' }}>
-                                    {dsAnalytics?.name ? dsAnalytics.name.replace('.csv', '').replace('.xlsx', '') : 'Sales Performance'} Dashboard
-                                </h1>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--studio-text-sub, #64748b)', marginTop: '0.25rem', marginBottom: 0 }}>
-                                    Generated dynamically on {new Date().toLocaleDateString(undefined, { dateStyle: 'long' })}
-                                </p>
-                            </div>
-                            <div style={{
-                                padding: '0.35rem 0.75rem',
-                                background: 'rgba(99, 102, 241, 0.08)',
-                                border: '1px solid rgba(99, 102, 241, 0.2)',
-                                borderRadius: '99px',
-                                fontSize: '0.7rem',
-                                fontWeight: 700,
-                                color: '#4f46e5',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.25rem'
-                            }}>
-                                ✦ AI Generated Report
-                            </div>
-                        </div>
+                                {/* PDF Export Header (Visible only during export) */}
+                                <div
+                                    id="pdf-export-header"
+                                    style={{
+                                        display: 'none',
+                                        flexDirection: 'column',
+                                        gap: '1rem',
+                                        padding: '1.5rem',
+                                        backgroundColor: '#ffffff',
+                                        border: '1px solid var(--studio-border, #e2e8f0)',
+                                        borderRadius: '16px',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                                        marginBottom: '0.5rem',
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, color: 'var(--studio-text, #0f172a)', letterSpacing: '-0.025em' }}>
+                                                {dsAnalytics?.name ? dsAnalytics.name.replace('.csv', '').replace('.xlsx', '') : 'Sales Performance'} Dashboard
+                                            </h1>
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--studio-text-sub, #64748b)', marginTop: '0.25rem', marginBottom: 0 }}>
+                                                Generated dynamically on {new Date().toLocaleDateString(undefined, { dateStyle: 'long' })}
+                                            </p>
+                                        </div>
+                                        <div style={{
+                                            padding: '0.35rem 0.75rem',
+                                            background: 'rgba(99, 102, 241, 0.08)',
+                                            border: '1px solid rgba(99, 102, 241, 0.2)',
+                                            borderRadius: '99px',
+                                            fontSize: '0.7rem',
+                                            fontWeight: 700,
+                                            color: '#4f46e5',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.25rem'
+                                        }}>
+                                            ✦ AI Generated Report
+                                        </div>
+                                    </div>
 
-                        {/* Dataset Info Grid */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
-                            gap: '1rem',
-                            borderTop: '1px solid var(--studio-border, #e2e8f0)',
-                            borderBottom: '1px solid var(--studio-border, #e2e8f0)',
-                            padding: '0.85rem 0',
-                            marginTop: '0.25rem'
-                        }}>
-                            <div>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Dataset Name</span>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {dsAnalytics?.name || 'N/A'}
-                                </div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Total Records</span>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem' }}>
-                                    {dsAnalytics?.rows?.toLocaleString() || 'N/A'}
-                                </div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Attributes</span>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {dsAnalytics?.columns?.length || 0} columns
-                                </div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Data Quality Score</span>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-green, #10b981)', marginTop: '0.15rem' }}>
-                                    {dsAnalytics?.qualityScore || 95}%
-                                </div>
-                            </div>
-                        </div>
+                                    {/* Dataset Info Grid */}
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(4, 1fr)',
+                                        gap: '1rem',
+                                        borderTop: '1px solid var(--studio-border, #e2e8f0)',
+                                        borderBottom: '1px solid var(--studio-border, #e2e8f0)',
+                                        padding: '0.85rem 0',
+                                        marginTop: '0.25rem'
+                                    }}>
+                                        <div>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Dataset Name</span>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {dsAnalytics?.name || 'N/A'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Total Records</span>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem' }}>
+                                                {dsAnalytics?.rows?.toLocaleString() || 'N/A'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Attributes</span>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-text, #0f172a)', marginTop: '0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {dsAnalytics?.columns?.length || 0} columns
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--studio-text-sub, #64748b)', textTransform: 'uppercase' }}>Data Quality Score</span>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--studio-green, #10b981)', marginTop: '0.15rem' }}>
+                                                {dsAnalytics?.qualityScore || 95}%
+                                            </div>
+                                        </div>
+                                    </div>
 
-                        {/* Executive Summary */}
-                        {aiExplanation && (
-                            <div style={{
-                                backgroundColor: 'var(--studio-bg, #f8fafc)',
-                                border: '1px solid var(--studio-border, #e2e8f0)',
-                                borderRadius: '12px',
-                                padding: '1rem',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '0.35rem'
-                            }}>
-                                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    Executive Summary
-                                </span>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--studio-text, #334155)', margin: 0, lineHeight: 1.5 }}>
-                                    {aiExplanation}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                                    {/* Executive Summary */}
+                                    {aiExplanation && (
+                                        <div style={{
+                                            backgroundColor: 'var(--studio-bg, #f8fafc)',
+                                            border: '1px solid var(--studio-border, #e2e8f0)',
+                                            borderRadius: '12px',
+                                            padding: '1rem',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '0.35rem'
+                                        }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                Executive Summary
+                                            </span>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--studio-text, #334155)', margin: 0, lineHeight: 1.5 }}>
+                                                {aiExplanation}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
 
                                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--studio-text-sub)' }}>
                                     Showing underlying database records matching current dashboard filters ({drillThroughRows.length.toLocaleString()} matching records).
@@ -7507,14 +7552,14 @@ export default function AnalyticsPage() {
                                                 borderLeft: `4px solid ${THEME_COLORS[index % THEME_COLORS.length]}`,
                                                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)'
                                             }}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, index)}
-                                            onDragOver={(e) => handleDragOver(e, index)}
-                                            onDrop={(e) => handleDrop(e, index)}
-                                            onDragEnd={handleDragEnd}
+                                            draggable={!isReadOnly}
+                                            onDragStart={isReadOnly ? undefined : (e) => handleDragStart(e, index)}
+                                            onDragOver={isReadOnly ? undefined : (e) => handleDragOver(e, index)}
+                                            onDrop={isReadOnly ? undefined : (e) => handleDrop(e, index)}
+                                            onDragEnd={isReadOnly ? undefined : handleDragEnd}
                                         >
                                             {/* Dotted grab handle */}
-                                            <div className="studio-drag-handle" title="Drag to reorder KPIs" />
+                                            {!isReadOnly && <div className="studio-drag-handle" title="Drag to reorder KPIs" />}
 
                                             {/* Card Header controls */}
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
@@ -7531,19 +7576,21 @@ export default function AnalyticsPage() {
                                                     >
                                                         <Eye size={10} />
                                                     </button>
-                                                    <button
-                                                        style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }}
-                                                        onClick={() => {
-                                                            if (lastWidgetIdRef.current === w.id) {
-                                                                lastWidgetIdRef.current = null;
-                                                            }
-                                                            setWidgets(prev => prev.filter(item => item.id !== w.id));
-                                                            showToast('KPI box removed.', 'info');
-                                                        }}
-                                                        title="Delete KPI"
-                                                    >
-                                                        <Trash2 size={10} />
-                                                    </button>
+                                                    {!isReadOnly && (
+                                                        <button
+                                                            style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center', opacity: 0.5 }}
+                                                            onClick={() => {
+                                                                if (lastWidgetIdRef.current === w.id) {
+                                                                    lastWidgetIdRef.current = null;
+                                                                }
+                                                                setWidgets(prev => prev.filter(item => item.id !== w.id));
+                                                                showToast('KPI box removed.', 'info');
+                                                            }}
+                                                            title="Delete KPI"
+                                                        >
+                                                            <Trash2 size={10} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -7553,7 +7600,7 @@ export default function AnalyticsPage() {
                                             </div>
 
                                             {/* Bottom-right resizing cursor handle */}
-                                            <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />
+                                            {!isReadOnly && <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />}
                                         </div>
                                     );
                                 })}
@@ -7589,14 +7636,14 @@ export default function AnalyticsPage() {
                                                 borderTop: `4px solid ${THEME_COLORS[index % THEME_COLORS.length]}`,
                                                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05)'
                                             }}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, index)}
-                                            onDragOver={(e) => handleDragOver(e, index)}
-                                            onDrop={(e) => handleDrop(e, index)}
-                                            onDragEnd={handleDragEnd}
+                                            draggable={!isReadOnly}
+                                            onDragStart={isReadOnly ? undefined : (e) => handleDragStart(e, index)}
+                                            onDragOver={isReadOnly ? undefined : (e) => handleDragOver(e, index)}
+                                            onDrop={isReadOnly ? undefined : (e) => handleDrop(e, index)}
+                                            onDragEnd={isReadOnly ? undefined : handleDragEnd}
                                         >
                                             {/* Dotted grab handle */}
-                                            <div className="studio-drag-handle" title="Drag to reorder visual" />
+                                            {!isReadOnly && <div className="studio-drag-handle" title="Drag to reorder visual" />}
 
                                             {/* Card Header controls */}
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -7613,19 +7660,21 @@ export default function AnalyticsPage() {
                                                     >
                                                         <Eye size={12} />
                                                     </button>
-                                                    <button
-                                                        style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                                        onClick={() => {
-                                                            if (lastWidgetIdRef.current === w.id) {
-                                                                lastWidgetIdRef.current = null;
-                                                            }
-                                                            setWidgets(prev => prev.filter(item => item.id !== w.id));
-                                                            showToast('Visual card removed.', 'info');
-                                                        }}
-                                                        title="Delete Visual"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
+                                                    {!isReadOnly && (
+                                                        <button
+                                                            style={{ border: 'none', background: 'transparent', color: 'var(--studio-text-sub)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                                            onClick={() => {
+                                                                if (lastWidgetIdRef.current === w.id) {
+                                                                    lastWidgetIdRef.current = null;
+                                                                }
+                                                                setWidgets(prev => prev.filter(item => item.id !== w.id));
+                                                                showToast('Visual card removed.', 'info');
+                                                            }}
+                                                            title="Delete Visual"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -7635,7 +7684,7 @@ export default function AnalyticsPage() {
                                             </div>
 
                                             {/* Bottom-right resizing cursor handle */}
-                                            <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />
+                                            {!isReadOnly && <div className="studio-resize-handle" onMouseDown={(e) => handleResizeMouseDown(e, w.id)} />}
                                         </div>
                                     );
                                 })}
@@ -7643,7 +7692,7 @@ export default function AnalyticsPage() {
                         </div>
 
                         {/* RIGHT SIDEBAR: PERSISTENT AI ASSISTANT CHAT */}
-                        <div className="studio-sidebar-right" style={{ display: chatCollapsed ? 'none' : 'flex' }}>
+                        <div className="studio-sidebar-right" style={{ display: (chatCollapsed || isReadOnly) ? 'none' : 'flex' }}>
                             <div className="studio-right-header">
                                 <span className="studio-right-title">
                                     <Sparkles size={14} style={{ color: '#6366f1' }} /> AI Assistant
