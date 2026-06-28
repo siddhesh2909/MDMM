@@ -194,5 +194,61 @@
       "temperature": 0.7,
       "customRules": "Format tabular results cleanly as Markdown tables."
     }
+  },
+  "0dcb2db3-8e5e-44fc-a320-268fa8d711d9": {
+    "profilePhoto": "",
+    "jobTitle": "Guest Data Viewer",
+    "contactNumber": "+1 (555) 019-2834",
+    "timezone": "UTC (GMT+00:00)",
+    "twoFactorEnabled": false,
+    "activeSessions": [
+      {
+        "id": "session-bsg1c4y",
+        "device": "Chrome on macOS (Current)",
+        "location": "San Francisco, US",
+        "ip": "192.168.1.100",
+        "lastActive": "2026-06-27T05:33:49.286Z",
+        "currentSession": true
+      }
+    ],
+    "lastLoginInfo": "Chrome on macOS, San Francisco, US (IP: 192.168.1.100)",
+    "notifications": {
+      "system": true,
+      "email": false,
+      "aiAlerts": true
+    },
+    "aiPreferences": {
+      "model": "llama-3-8b",
+      "temperature": 0.7,
+      "customRules": "Format tabular results cleanly as Markdown tables."
+    }
+  },
+  "505346d9-c072-43a1-8f97-59cd330e5ad6": {
+    "profilePhoto": "",
+    "jobTitle": "Guest Data Viewer",
+    "contactNumber": "+1 (555) 019-2834",
+    "timezone": "UTC (GMT+00:00)",
+    "twoFactorEnabled": false,
+    "activeSessions": [
+      {
+        "id": "session-gbscg23",
+        "device": "Chrome on macOS (Current)",
+        "location": "San Francisco, US",
+        "ip": "192.168.1.100",
+        "lastActive": "2026-06-27T05:36:09.859Z",
+        "currentSession": true
+      }
+    ],
+    "lastLoginInfo": "Chrome on macOS, San Francisco, US (IP: 192.168.1.100)",
+    "notifications": {
+      "system": true,
+      "email": false,
+      "aiAlerts": true
+    },
+    "aiPreferences": {
+      "model": "llama-3-8b",
+      "temperature": 0.7,
+      "customRules": "Format tabular results cleanly as Markdown tables."
+    }
   }
 }

@@ -69,12 +69,34 @@ export const requireRole = (roles: string[]) => {
 };
 
 export const requirePermission = (permission: string) => {
+    // Role-based fallback permissions — ensures existing users have correct access
+    // even if their DB permissions field is outdated
+    const ROLE_PERMISSIONS: Record<string, string[]> = {
+        'Admin': ['*'],
+        'Analyst': ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view'],
+        'Data Analyst': ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view'],
+        'Data Engineer': ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view'],
+        'Data Steward': ['dataset:manage', 'dataset:view', 'contract:edit', 'contract:view'],
+        'Business User': ['dataset:view'],
+        'Viewer': ['dataset:view'],
+    };
+
     return (req: any, res: express.Response, next: express.NextFunction) => {
         const authReq = req as AuthenticatedRequest;
         if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
-        if (!authReq.user.permissions.includes(permission) && authReq.user.role !== 'Admin') {
-            return res.status(403).json({ error: `Forbidden: Missing permission [${permission}]` });
-        }
-        next();
+
+        const role = authReq.user.role;
+
+        // Admin always passes
+        if (role === 'Admin') return next();
+
+        // Check explicit DB-stored permissions first
+        if (authReq.user.permissions.includes(permission)) return next();
+
+        // Fallback: check role-based default permissions
+        const roleDefaults = ROLE_PERMISSIONS[role] || [];
+        if (roleDefaults.includes('*') || roleDefaults.includes(permission)) return next();
+
+        return res.status(403).json({ error: `Forbidden: Missing permission [${permission}]` });
     };
 };
