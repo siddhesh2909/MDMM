@@ -219,7 +219,7 @@
     },
     "aiPreferences": {
       "model": "llama-3-8b",
-      "temperature": 0.7,
+      "temperature": 0.8,
       "customRules": "Format tabular results cleanly as Markdown tables."
     }
   },

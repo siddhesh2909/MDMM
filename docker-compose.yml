@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ./collaborative-ai-backend
+      dockerfile: Dockerfile
+    container_name: collaborative-ai-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - JWT_SECRET=super_secret_collaborative_ai_key_2026
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - NODE_ENV=production
+    volumes:
+      - ./collaborative-ai-backend/prisma:/app/prisma
+      - ./collaborative-ai-backend/uploads:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./collaborative-ai-frontend
+      dockerfile: Dockerfile
+    container_name: collaborative-ai-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:5001
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    restart: unless-stopped

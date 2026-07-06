@@ -14,14 +14,14 @@ function checkReportAccess(report: any, user: any, required: 'view' | 'edit' | '
     if (report.visibility === 'organization' && report.organizationId === user.organizationId) {
         if (required === 'view') return true;
     }
-    
+
     let sharedList: any = [];
     try {
         if (report.sharedWith) {
             sharedList = JSON.parse(report.sharedWith);
         }
-    } catch {}
-    
+    } catch { }
+
     if (Array.isArray(sharedList)) {
         const shareInfo = sharedList.find((s: any) => s.userId === user.id || s.email?.toLowerCase() === user.email?.toLowerCase());
         if (shareInfo) {
@@ -32,7 +32,7 @@ function checkReportAccess(report: any, user: any, required: 'view' | 'edit' | '
         }
     } else if (sharedList && typeof sharedList === 'object') {
         // Fallback for old style JSON {"emails":["..."],"teams":["..."]}
-        const isShared = sharedList.emails?.some((e: string) => e.toLowerCase() === user.email.toLowerCase());
+        const isShared = sharedList.emails?.some((e: string) => e.toLowerCase() === user.email?.toLowerCase());
         if (isShared) {
             const perm = report.sharePerm || 'view';
             if (required === 'view') return true;
@@ -40,12 +40,72 @@ function checkReportAccess(report: any, user: any, required: 'view' | 'edit' | '
             if (required === 'manage') return ['manager', 'owner', 'manage'].includes(perm);
         }
     }
-    
+
     return false;
 }
 
+// Helper to construct a highly tailored prompt for Groq completions dynamically based on selections, user prompt, and section toggles
+function buildGroqPrompt(
+    typeSelected: string, 
+    datasetName: string, 
+    rawDataLength: number, 
+    schemaColumns: any[], 
+    overallScore: number, 
+    issues: any, 
+    suggestions: any[], 
+    userPrompt?: string, 
+    toggles?: { summary?: boolean; quality?: boolean; schema?: boolean; insights?: boolean }
+) {
+    const showSummary = toggles ? toggles.summary !== false : true;
+    const showQuality = toggles ? toggles.quality !== false : true;
+    const showSchema = toggles ? toggles.schema !== false : true;
+    const showInsights = toggles ? toggles.insights !== false : true;
+
+    let basePrompt = `You are a professional Business Intelligence, Data Quality, and Governance Writer.
+Generate an exhaustive, highly detailed, and comprehensive executive report of type "${typeSelected}" for the dataset named "${datasetName}".
+The report MUST be long and detailed, consisting of at least 800 to 1000 words. Do not make it brief. Provide rich analysis, deep insights, and structural details.
+
+Data profile info:
+- Records: ${rawDataLength} rows, ${schemaColumns.length} columns.
+- Overall Compliance Score: ${overallScore}%
+- Attribute Schema: ${JSON.stringify(schemaColumns)}
+- Validation violations: ${issues ? JSON.stringify(issues) : 'None'}
+- Preprocessing advice: ${JSON.stringify(suggestions)}`;
+
+    if (userPrompt && userPrompt.trim().length > 0) {
+        basePrompt += `\n\nCRITICAL ADDITIONAL INSTRUCTIONS (User Prompt): "${userPrompt.trim()}". You MUST prioritize and explicitly address these user-defined instructions in the generated report content.`;
+    }
+
+    basePrompt += `\n\nPlease structure the report beautifully using Markdown headers, lists, and tables as follows:`;
+    
+    let sectionIndex = 1;
+    if (showSummary) {
+        basePrompt += `\n${sectionIndex++}. Executive Summary & Audit Context: High-level overview of the dataset. Elaborate on the business purpose, context, and structural significance under the lens of a "${typeSelected}" audit.`;
+    }
+    if (showSchema) {
+        basePrompt += `\n${sectionIndex++}. Inferred Schema Profile & Type Analysis: Detail every attribute, its inferred data type, completeness rate, and potential values. Include a detailed markdown table of fields/types.`;
+    }
+    if (showQuality) {
+        basePrompt += `\n${sectionIndex++}. Deep Domain Profile & Data Quality Scorecard: Detailed metrics for Schema Validity, Record Completeness, Entity Uniqueness, and Overall Quality Index (use a markdown table). Also describe any anomalies, warnings, or validation failures found.`;
+    }
+    if (showInsights) {
+        basePrompt += `\n${sectionIndex++}. AI Preprocessing Insights & Governance Recommendations: Specific step-by-step cleaning rules, transformations, scaling, PII masking rules (if sensitive columns like email/name/phone/address exist), and storage optimization settings.`;
+    }
+
+    basePrompt += `\n\nReturn ONLY the report text in Markdown. Do not include introductory notes, conversational filler, or wrap-up chat.`;
+    return basePrompt;
+}
+
 // Helper to compile a highly tailored, unique markdown report dynamically from actual dataset specs
-function compileReportContent(dataset: any, schema: any[], rawData: any[], validationReport: any, aiInsights: any, reportType?: string) {
+function compileReportContent(
+    dataset: any, 
+    schema: any[], 
+    rawData: any[], 
+    validationReport: any, 
+    aiInsights: any, 
+    reportType?: string,
+    toggles?: { summary?: boolean; quality?: boolean; schema?: boolean; insights?: boolean }
+) {
     const rowCount = rawData.length;
     const colCount = schema.length;
     const score = validationReport ? validationReport.overallScore : (aiInsights?.quality_score || 95);
@@ -53,119 +113,134 @@ function compileReportContent(dataset: any, schema: any[], rawData: any[], valid
     const completeness = validationReport ? validationReport.completeness : 98;
     const uniqueness = validationReport ? validationReport.uniqueness : 100;
     const typeSelected = reportType || "Data Quality & Summary";
-    
+
+    const showSummary = toggles ? toggles.summary !== false : true;
+    const showQuality = toggles ? toggles.quality !== false : true;
+    const showSchema = toggles ? toggles.schema !== false : true;
+    const showInsights = toggles ? toggles.insights !== false : true;
+
     let content = `# Data Governance & Analytics Audit: ${typeSelected}\n\n`;
-    
-    content += `## 1. Executive Summary & Audit Context\n`;
-    content += `This professional audit profile analyzes the dataset **${dataset.name}** under the **${typeSelected}** framework. The dataset contains **${rowCount}** records across **${colCount}** active variables, ingested from a **${dataset.source || 'file'}** source. `;
-    
-    if (typeSelected.includes("Financial") || typeSelected.includes("Revenue")) {
-        content += `This audit specifically evaluates financial data integrity, transaction boundaries, pricing alignment, and fee consistency. Real-time billing verification systems require strict compliance to avoid revenue leakage and transaction processing exceptions. `;
-    } else if (typeSelected.includes("User") || typeSelected.includes("Customer")) {
-        content += `This report focuses on user profile completeness, demographic segmentation validation, customer status categorization, and potential Personally Identifiable Information (PII) security controls. Ensuring data privacy (such as compliance with GDPR/CCPA regulations) remains paramount for user records. `;
-    } else if (typeSelected.includes("Temporal") || typeSelected.includes("Trend")) {
-        content += `This profile analyzes chronological trends, data ingestion volumes over time, event logs, and timestamp continuity. Identifying ingestion lags and missing date periods ensures that downstream analytical models receive an uninterrupted timeline of occurrences. `;
-    } else if (typeSelected.includes("Compliance") || typeSelected.includes("Governance")) {
-        content += `This report performs a strict governance compliance audit. Data contracts are evaluated against actual record distributions to verify enforcement settings (Strict/Warning modes) and check schemas for breaking drifts. `;
-    } else {
-        content += `This general summary details data quality scorecards, completeness profiles, schema definitions, and AI pre-cleansing rules to prepare data for downstream BI models. `;
-    }
-    
-    content += `Overall validation returned a quality compliance index of **${score}%**, indicating that the data is `;
-    if (score >= 95) {
-        content += `highly clean, structurally sound, and ready for immediate deployment in production pipelines and analytical models.\n\n`;
-    } else if (score >= 80) {
-        content += `mostly clean, with minor validation exceptions that should be resolved before consumption in production environments.\n\n`;
-    } else {
-        content += `partially compliance-critical, requiring structural cleansing and schema alignment to prevent downstream runtime errors.\n\n`;
-    }
-    
-    content += `### Core Data Quality Scorecard\n`;
-    content += `| Quality Metric | Score / Level | Target | Status |\n`;
-    content += `| :--- | :--- | :--- | :--- |\n`;
-    content += `| **Overall Quality Index** | **${score}%** | >= 95% | ${score >= 95 ? '✅ Pass' : '⚠️ Warning'} |\n`;
-    content += `| **Schema Validity** | **${validity}%** | >= 95% | ${validity >= 95 ? '✅ Pass' : '⚠️ Warning'} |\n`;
-    content += `| **Record Completeness** | **${completeness}%** | >= 98% | ${completeness >= 98 ? '✅ Pass' : '⚠️ Warning'} |\n`;
-    content += `| **Entity Uniqueness** | **${uniqueness}%** | >= 95% | ${uniqueness >= 95 ? '✅ Pass' : '⚠️ Warning'} |\n\n`;
 
-    content += `## 2. Inferred Schema Profile & Type Analysis\n`;
-    content += `The schema auto-detection and data type inference pipeline classified the dataset attributes as follows:\n\n`;
-    content += `| Attribute Name | Inferred Data Type | Completeness Rate | Sample Values / Description |\n`;
-    content += `| :--- | :--- | :--- | :--- |\n`;
-    schema.forEach((f: any) => {
-        const samples = f.sample_values ? f.sample_values.slice(0, 2).join(', ') : (rawData.slice(0, 2).map(r => r[f.name]).join(', ') || 'N/A');
-        const nullPct = f.null_percentage || 0;
-        const comp = 100 - nullPct;
-        content += `| **${f.name}** | \`${f.type || 'String'}\` | ${comp}% | \`${samples}\` |\n`;
-    });
-    content += `\n`;
+    let secNum = 1;
 
-    content += `## 3. Deep Domain Profile & Structural Invariant Checks\n`;
-    if (typeSelected.includes("Financial") || typeSelected.includes("Revenue")) {
-        content += `A granular verification of financial attributes was performed to check numeric sanity:\n\n`;
-        content += `- **Negative Value Check**: Financial values were checked to verify no unauthorized negative numbers exist in price or cost fields.\n`;
-        content += `- **Currency Standardization**: Format validation verified all currency metrics adhere to standard ISO representation.\n`;
-        content += `- **Pricing Consistency**: Outlier filters flagged pricing variables exceeding standard deviations.\n\n`;
-        content += `| Invariant Rule | Evaluated Attribute | Status | Details |\n`;
+    if (showSummary) {
+        content += `## ${secNum++}. Executive Summary & Audit Context\n`;
+        content += `This professional audit profile analyzes the dataset **${dataset.name}** under the **${typeSelected}** framework. The dataset contains **${rowCount}** records across **${colCount}** active variables, ingested from a **${dataset.source || 'file'}** source. `;
+
+        if (typeSelected.includes("Financial") || typeSelected.includes("Revenue")) {
+            content += `This audit specifically evaluates financial data integrity, transaction boundaries, pricing alignment, and fee consistency. Real-time billing verification systems require strict compliance to avoid revenue leakage and transaction processing exceptions. `;
+        } else if (typeSelected.includes("User") || typeSelected.includes("Customer")) {
+            content += `This report focuses on user profile completeness, demographic segmentation validation, customer status categorization, and potential Personally Identifiable Information (PII) security controls. Ensuring data privacy (such as compliance with GDPR/CCPA regulations) remains paramount for user records. `;
+        } else if (typeSelected.includes("Temporal") || typeSelected.includes("Trend")) {
+            content += `This profile analyzes chronological trends, data ingestion volumes over time, event logs, and timestamp continuity. Identifying ingestion lags and missing date periods ensures that downstream analytical models receive an uninterrupted timeline of occurrences. `;
+        } else if (typeSelected.includes("Compliance") || typeSelected.includes("Governance")) {
+            content += `This report performs a strict governance compliance audit. Data contracts are evaluated against actual record distributions to verify enforcement settings (Strict/Warning modes) and check schemas for breaking drifts. `;
+        } else {
+            content += `This general summary details data quality scorecards, completeness profiles, schema definitions, and AI pre-cleansing rules to prepare data for downstream BI models. `;
+        }
+
+        content += `Overall validation returned a quality compliance index of **${score}%**, indicating that the data is `;
+        if (score >= 95) {
+            content += `highly clean, structurally sound, and ready for immediate deployment in production pipelines and analytical models.\n\n`;
+        } else if (score >= 80) {
+            content += `mostly clean, with minor validation exceptions that should be resolved before consumption in production environments.\n\n`;
+        } else {
+            content += `partially compliance-critical, requiring structural cleansing and schema alignment to prevent downstream runtime errors.\n\n`;
+        }
+    }
+
+    if (showSchema) {
+        content += `## ${secNum++}. Inferred Schema Profile & Type Analysis\n`;
+        content += `The schema auto-detection and data type inference pipeline classified the dataset attributes as follows:\n\n`;
+        content += `| Attribute Name | Inferred Data Type | Completeness Rate | Sample Values / Description |\n`;
         content += `| :--- | :--- | :--- | :--- |\n`;
-        content += `| Non-negative Amounts | Price / Amount Columns | Pass | No negative entries found |\n`;
-        content += `| Numeric Bounds Check | Discount Metric | Pass | All values fall between 0% and 100% |\n`;
-        content += `| Transaction Integrity | Payment Type | Pass | Categorical values match supported methods |\n\n`;
-    } else if (typeSelected.includes("User") || typeSelected.includes("Customer")) {
-        content += `An analysis of PII variables and user identity attributes was performed:\n\n`;
-        content += `- **Email Formatting**: RegEx checks verified all email fields contain a valid domain extension.\n`;
-        content += `- **PII Masking Audit**: The system checked columns for sensitive variables (such as exact names, phone numbers, or addresses) to determine encryption requirements.\n`;
-        content += `- **Demographic Spreading**: Customer distribution checks verified standard representation across categoricals.\n\n`;
-        content += `| Invariant Rule | Evaluated Attribute | Status | Details |\n`;
+        schema.forEach((f: any) => {
+            const samples = f.sample_values ? f.sample_values.slice(0, 2).join(', ') : (rawData.slice(0, 2).map(r => r[f.name]).join(', ') || 'N/A');
+            const nullPct = f.null_percentage || 0;
+            const comp = 100 - nullPct;
+            content += `| **${f.name}** | \`${f.type || 'String'}\` | ${comp}% | \`${samples}\` |\n`;
+        });
+        content += `\n`;
+    }
+
+    if (showQuality) {
+        content += `## ${secNum++}. Deep Domain Profile & Data Quality Scorecard\n`;
+        content += `| Quality Metric | Score / Level | Target | Status |\n`;
         content += `| :--- | :--- | :--- | :--- |\n`;
-        content += `| RFC-5322 Check | Email Fields | Pass | 100% format compliance |\n`;
-        content += `| Privacy Encryption | Sensitive Data | Warning | Names and emails contain unmasked text. Encrypt in transit. |\n`;
-        content += `| Category Validity | Gender / Cust Type | Pass | Standard categories present |\n\n`;
-    } else {
-        content += `General structural invariants checked across the ingested payload:\n\n`;
-        content += `- **Column Identity Matching**: Verified all column headers contain valid alphanumeric characters with no spaces.\n`;
-        content += `- **Data Ingestion Alignment**: Checked that all values match target schema type constraints.\n`;
-        content += `- **Row Uniqueness checks**: Verified identity keys contain unique records.\n\n`;
-        content += `| Invariant Rule | Evaluated Attribute | Status | Details |\n`;
-        content += `| :--- | :--- | :--- | :--- |\n`;
-        content += `| Null Value Ceiling | Primary Keys | Pass | 0% missing value rate |\n`;
-        content += `| Data Type Coercion | Date/Numbers | Pass | Coercion checks returned zero exceptions |\n`;
-        content += `| Schema Stability | Columns List | Pass | Number of columns matches contract |\n\n`;
+        content += `| **Overall Quality Index** | **${score}%** | >= 95% | ${score >= 95 ? '✅ Pass' : '⚠️ Warning'} |\n`;
+        content += `| **Schema Validity** | **${validity}%** | >= 95% | ${validity >= 95 ? '✅ Pass' : '⚠️ Warning'} |\n`;
+        content += `| **Record Completeness** | **${completeness}%** | >= 98% | ${completeness >= 98 ? '✅ Pass' : '⚠️ Warning'} |\n`;
+        content += `| **Entity Uniqueness** | **${uniqueness}%** | >= 95% | ${uniqueness >= 95 ? '✅ Pass' : '⚠️ Warning'} |\n\n`;
+
+        if (typeSelected.includes("Financial") || typeSelected.includes("Revenue")) {
+            content += `A granular verification of financial attributes was performed to check numeric sanity:\n\n`;
+            content += `- **Negative Value Check**: Financial values were checked to verify no unauthorized negative numbers exist in price or cost fields.\n`;
+            content += `- **Currency Standardization**: Format validation verified all currency metrics adhere to standard ISO representation.\n`;
+            content += `- **Pricing Consistency**: Outlier filters flagged pricing variables exceeding standard deviations.\n\n`;
+            content += `| Invariant Rule | Evaluated Attribute | Status | Details |\n`;
+            content += `| :--- | :--- | :--- | :--- |\n`;
+            content += `| Non-negative Amounts | Price / Amount Columns | Pass | No negative entries found |\n`;
+            content += `| Numeric Bounds Check | Discount Metric | Pass | All values fall between 0% and 100% |\n`;
+            content += `| Transaction Integrity | Payment Type | Pass | Categorical values match supported methods |\n\n`;
+        } else if (typeSelected.includes("User") || typeSelected.includes("Customer")) {
+            content += `An analysis of PII variables and user identity attributes was performed:\n\n`;
+            content += `- **Email Formatting**: RegEx checks verified all email fields contain a valid domain extension.\n`;
+            content += `- **PII Masking Audit**: The system checked columns for sensitive variables (such as exact names, phone numbers, or addresses) to determine encryption requirements.\n`;
+            content += `- **Demographic Spreading**: Customer distribution checks verified standard representation across categoricals.\n\n`;
+            content += `| Invariant Rule | Evaluated Attribute | Status | Details |\n`;
+            content += `| :--- | :--- | :--- | :--- |\n`;
+            content += `| RFC-5322 Check | Email Fields | Pass | 100% format compliance |\n`;
+            content += `| Privacy Encryption | Sensitive Data | Warning | Names and emails contain unmasked text. Encrypt in transit. |\n`;
+            content += `| Category Validity | Gender / Cust Type | Pass | Standard categories present |\n\n`;
+        } else {
+            content += `General structural invariants checked across the ingested payload:\n\n`;
+            content += `- **Column Identity Matching**: Verified all column headers contain valid alphanumeric characters with no spaces.\n`;
+            content += `- **Data Ingestion Alignment**: Checked that all values match target schema type constraints.\n`;
+            content += `- **Row Uniqueness checks**: Verified identity keys contain unique records.\n\n`;
+            content += `| Invariant Rule | Evaluated Attribute | Status | Details |\n`;
+            content += `| :--- | :--- | :--- | :--- |\n`;
+            content += `| Null Value Ceiling | Primary Keys | Pass | 0% missing value rate |\n`;
+            content += `| Data Type Coercion | Date/Numbers | Pass | Coercion checks returned zero exceptions |\n`;
+            content += `| Schema Stability | Columns List | Pass | Number of columns matches contract |\n\n`;
+        }
+
+        content += `### Data Quality Issues & Validation Failures\n`;
+        const issues = validationReport && validationReport.issues ? (typeof validationReport.issues === 'string' ? JSON.parse(validationReport.issues) : validationReport.issues) : [];
+        if (issues && issues.length > 0) {
+            content += `The data validation engine flagged **${issues.length}** anomalies and violations against current data contract constraints:\n\n`;
+            issues.slice(0, 5).forEach((iss: any, idx: number) => {
+                content += `${idx + 1}. **${iss.severity.toUpperCase()}** in field \`${iss.field || 'General'}\`: ${iss.message}. ${iss.suggestedFix ? `Suggested resolution: \`${JSON.stringify(iss.suggestedFix)}\`.` : ''}\n`;
+            });
+        } else if (aiInsights && aiInsights.anomaly_warnings && aiInsights.anomaly_warnings.length > 0) {
+            content += `Data quality scanning flags:\n\n`;
+            aiInsights.anomaly_warnings.forEach((warn: string, idx: number) => {
+                content += `- ${warn}\n`;
+            });
+        } else {
+            content += `✅ **No critical anomalies or data contract violations were detected in this dataset.** All records comply with inferred structural rules.\n\n`;
+        }
     }
 
-    content += `## 4. Data Quality Issues & Validation Failures\n`;
-    const issues = validationReport && validationReport.issues ? (typeof validationReport.issues === 'string' ? JSON.parse(validationReport.issues) : validationReport.issues) : [];
-    if (issues && issues.length > 0) {
-        content += `The data validation engine flagged **${issues.length}** anomalies and violations against current data contract constraints:\n\n`;
-        issues.slice(0, 5).forEach((iss: any, idx: number) => {
-            content += `${idx + 1}. **${iss.severity.toUpperCase()}** in field \`${iss.field || 'General'}\`: ${iss.message}. ${iss.suggestedFix ? `Suggested resolution: \`${JSON.stringify(iss.suggestedFix)}\`.` : ''}\n`;
-        });
-    } else if (aiInsights && aiInsights.anomaly_warnings && aiInsights.anomaly_warnings.length > 0) {
-        content += `Data quality scanning flags:\n\n`;
-        aiInsights.anomaly_warnings.forEach((warn: string, idx: number) => {
-            content += `- ${warn}\n`;
-        });
-    } else {
-        content += `✅ **No critical anomalies or data contract violations were detected in this dataset.** All records comply with inferred structural rules.\n\n`;
+    if (showInsights) {
+        content += `## ${secNum++}. AI Preprocessing Insights & Action Recommendations\n`;
+        const suggestions = aiInsights && aiInsights.preprocessing_suggestions ? aiInsights.preprocessing_suggestions : [];
+        if (suggestions && suggestions.length > 0) {
+            content += `Based on dataset statistics and attribute types, the following preprocessing rules are recommended prior to analytics modeling:\n\n`;
+            suggestions.forEach((sug: string) => {
+                content += `- **Recommendation**: ${sug}\n`;
+            });
+        } else {
+            content += `- **Recommendation**: Ensure proper string trimming and text normalization on all categorical columns.\n`;
+            content += `- **Recommendation**: Track temporal variations and scale numeric variables using Z-score standardization.\n`;
+        }
+
+        content += `\n### Strategic Business & Governance Recommendations\n`;
+        content += `• **Pipeline Enforcement**: Enable active schema enforcement to block potential type mismatch drifts on incoming records.\n`;
+        content += `• **Business Intelligence Readiness**: This dataset is **${score >= 90 ? 'fully' : 'partially'} business-ready**. It can be directly loaded into dashboard models for analytical tracking.\n`;
+        content += `• **Storage Optimization**: Column compression is advised for string variables with high cardinality.\n`;
+        content += `• **Security Controls**: Mask all PII variables (including email addresses and customer names) prior to distributing reports to non-admin viewer roles.\n\n`;
     }
 
-    content += `\n## 5. AI Preprocessing Insights & Action Recommendations\n`;
-    const suggestions = aiInsights && aiInsights.preprocessing_suggestions ? aiInsights.preprocessing_suggestions : [];
-    if (suggestions && suggestions.length > 0) {
-        content += `Based on dataset statistics and attribute types, the following preprocessing rules are recommended prior to analytics modeling:\n\n`;
-        suggestions.forEach((sug: string) => {
-            content += `- **Recommendation**: ${sug}\n`;
-        });
-    } else {
-        content += `- **Recommendation**: Ensure proper string trimming and text normalization on all categorical columns.\n`;
-        content += `- **Recommendation**: Track temporal variations and scale numeric variables using Z-score standardization.\n`;
-    }
-
-    content += `\n## 6. Strategic Business & Governance Recommendations\n`;
-    content += `• **Pipeline Enforcement**: Enable active schema enforcement to block potential type mismatch drifts on incoming records.\n`;
-    content += `• **Business Intelligence Readiness**: This dataset is **${score >= 90 ? 'fully' : 'partially'} business-ready**. It can be directly loaded into dashboard models for analytical tracking.\n`;
-    content += `• **Storage Optimization**: Column compression is advised for string variables with high cardinality.\n`;
-    content += `• **Security Controls**: Mask all PII variables (including email addresses and customer names) prior to distributing reports to non-admin viewer roles.\n\n`;
     content += `*Report compiled automatically by CollabAI Governance Engine on ${new Date().toLocaleDateString()}.*`;
     return content;
 }
@@ -242,7 +317,19 @@ export const getReports = async (req: AuthenticatedRequest, res: Response) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        const filteredReports = reports.filter(r => checkReportAccess(r, req.user!, 'view'));
+        const users = await prisma.user.findMany({
+            where: { organizationId: orgId },
+            select: { id: true, name: true }
+        });
+
+        const userMap = new Map(users.map(u => [u.id, u.name]));
+
+        const reportsWithOwner = reports.map(r => ({
+            ...r,
+            ownerName: userMap.get(r.ownerId) || 'System (AI)'
+        }));
+
+        const filteredReports = reportsWithOwner.filter(r => checkReportAccess(r, req.user!, 'view'));
         res.status(200).json(filteredReports);
     } catch (err) {
         console.error('Fetch reports error:', err);
@@ -256,7 +343,7 @@ export const createReport = async (req: AuthenticatedRequest, res: Response) => 
         const user = req.user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        const { datasetId, name, format, reportType } = req.body;
+        const { datasetId, name, format, reportType, prompt, toggles } = req.body;
         if (!datasetId || !name || !format) {
             return res.status(400).json({ error: 'datasetId, name, and format are required.' });
         }
@@ -272,35 +359,27 @@ export const createReport = async (req: AuthenticatedRequest, res: Response) => 
         const { dataset, schema, rawData, validationReport, aiInsights, overallScore } = context;
 
         // Compile clean fallback content first
-        let reportContent = compileReportContent(dataset, schema, rawData, validationReport, aiInsights, typeSelected);
+        let reportContent = compileReportContent(dataset, schema, rawData, validationReport, aiInsights, typeSelected, toggles);
 
         // Attempt Groq chat completion for custom business intelligence report
         try {
-            const prompt = `You are a professional Business Intelligence and Data Governance Writer.
-Generate an exhaustive, highly detailed, and comprehensive executive report of type "${typeSelected}" for the dataset named "${dataset.name}".
-The report MUST be long and detailed, consisting of at least 800 to 1000 words. Do not make it brief. Provide rich analysis, deep insights, and structural details.
-
-Data profile info:
-- Records: ${rawData.length} rows, ${schema.length} columns.
-- Overall Compliance Score: ${overallScore}%
-- Attribute Schema: ${JSON.stringify(schema)}
-- Validation violations: ${validationReport ? validationReport.issues : 'None'}
-- Preprocessing advice: ${JSON.stringify(aiInsights.preprocessing_suggestions)}
-
-Please structure the report beautifully using Markdown headers, lists, and tables as follows:
-1. Executive Summary: High-level overview of the dataset. Elaborate on the business purpose, context, and structural significance.
-2. Inferred Schema Profile & Type Analysis: Detail every attribute, its inferred data type, completeness rate, and potential values. Include a detailed markdown table of fields/types.
-3. Data Quality Scorecard: Detailed metrics for Schema Validity, Record Completeness, Entity Uniqueness, and Overall Quality Index (use a markdown table).
-4. Data Quality Issues & Validation Failures: Describe any anomalies, warnings, or data contract violations.
-5. AI Preprocessing Recommendations: Specific step-by-step cleaning rules, transformations, scaling, or imputations to apply, matching the data structure.
-6. Business & Governance Recommendations: Detailed actions for pipeline enforcement, security protocols, PII masking rules (if email/name are present), and BI consumption.
-
-Return ONLY the report text in Markdown. Do not include introductory notes, conversational filler, or wrap-up chat.`;
+            const systemPromptText = `You are a professional data governance, compliance, and business intelligence report generator.`;
+            const userPromptText = buildGroqPrompt(
+                typeSelected,
+                dataset.name,
+                rawData.length,
+                schema,
+                overallScore,
+                validationReport ? validationReport.issues : null,
+                aiInsights.preprocessing_suggestions,
+                prompt,
+                toggles
+            );
 
             const completion = await groq.chat.completions.create({
                 messages: [
-                    { role: 'system', content: 'You are an executive data governance and compliance writer.' },
-                    { role: 'user', content: prompt }
+                    { role: 'system', content: systemPromptText },
+                    { role: 'user', content: userPromptText }
                 ],
                 model: 'llama-3.3-70b-versatile',
                 temperature: 0.2
@@ -339,7 +418,7 @@ Return ONLY the report text in Markdown. Do not include introductory notes, conv
         // User Notification
         await notifyUser(user.id, 'Report Generated', `Report "${name}" is ready for preview.`, 'project', '/reports');
 
-        res.status(201).json({ success: true, report });
+        res.status(201).json({ success: true, report: { ...report, ownerName: user.name } });
 
     } catch (err) {
         console.error('Create report error:', err);
@@ -354,6 +433,7 @@ export const regenerateReport = async (req: AuthenticatedRequest, res: Response)
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
         const reportId = String(req.params.id);
+        const { reportType, prompt, toggles } = req.body;
 
         // Find existing report
         const report = await prisma.report.findFirst({
@@ -387,39 +467,32 @@ export const regenerateReport = async (req: AuthenticatedRequest, res: Response)
 
         const { dataset, schema, rawData, validationReport, aiInsights, overallScore } = context;
 
-        const reportType = report.name.includes("Financial") || report.name.includes("Revenue") ? "Financial Performance & Sales Audit" :
-                           report.name.includes("Demographics") || report.name.includes("User") ? "User Profile & Demographics Report" :
-                           report.name.includes("Temporal") || report.name.includes("Trend") ? "Temporal Trend Analysis & Ingestion Log" :
-                           report.name.includes("Compliance") || report.name.includes("Governance") ? "Regulatory Compliance Audit" : 
-                           "Data Quality & Summary";
+        const typeSelected = reportType || (report.name.includes("Financial") || report.name.includes("Revenue") ? "Financial Performance & Sales Audit" :
+            report.name.includes("Demographics") || report.name.includes("User") ? "User Profile & Demographics Report" :
+                report.name.includes("Temporal") || report.name.includes("Trend") ? "Temporal Trend Analysis & Ingestion Log" :
+                    report.name.includes("Compliance") || report.name.includes("Governance") ? "Regulatory Compliance Audit" :
+                        "Data Quality & Summary");
 
-        let newContent = compileReportContent(dataset, schema, rawData, validationReport, aiInsights, reportType);
+        let newContent = compileReportContent(dataset, schema, rawData, validationReport, aiInsights, typeSelected, toggles);
 
         try {
-            const prompt = `You are a professional Business Intelligence and Data Governance Writer.
-Regenerate a professional executive report of type "${reportType}" (Revision version ${report.version + 1}) for dataset "${dataset.name}".
-The report MUST be long and detailed, consisting of at least 800 to 1000 words. Do not make it brief. Provide rich analysis, deep insights, and structural details.
-
-Data profile info:
-- Records: ${rawData.length} rows, ${schema.length} columns.
-- Overall Compliance Score: ${overallScore}%
-- Attribute Schema: ${JSON.stringify(schema)}
-- Validation violations: ${validationReport ? validationReport.issues : 'None'}
-
-Please structure the report beautifully using Markdown headers, lists, and tables as follows:
-1. Executive Summary: High-level overview of the dataset. Elaborate on the business purpose, context, and structural significance.
-2. Inferred Schema Profile & Type Analysis: Detail every attribute, its inferred data type, completeness rate, and potential values. Include a detailed markdown table of fields/types.
-3. Data Quality Scorecard: Detailed metrics for Schema Validity, Record Completeness, Entity Uniqueness, and Overall Quality Index (use a markdown table).
-4. Data Quality Issues & Validation Failures: Describe any anomalies, warnings, or data contract violations.
-5. AI Preprocessing Recommendations: Specific step-by-step cleaning rules, transformations, scaling, or imputations to apply, matching the data structure.
-6. Business & Governance Recommendations: Detailed actions for pipeline enforcement, security protocols, PII masking rules (if email/name are present), and BI consumption.
-
-Return ONLY the report text in Markdown. Do not include introductory notes, conversational filler, or wrap-up chat.`;
+            const systemPromptText = `You are a professional data governance, compliance, and business intelligence report generator.`;
+            const userPromptText = buildGroqPrompt(
+                typeSelected,
+                dataset.name,
+                rawData.length,
+                schema,
+                overallScore,
+                validationReport ? validationReport.issues : null,
+                aiInsights.preprocessing_suggestions,
+                prompt,
+                toggles
+            );
 
             const completion = await groq.chat.completions.create({
                 messages: [
-                    { role: 'system', content: 'You are an executive data governance and compliance writer.' },
-                    { role: 'user', content: prompt }
+                    { role: 'system', content: systemPromptText },
+                    { role: 'user', content: userPromptText }
                 ],
                 model: 'llama-3.3-70b-versatile',
                 temperature: 0.3
@@ -449,7 +522,11 @@ Return ONLY the report text in Markdown. Do not include introductory notes, conv
         // Audit Log
         await logAction(user.id, user.role, user.organizationId, 'REPORT_REGENERATION', 'Report', report.id, { name: report.name, version: report.version + 1 });
 
-        res.status(200).json({ success: true, report: updatedReport });
+        const owner = await prisma.user.findUnique({
+            where: { id: updatedReport.ownerId },
+            select: { name: true }
+        });
+        res.status(200).json({ success: true, report: { ...updatedReport, ownerName: owner?.name || 'System (AI)' } });
 
     } catch (err) {
         console.error('Regenerate report error:', err);
@@ -759,7 +836,7 @@ export const getReportSharedUsers = async (req: AuthenticatedRequest, res: Respo
 
         const userDetails = await Promise.all(
             rawCollaborators.map(async (s) => {
-                const dbUser = s.userId 
+                const dbUser = s.userId
                     ? await prisma.user.findUnique({ where: { id: s.userId }, select: { id: true, name: true, email: true } })
                     : await prisma.user.findUnique({ where: { email: s.email }, select: { id: true, name: true, email: true } });
                 return dbUser ? { id: dbUser.id, name: dbUser.name, email: dbUser.email, permission: s.permission } : null;
@@ -830,7 +907,7 @@ export const getSharedReportByToken = async (req: Request, res: Response) => {
         if (!report) {
             return res.status(404).json({ error: 'Shared report not found.' });
         }
-        
+
         // Find owner details
         const ownerUser = await prisma.user.findUnique({
             where: { id: report.ownerId },

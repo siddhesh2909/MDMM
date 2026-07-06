@@ -4,6 +4,8 @@ import prisma from '../lib/prisma';
 
 export interface AuthenticatedUser {
     id: string;
+    name: string;
+    email: string;
     role: string;
     organizationId: string;
     permissions: string[];
@@ -45,6 +47,8 @@ export const authenticateToken = (req: AuthenticatedRequest, res: express.Respon
             const roleOverride = req.headers['x-role-override'] as string;
             req.user = {
                 id: dbUser.id,
+                name: dbUser.name,
+                email: dbUser.email,
                 role: roleOverride || dbUser.role,
                 organizationId: dbUser.organizationId,
                 permissions: parsedPermissions
